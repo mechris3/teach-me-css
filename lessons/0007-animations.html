@@ -1,0 +1,930 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lesson 7: CSS Animations — @keyframes and Beyond</title>
+  <style>
+    :root {
+      --text: #1a1a2e;
+      --bg: #fefefe;
+      --accent: #3a86ff;
+      --code-bg: #f4f4f8;
+      --border: #e0e0e0;
+      --serif: 'Georgia', serif;
+      --mono: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+      --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+
+    * { box-sizing: border-box; margin: 0; }
+
+    body {
+      font-family: var(--sans);
+      color: var(--text);
+      background: var(--bg);
+      line-height: 1.7;
+      max-width: 42rem;
+      margin: 0 auto;
+      padding: 3rem 1.5rem;
+    }
+
+    h1 { font-family: var(--serif); font-size: 1.8rem; margin-bottom: 0.25rem; font-weight: normal; }
+    .lesson-number { font-size: 0.85rem; color: #666; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.25rem; }
+    h2 { font-family: var(--serif); font-size: 1.3rem; margin-top: 2.5rem; margin-bottom: 0.75rem; font-weight: normal; }
+    h3 { font-size: 1rem; margin-top: 1.5rem; margin-bottom: 0.5rem; }
+    p, li { margin-bottom: 1rem; }
+    ul, ol { padding-left: 1.5rem; }
+
+    code { font-family: var(--mono); font-size: 0.88em; background: var(--code-bg); padding: 0.15em 0.4em; border-radius: 3px; }
+    pre { background: var(--code-bg); border: 1px solid var(--border); border-radius: 6px; padding: 1.25rem; overflow-x: auto; margin: 1.25rem 0; line-height: 1.5; }
+    pre code { background: none; padding: 0; font-size: 0.85rem; }
+    .key-insight { border-left: 3px solid var(--accent); padding: 1rem 1.25rem; margin: 1.5rem 0; background: #f0f7ff; border-radius: 0 6px 6px 0; }
+    .key-insight p { margin-bottom: 0.5rem; }
+    .key-insight p:last-child { margin-bottom: 0; }
+    .demo { border: 1px solid var(--border); border-radius: 8px; padding: 1.5rem; margin: 1.5rem 0; background: #fafafa; }
+    .demo-label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em; color: #888; margin-bottom: 1rem; }
+
+    /* Demo: basic keyframes */
+    @keyframes slide-in {
+      from { transform: translateX(-100%); opacity: 0; }
+      to   { transform: translateX(0); opacity: 1; }
+    }
+
+    .slide-in-box {
+      width: 120px;
+      height: 60px;
+      background: var(--accent);
+      border-radius: 6px;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+
+    .slide-in-box.animate {
+      animation: slide-in 0.6s ease-out both;
+    }
+
+    /* Demo: multi-step */
+    @keyframes bounce {
+      0%   { transform: translateY(0); }
+      30%  { transform: translateY(-40px); }
+      50%  { transform: translateY(0); }
+      70%  { transform: translateY(-20px); }
+      100% { transform: translateY(0); }
+    }
+
+    .bounce-box {
+      width: 50px;
+      height: 50px;
+      background: #e76f51;
+      border-radius: 50%;
+      animation: bounce 1s ease-in-out infinite;
+    }
+
+    /* Demo: fill modes */
+    @keyframes fade-in {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .fill-none     { animation: fade-in 0.5s ease 1s 1 normal none; opacity: 0; }
+    .fill-forwards { animation: fade-in 0.5s ease 1s 1 normal forwards; }
+    .fill-both     { animation: fade-in 0.5s ease 1s 1 normal both; }
+
+    .fill-demo-item {
+      width: 100px;
+      height: 50px;
+      border-radius: 6px;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.7rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+    }
+
+    .fill-demo-item:nth-child(1) { background: var(--accent); }
+    .fill-demo-item:nth-child(2) { background: #2a9d8f; }
+    .fill-demo-item:nth-child(3) { background: #6c5ce7; }
+
+    /* Demo: pause/play */
+    .spinner {
+      width: 50px;
+      height: 50px;
+      border: 4px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      animation-play-state: running;
+    }
+
+    .spinner.paused {
+      animation-play-state: paused;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* Demo: scroll-driven */
+    .scroll-container {
+      height: 200px;
+      overflow-y: scroll;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      position: relative;
+    }
+
+    .scroll-content {
+      height: 600px;
+      padding: 1rem;
+      background: linear-gradient(to bottom, #f0f7ff, #fff3e0);
+      font-size: 0.8rem;
+    }
+
+    .scroll-progress {
+      position: sticky;
+      top: 0;
+      height: 4px;
+      background: var(--accent);
+      transform-origin: left;
+      animation: grow-width linear;
+      animation-timeline: scroll(nearest block);
+    }
+
+    @keyframes grow-width {
+      from { transform: scaleX(0); }
+      to   { transform: scaleX(1); }
+    }
+
+    /* Demo: staggered entrance */
+    @keyframes fade-up {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .stagger-item {
+      background: var(--accent);
+      color: white;
+      padding: 0.75rem 1rem;
+      border-radius: 6px;
+      margin-bottom: 0.5rem;
+      font-size: 0.8rem;
+      font-weight: 600;
+      opacity: 0;
+    }
+
+    .stagger-item.animate {
+      animation: fade-up 0.4s ease both;
+    }
+
+    .stagger-item:nth-child(1) { animation-delay: 0s; }
+    .stagger-item:nth-child(2) { animation-delay: 0.1s; }
+    .stagger-item:nth-child(3) { animation-delay: 0.15s; }
+    .stagger-item:nth-child(4) { animation-delay: 0.2s; }
+
+    /* Demo: loading spinner (practical) */
+    .demo-spinner {
+      width: 28px;
+      height: 28px;
+      border: 3px solid #eee;
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      display: inline-block;
+      vertical-align: middle;
+      margin-right: 0.5rem;
+    }
+
+    /* Demo: pulse */
+    @keyframes pulse {
+      from { transform: scale(1); opacity: 1; }
+      to   { transform: scale(1.05); opacity: 0.8; }
+    }
+
+    .demo-badge {
+      display: inline-block;
+      background: #e76f51;
+      color: white;
+      padding: 0.5rem 1rem;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      animation: pulse 1.5s ease-in-out infinite alternate;
+    }
+
+    .replay-btn {
+      font-family: var(--sans);
+      font-size: 0.8rem;
+      padding: 0.4rem 0.8rem;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      background: white;
+      cursor: pointer;
+      margin-bottom: 0.75rem;
+      transition: border-color 0.15s;
+    }
+    .replay-btn:hover { border-color: var(--accent); }
+
+    /* Demo: direction */
+    @keyframes slide-right {
+      from { transform: translateX(0); }
+      to   { transform: translateX(150px); }
+    }
+
+    .direction-box {
+      width: 40px;
+      height: 40px;
+      border-radius: 6px;
+      margin-bottom: 0.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 0.65rem;
+      font-weight: 600;
+    }
+
+    .dir-normal    { background: var(--accent); animation: slide-right 1.5s ease-in-out infinite; animation-direction: normal; }
+    .dir-reverse   { background: #e76f51; animation: slide-right 1.5s ease-in-out infinite; animation-direction: reverse; }
+    .dir-alternate { background: #2a9d8f; animation: slide-right 1.5s ease-in-out infinite; animation-direction: alternate; }
+    .dir-alt-rev   { background: #6c5ce7; animation: slide-right 1.5s ease-in-out infinite; animation-direction: alternate-reverse; }
+
+    /* Demo: multiple animations */
+    @keyframes slide-up-multi {
+      from { transform: translateY(20px); }
+      to   { transform: translateY(0); }
+    }
+
+    @keyframes color-cycle {
+      0%   { background: var(--accent); }
+      50%  { background: #e76f51; }
+      100% { background: var(--accent); }
+    }
+
+    .multi-anim-box {
+      width: 80px;
+      height: 80px;
+      border-radius: 8px;
+      background: var(--accent);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.7rem;
+      font-weight: 600;
+      animation:
+        slide-up-multi 0.5s ease both,
+        pulse 1.5s ease-in-out 0.5s infinite alternate,
+        color-cycle 3s linear 0.5s infinite;
+    }
+    .reveal-item {
+      opacity: 0;
+      transform: translateY(30px);
+      animation: reveal linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 100%;
+    }
+
+    @keyframes reveal {
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .reveal-card {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1rem;
+      margin-bottom: 1rem;
+      font-size: 0.85rem;
+    }
+
+    .quiz { background: #fffdf0; border: 1px solid #e8e0c0; border-radius: 8px; padding: 1.5rem; margin: 2rem 0; }
+    .quiz h3 { font-size: 1rem; margin-bottom: 1rem; margin-top: 0; font-weight: 600; }
+    .quiz-options { list-style: none; padding: 0; }
+    .quiz-options li { margin-bottom: 0.5rem; }
+    .quiz-options button { display: block; width: 100%; text-align: left; padding: 0.75rem 1rem; border: 1px solid var(--border); border-radius: 6px; background: white; font-family: var(--mono); font-size: 0.85rem; cursor: pointer; transition: border-color 0.15s; }
+    .quiz-options button:hover { border-color: var(--accent); }
+    .quiz-options button.correct { border-color: #2a9d8f; background: #e8f8f5; }
+    .quiz-options button.incorrect { border-color: #e76f51; background: #fef0ed; }
+    .quiz-feedback { margin-top: 1rem; padding: 0.75rem; border-radius: 6px; font-size: 0.9rem; display: none; }
+    .source-link { margin-top: 3rem; padding-top: 1.5rem; border-top: 1px solid var(--border); }
+    .source-link a { color: var(--accent); text-decoration: none; border-bottom: 1px solid transparent; }
+    .source-link a:hover { border-bottom-color: var(--accent); }
+    .followup { margin-top: 2rem; padding: 1rem 1.25rem; background: #f9f9f9; border-radius: 8px; font-size: 0.9rem; color: #555; }
+    @media print { body { max-width: 100%; padding: 1rem; } .demo { break-inside: avoid; } }
+  </style>
+</head>
+<body>
+
+<p class="lesson-number">Lesson 07</p>
+<h1>CSS Animations — <code>@keyframes</code> and Beyond</h1>
+
+<p>Transitions are reactive — they need a trigger (hover, class change, etc.). Animations are proactive — they run on their own, can loop, can have multiple steps, and can fire on page load. They're the tool for anything more complex than "smoothly change one value when something happens."</p>
+
+<h2>Transitions vs Animations — when to use which</h2>
+
+<table style="width: 100%; border-collapse: collapse; font-size: 0.85rem; margin: 1.5rem 0;">
+  <thead>
+    <tr style="border-bottom: 2px solid var(--border); text-align: left;">
+      <th style="padding: 0.5rem;">Use transitions when...</th>
+      <th style="padding: 0.5rem;">Use animations when...</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr style="border-bottom: 1px solid var(--border);">
+      <td style="padding: 0.5rem;">A → B (two states)</td>
+      <td style="padding: 0.5rem;">A → B → C → ... (multiple steps)</td>
+    </tr>
+    <tr style="border-bottom: 1px solid var(--border);">
+      <td style="padding: 0.5rem;">Triggered by user action or state change</td>
+      <td style="padding: 0.5rem;">Runs automatically (page load, always)</td>
+    </tr>
+    <tr style="border-bottom: 1px solid var(--border);">
+      <td style="padding: 0.5rem;">Plays once, reverses when trigger leaves</td>
+      <td style="padding: 0.5rem;">Can loop, alternate, pause, restart</td>
+    </tr>
+    <tr>
+      <td style="padding: 0.5rem;">Simpler syntax, less control</td>
+      <td style="padding: 0.5rem;">Full timeline control</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2>@keyframes — defining the sequence</h2>
+
+<p>A <code>@keyframes</code> rule defines the steps of an animation by name:</p>
+
+<pre><code>@keyframes slide-in {
+  from { transform: translateX(-100%); opacity: 0; }
+  to   { transform: translateX(0); opacity: 1; }
+}</code></pre>
+
+<p><code>from</code> is an alias for <code>0%</code>, <code>to</code> is an alias for <code>100%</code>. You can use any percentage steps:</p>
+
+<pre><code>@keyframes bounce {
+  0%   { transform: translateY(0); }
+  30%  { transform: translateY(-40px); }
+  50%  { transform: translateY(0); }
+  70%  { transform: translateY(-20px); }
+  100% { transform: translateY(0); }
+}</code></pre>
+
+<div class="demo">
+  <p class="demo-label">slide-in: ran once on page load (click replay to see again)</p>
+  <button class="replay-btn" onclick="replaySlideIn()">▶ Replay</button>
+  <div class="slide-in-box animate" id="slideInDemo">Slide in</div>
+</div>
+
+<div class="demo">
+  <p class="demo-label">bounce: multi-step keyframes running infinitely</p>
+  <div class="bounce-box"></div>
+</div>
+
+<h2>The animation shorthand</h2>
+
+<pre><code>animation: &lt;name&gt; &lt;duration&gt; &lt;timing&gt; &lt;delay&gt; &lt;count&gt; &lt;direction&gt; &lt;fill-mode&gt; &lt;play-state&gt;;
+
+/* Example */
+animation: slide-in 0.6s ease-out 0s 1 normal both running;
+
+/* Minimum needed */
+animation: slide-in 0.6s;</code></pre>
+
+<p>The individual properties:</p>
+<ul>
+  <li><code>animation-name</code> — which @keyframes to use</li>
+  <li><code>animation-duration</code> — total time for one cycle</li>
+  <li><code>animation-timing-function</code> — same curves as transitions (ease, linear, cubic-bezier, etc.)</li>
+  <li><code>animation-delay</code> — wait before starting</li>
+  <li><code>animation-iteration-count</code> — how many times (<code>1</code>, <code>3</code>, <code>infinite</code>)</li>
+  <li><code>animation-direction</code> — <code>normal</code>, <code>reverse</code>, <code>alternate</code>, <code>alternate-reverse</code></li>
+  <li><code>animation-fill-mode</code> — what styles to show before/after the animation (explained in detail <a href="#fill-modes">below</a>)</li>
+  <li><code>animation-play-state</code> — <code>running</code> or <code>paused</code></li>
+</ul>
+
+<h2>Live demo: the animation shorthand applied</h2>
+
+<pre><code>@keyframes slide-in {
+  from { transform: translateX(-100%); opacity: 0; }
+  to   { transform: translateX(0); opacity: 1; }
+}
+
+.box {
+  animation: slide-in 0.6s ease-out both;
+}
+
+@keyframes bounce {
+  0%   { transform: translateY(0); }
+  30%  { transform: translateY(-40px); }
+  50%  { transform: translateY(0); }
+  70%  { transform: translateY(-20px); }
+  100% { transform: translateY(0); }
+}
+
+.ball {
+  animation: bounce 1s ease-in-out infinite;
+}</code></pre>
+
+<h2 id="fill-modes">Fill modes — what happens before and after</h2>
+
+<p>By default, an animated element snaps back to its pre-animation state when the animation ends. <code>animation-fill-mode</code> controls this:</p>
+
+<ul>
+  <li><code>none</code> (default) — element reverts to its base styles when animation ends</li>
+  <li><code>forwards</code> — element stays at the final keyframe (100%) after the animation</li>
+  <li><code>backwards</code> — element shows the first keyframe (0%) during any delay before the animation starts</li>
+  <li><code>both</code> — combines forwards and backwards (they apply to different time windows — see below)</li>
+</ul>
+
+<h3>The timeline: when each fill-mode applies</h3>
+
+<p>An animation has three time periods. Fill-mode controls what shows during the periods <em>outside</em> the active animation:</p>
+
+<pre><code>TIME ──────────────────────────────────────────────────────►
+
+│◄─── BEFORE ───►│◄──── ACTIVE ANIMATION ────►│◄── AFTER ──►│
+│  (delay period) │  (keyframes 0% → 100%)     │  (finished) │
+│                 │                             │             │
+│  fill: none     │                             │  fill: none │
+│  → base styles  │                             │  → base     │
+│                 │                             │    styles   │
+│  fill: backwards│                             │             │
+│  → "from" (0%)  │                             │             │
+│    keyframe     │                             │             │
+│                 │                             │  fill:      │
+│                 │                             │  forwards   │
+│                 │                             │  → "to"     │
+│                 │                             │    (100%)   │
+│                 │                             │    keyframe │
+│  fill: both     │                             │  fill: both │
+│  → "from" (0%)  │                             │  → "to"     │
+│    keyframe     │                             │    (100%)   │
+│                 │                             │    keyframe │</code></pre>
+
+<p><strong><code>both</code> isn't holding two things at once</strong> — it's applying <code>backwards</code> to the "before" window and <code>forwards</code> to the "after" window. They govern different moments in time, so they never conflict.</p>
+
+<h3>Concrete example</h3>
+
+<pre><code>@keyframes fade-in {
+  from { opacity: 0; }   /* 0% keyframe */
+  to   { opacity: 1; }   /* 100% keyframe */
+}
+
+.box {
+  opacity: 0.5;  /* ← base state */
+  animation: fade-in 0.5s ease 1s both;
+  /*                            ↑ 1s delay */
+}
+
+/* With fill-mode: both, the timeline is:
+   0s – 1s (delay):     opacity: 0   (from keyframe, thanks to "backwards")
+   1s – 1.5s (active):  opacity: 0 → 1 (animating)
+   1.5s+ (after):        opacity: 1   (to keyframe, thanks to "forwards")
+
+   Without "both" (fill: none):
+   0s – 1s (delay):     opacity: 0.5 (base state — visible flash!)
+   1s – 1.5s (active):  opacity: 0 → 1 (animating)
+   1.5s+ (after):        opacity: 0.5 (base state — snaps back!)
+*/</code></pre>
+
+<div class="demo">
+  <p class="demo-label">Three boxes with a 1s delay — watch what happens during the delay and after completion</p>
+  <div class="fill-demo-item fill-none">fill: none</div>
+  <div class="fill-demo-item fill-forwards">fill: forwards</div>
+  <div class="fill-demo-item fill-both">fill: both</div>
+</div>
+
+<pre><code>@keyframes fade-in {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* No fill: visible at base state during delay, snaps back after */
+.fill-none     { animation: fade-in 0.5s ease 1s 1 normal none; }
+
+/* Forwards: stays at final state after animation ends */
+.fill-forwards { animation: fade-in 0.5s ease 1s 1 normal forwards; }
+
+/* Both: shows first keyframe during delay, stays at last after */
+.fill-both     { animation: fade-in 0.5s ease 1s 1 normal both; }</code></pre>
+
+<div class="key-insight">
+  <p><strong>Rule of thumb:</strong> Use <code>both</code> for entrance animations. It ensures the element starts in the "from" state (even during delay) and stays in the "to" state after completion. Without it, you get flashes of the base state.</p>
+</div>
+
+<h2>Direction — alternate and reverse</h2>
+
+<div class="demo">
+  <p class="demo-label">All four direction values animating a box to the right</p>
+  <div class="direction-box dir-normal">normal</div>
+  <div class="direction-box dir-reverse">reverse</div>
+  <div class="direction-box dir-alternate">alternate</div>
+  <div class="direction-box dir-alt-rev">alt-rev</div>
+</div>
+
+<pre><code>/* Normal: 0% → 100%, 0% → 100%, ... */
+animation-direction: normal;
+
+/* Reverse: 100% → 0%, 100% → 0%, ... */
+animation-direction: reverse;
+
+/* Alternate: 0% → 100%, 100% → 0%, 0% → 100%, ... */
+animation-direction: alternate;
+
+/* Alternate-reverse: 100% → 0%, 0% → 100%, ... */
+animation-direction: alternate-reverse;</code></pre>
+
+<p><code>alternate</code> is particularly useful for looping animations that should feel smooth — like a pulse or breathing effect — because it reverses direction each cycle instead of jumping back to the start.</p>
+
+<h2>Pause and play</h2>
+
+<p>You can pause animations with <code>animation-play-state</code>. This is useful for reducing motion when a user isn't actively looking, or for interactive controls:</p>
+
+<div class="demo">
+  <p class="demo-label">Click the spinner to toggle pause/play</p>
+  <div class="spinner" id="spinnerDemo" onclick="this.classList.toggle('paused')"></div>
+</div>
+
+<pre><code>@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.spinner {
+  animation: spin 1s linear infinite;
+}
+
+.spinner.paused {
+  animation-play-state: paused;
+}</code></pre>
+
+<div class="key-insight">
+  <p><strong>Accessibility pattern:</strong> Use <code>@media (prefers-reduced-motion: reduce)</code> to pause or remove animations for users who've requested less motion:</p>
+</div>
+
+<pre><code>@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}</code></pre>
+
+<h2>Scroll-driven animations — the new frontier</h2>
+
+<p>Traditionally, animations run on a time-based timeline. Scroll-driven animations (Chrome 115+, Firefox 110+) let you tie animation progress to <strong>scroll position</strong> instead of elapsed time. No JavaScript needed.</p>
+
+<p>There are two types of scroll timeline:</p>
+<ul>
+  <li><code>scroll()</code> — progress tracks how far a scroll container has been scrolled (0% at top, 100% at bottom)</li>
+  <li><code>view()</code> — progress tracks an element's visibility within a scroll container (0% when entering, 100% when fully visible or leaving)</li>
+</ul>
+
+<h3>Scroll progress bar</h3>
+
+<div class="demo">
+  <p class="demo-label">Scroll this box — the blue bar at the top grows with scroll progress</p>
+  <div class="scroll-container">
+    <div class="scroll-progress"></div>
+    <div class="scroll-content">
+      <p>Scroll down to see the progress bar grow...</p>
+      <p style="margin-top: 100px;">Keep going...</p>
+      <p style="margin-top: 100px;">Almost there...</p>
+      <p style="margin-top: 100px;">Bottom!</p>
+    </div>
+  </div>
+</div>
+
+<pre><code>@keyframes grow-width {
+  from { transform: scaleX(0); }
+  to   { transform: scaleX(1); }
+}
+
+.progress-bar {
+  position: sticky;
+  top: 0;
+  height: 4px;
+  background: blue;
+  transform-origin: left;
+  animation: grow-width linear;
+  animation-timeline: scroll(nearest block);
+}</code></pre>
+
+<div class="key-insight">
+  <p><strong>Key concept:</strong> <code>animation-timeline: scroll()</code> replaces the default time-based timeline. The animation still uses the same @keyframes — but progress is driven by scroll position instead of a clock. Duration becomes irrelevant (you can omit it or set it to <code>auto</code>).</p>
+</div>
+
+<h3>The scroll() function arguments</h3>
+
+<p><code>scroll()</code> takes two optional arguments:</p>
+
+<pre><code>animation-timeline: scroll( &lt;scroller&gt;  &lt;axis&gt; );
+
+/* Defaults: */
+animation-timeline: scroll(nearest block);</code></pre>
+
+<h4>Argument 1: which scroller to track</h4>
+
+<ul>
+  <li><code>nearest</code> (default) — the closest ancestor that has scrollable overflow. In the demo above, that's the <code>.scroll-container</code> div.</li>
+  <li><code>root</code> — the document's root scroll container (the viewport / page scroll). Use this for full-page progress bars.</li>
+  <li><code>self</code> — the element itself is the scroll container (for elements with their own overflow scroll).</li>
+</ul>
+
+<h4>Argument 2: which axis</h4>
+
+<ul>
+  <li><code>block</code> (default) — the block axis (vertical in horizontal writing modes, i.e. up/down scroll).</li>
+  <li><code>inline</code> — the inline axis (horizontal scroll in normal writing modes).</li>
+  <li><code>x</code> — always horizontal, regardless of writing mode.</li>
+  <li><code>y</code> — always vertical, regardless of writing mode.</li>
+</ul>
+
+<h4>Practical examples</h4>
+
+<pre><code>/* Track the page scroll (full-page progress bar) */
+animation-timeline: scroll(root block);
+
+/* Track a horizontal carousel scroll */
+animation-timeline: scroll(nearest inline);
+
+/* Track the element's own scroll (e.g. a scrollable panel) */
+animation-timeline: scroll(self block);
+
+/* Shortest form — defaults to nearest ancestor, vertical */
+animation-timeline: scroll();</code></pre>
+
+<div class="key-insight">
+  <p><strong>Most common usage:</strong> <code>scroll(root block)</code> for page-level progress indicators, and <code>scroll(nearest block)</code> (or just <code>scroll()</code>) for animations tied to a specific scrollable container.</p>
+</div>
+
+<h3>View-driven reveal animation</h3>
+
+<p><code>view()</code> ties progress to an element's intersection with the viewport (or scroll container). Combined with <code>animation-range</code>, you can control exactly when the animation starts and ends:</p>
+
+<div class="demo">
+  <p class="demo-label">These cards use view() on the page viewport — scroll the page up and down to see them animate in and out</p>
+  <div style="display: flex; flex-direction: column; gap: 1rem;">
+    <div class="reveal-card reveal-item">Card A — I animate as I enter the page viewport</div>
+    <div class="reveal-card reveal-item">Card B — scroll me out of view and back</div>
+    <div class="reveal-card reveal-item">Card C — the effect reverses when I leave</div>
+  </div>
+</div>
+
+<p><em>Note: if all cards are already visible, scroll down past them and back up — the animation is tied to their intersection with the browser viewport, not a nested container.</em></p>
+
+<pre><code>@keyframes reveal {
+  from { opacity: 0; transform: translateY(30px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.card {
+  animation: reveal linear both;
+  animation-timeline: view();
+  animation-range: entry 0% entry 100%;
+  /* Animates from invisible → visible as it enters the viewport */
+}</code></pre>
+
+<p><code>animation-range</code> values:</p>
+<ul>
+  <li><code>entry 0%</code> — the element's top edge hits the bottom of the viewport</li>
+  <li><code>entry 100%</code> — the element is fully inside the viewport</li>
+  <li><code>exit 0%</code> — the element starts leaving the viewport at the top</li>
+  <li><code>exit 100%</code> — the element is fully out of view</li>
+  <li><code>cover</code>, <code>contain</code> — shorthand ranges for common cases</li>
+</ul>
+
+<h2>Multiple animations on one element</h2>
+
+<p>You can stack animations with comma separation:</p>
+
+<div class="demo">
+  <p class="demo-label">This box has three animations: slide-up, pulse, and colour cycle — all running independently</p>
+  <div class="multi-anim-box">3 anims</div>
+</div>
+
+<pre><code>.element {
+  animation:
+    fade-in 0.5s ease both,
+    slide-up 0.5s ease both,
+    pulse 2s ease-in-out 1s infinite alternate;
+}</code></pre>
+
+<p>Each animation runs independently — different durations, delays, and iteration counts.</p>
+
+<h2>Practical patterns</h2>
+
+<h3>Staggered entrance</h3>
+
+<div class="demo">
+  <p class="demo-label">Click replay to see staggered fade-up</p>
+  <button class="replay-btn" onclick="replayStagger()">▶ Replay</button>
+  <div id="staggerDemo">
+    <div class="stagger-item animate">Item 1</div>
+    <div class="stagger-item animate">Item 2</div>
+    <div class="stagger-item animate">Item 3</div>
+    <div class="stagger-item animate">Item 4</div>
+  </div>
+</div>
+
+<pre><code>@keyframes fade-up {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.list-item {
+  animation: fade-up 0.4s ease both;
+}
+
+.list-item:nth-child(1) { animation-delay: 0s; }
+.list-item:nth-child(2) { animation-delay: 0.1s; }
+.list-item:nth-child(3) { animation-delay: 0.15s; }
+.list-item:nth-child(4) { animation-delay: 0.2s; }
+
+/* Or with custom properties for flexibility: */
+.list-item {
+  animation-delay: calc(var(--i, 0) * 0.1s);
+}
+/* Set --i via inline style or attr() in the HTML */</code></pre>
+
+<h3>Loading spinner</h3>
+
+<div class="demo">
+  <p class="demo-label">A simple border-based spinner — infinite linear rotation</p>
+  <div class="demo-spinner"></div>
+  <span style="font-size: 0.85rem;">Loading...</span>
+</div>
+
+<pre><code>@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.spinner {
+  width: 24px;
+  height: 24px;
+  border: 3px solid #eee;
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}</code></pre>
+
+<h3>Pulse / breathing effect</h3>
+
+<div class="demo">
+  <p class="demo-label">Badge pulsing continuously using alternate direction</p>
+  <div class="demo-badge">3 notifications</div>
+</div>
+
+<pre><code>@keyframes pulse {
+  from { transform: scale(1); opacity: 1; }
+  to   { transform: scale(1.05); opacity: 0.8; }
+}
+
+.badge {
+  animation: pulse 1.5s ease-in-out infinite alternate;
+}</code></pre>
+
+<h2>Animation events in JavaScript</h2>
+
+<p>You can listen for animation lifecycle events:</p>
+
+<pre><code>element.addEventListener('animationstart', (e) =&gt; { /* fired when animation begins */ });
+element.addEventListener('animationend', (e) =&gt; { /* fired when animation completes */ });
+element.addEventListener('animationiteration', (e) =&gt; { /* fired at start of each loop */ });</code></pre>
+
+<p>Useful for: removing elements after an exit animation, chaining animations in sequence, or syncing JS state with CSS animations.</p>
+
+<h2>Retrieval check</h2>
+
+<div class="quiz" id="quiz1">
+  <h3>What's the key difference between transitions and animations?</h3>
+  <ul class="quiz-options">
+    <li><button onclick="checkAnswer(this, false)">Animations use GPU, transitions don't</button></li>
+    <li><button onclick="checkAnswer(this, true)">Animations can run autonomously; transitions need a trigger</button></li>
+    <li><button onclick="checkAnswer(this, false)">Transitions can loop, animations can't</button></li>
+    <li><button onclick="checkAnswer(this, false)">They're interchangeable — just different syntax</button></li>
+  </ul>
+  <div class="quiz-feedback"></div>
+</div>
+
+<div class="quiz" id="quiz2">
+  <h3>What does animation-fill-mode: both do?</h3>
+  <ul class="quiz-options">
+    <li><button onclick="checkAnswer(this, false)">Plays the animation in both directions alternately</button></li>
+    <li><button onclick="checkAnswer(this, false)">Applies both transform and opacity at once</button></li>
+    <li><button onclick="checkAnswer(this, true)">Shows first keyframe during delay AND holds last keyframe after end</button></li>
+    <li><button onclick="checkAnswer(this, false)">Runs on both desktop and mobile browsers</button></li>
+  </ul>
+  <div class="quiz-feedback"></div>
+</div>
+
+<div class="quiz" id="quiz3">
+  <h3>How do you make a scroll-driven animation instead of time-based?</h3>
+  <ul class="quiz-options">
+    <li><button onclick="checkAnswer(this, false)">Set animation-duration to scroll</button></li>
+    <li><button onclick="checkAnswer(this, true)">Set animation-timeline: scroll() or view()</button></li>
+    <li><button onclick="checkAnswer(this, false)">Use @keyframes with scroll percentages</button></li>
+    <li><button onclick="checkAnswer(this, false)">Add scroll-behavior: animated to the container</button></li>
+  </ul>
+  <div class="quiz-feedback"></div>
+</div>
+
+<div class="quiz" id="quiz4">
+  <h3>You want a looping animation that reverses direction each cycle. What animation-direction value?</h3>
+  <ul class="quiz-options">
+    <li><button onclick="checkAnswer(this, false)">reverse</button></li>
+    <li><button onclick="checkAnswer(this, true)">alternate</button></li>
+    <li><button onclick="checkAnswer(this, false)">both</button></li>
+    <li><button onclick="checkAnswer(this, false)">infinite</button></li>
+  </ul>
+  <div class="quiz-feedback"></div>
+</div>
+
+<div class="quiz" id="quiz5">
+  <h3>In animation-range: entry 0% entry 100%, what does "entry 0%" mean?</h3>
+  <ul class="quiz-options">
+    <li><button onclick="checkAnswer(this, false)">The element is at the top of the viewport</button></li>
+    <li><button onclick="checkAnswer(this, true)">The element's top edge hits the bottom of the viewport</button></li>
+    <li><button onclick="checkAnswer(this, false)">The element is 0% visible (fully hidden)</button></li>
+    <li><button onclick="checkAnswer(this, false)">The scroll container is at 0% scroll position</button></li>
+  </ul>
+  <div class="quiz-feedback"></div>
+</div>
+
+<div class="source-link">
+  <p><strong>Primary sources:</strong></p>
+  <ul>
+    <li><a href="https://developer.mozilla.org/en-US/docs/Web/CSS/animation">MDN — animation</a></li>
+    <li><a href="https://developer.mozilla.org/en-US/docs/Web/CSS/@keyframes">MDN — @keyframes</a></li>
+    <li><a href="https://developer.mozilla.org/en-US/docs/Web/CSS/animation-timeline">MDN — animation-timeline</a></li>
+    <li><a href="https://scroll-driven-animations.style">scroll-driven-animations.style</a> — interactive demos and tool for visualising scroll/view timelines</li>
+  </ul>
+</div>
+
+<div class="followup">
+  <p>💬 That's Lesson 7. You now have the complete motion toolkit: transitions for reactive A→B changes, animations for proactive multi-step sequences, and scroll-driven animations for tying motion to scroll position — all in pure CSS.</p>
+  <p><strong>Next options:</strong></p>
+  <ul>
+    <li><strong>Flexbox</strong> — how the flex algorithm decides sizes</li>
+    <li><strong>Grid</strong> — template areas, auto-flow, subgrid, named lines</li>
+    <li><strong>Cascade layers (@layer)</strong> — the new specificity tool</li>
+    <li><strong>CSS nesting</strong> — native nesting without preprocessors</li>
+    <li><strong>Container queries</strong> — responsive to parent, not viewport</li>
+  </ul>
+  <p>Your call, or I'll pick.</p>
+</div>
+
+<script>
+function replayStagger() {
+  const items = document.querySelectorAll('#staggerDemo .stagger-item');
+  items.forEach(item => {
+    item.classList.remove('animate');
+  });
+  void document.getElementById('staggerDemo').offsetHeight;
+  items.forEach(item => {
+    item.classList.add('animate');
+  });
+}
+
+function replaySlideIn() {
+  const box = document.getElementById('slideInDemo');
+  box.classList.remove('animate');
+  void box.offsetHeight;
+  box.classList.add('animate');
+}
+
+function checkAnswer(button, isCorrect) {
+  const quiz = button.closest('.quiz');
+  const buttons = quiz.querySelectorAll('button');
+  const feedback = quiz.querySelector('.quiz-feedback');
+
+  if (quiz.dataset.answered) return;
+  quiz.dataset.answered = 'true';
+
+  buttons.forEach(btn => btn.style.pointerEvents = 'none');
+
+  if (isCorrect) {
+    button.classList.add('correct');
+    feedback.textContent = '✓ Correct.';
+    feedback.style.background = '#e8f8f5';
+    feedback.style.color = '#1a7a6c';
+  } else {
+    button.classList.add('incorrect');
+    buttons.forEach(btn => {
+      if (btn.getAttribute('onclick').includes('true')) {
+        btn.classList.add('correct');
+      }
+    });
+    feedback.textContent = '✗ Not quite. The highlighted answer is correct.';
+    feedback.style.background = '#fef0ed';
+    feedback.style.color = '#c0392b';
+  }
+  feedback.style.display = 'block';
+}
+</script>
+
+</body>
+</html>

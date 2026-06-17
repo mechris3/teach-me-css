@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lesson 4: @function — Custom CSS Functions</title>
+  <style>
+    :root {
+      --text: #1a1a2e;
+      --bg: #fefefe;
+      --accent: #3a86ff;
+      --code-bg: #f4f4f8;
+      --border: #e0e0e0;
+      --serif: 'Georgia', serif;
+      --mono: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+      --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+
+    * { box-sizing: border-box; margin: 0; }
+
+    body {
+      font-family: var(--sans);
+      color: var(--text);
+      background: var(--bg);
+      line-height: 1.7;
+      max-width: 42rem;
+      margin: 0 auto;
+      padding: 3rem 1.5rem;
+    }
+
+    h1 {
+      font-family: var(--serif);
+      font-size: 1.8rem;
+      margin-bottom: 0.25rem;
+      font-weight: normal;
+    }
+
+    .lesson-number {
+      font-size: 0.85rem;
+      color: #666;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.25rem;
+    }
+
+    h2 {
+      font-family: var(--serif);
+      font-size: 1.3rem;
+      margin-top: 2.5rem;
+      margin-bottom: 0.75rem;
+      font-weight: normal;
+    }
+
+    h3 {
+      font-size: 1rem;
+      margin-top: 1.5rem;
+      margin-bottom: 0.5rem;
+    }
+
+    p, li { margin-bottom: 1rem; }
+    ul, ol { padding-left: 1.5rem; }
+
+    code {
+      font-family: var(--mono);
+      font-size: 0.88em;
+      background: var(--code-bg);
+      padding: 0.15em 0.4em;
+      border-radius: 3px;
+    }
+
+    pre {
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 1.25rem;
+      overflow-x: auto;
+      margin: 1.25rem 0;
+      line-height: 1.5;
+    }
+
+    pre code {
+      background: none;
+      padding: 0;
+      font-size: 0.85rem;
+    }
+
+    .key-insight {
+      border-left: 3px solid var(--accent);
+      padding: 1rem 1.25rem;
+      margin: 1.5rem 0;
+      background: #f0f7ff;
+      border-radius: 0 6px 6px 0;
+    }
+
+    .key-insight p { margin-bottom: 0.5rem; }
+    .key-insight p:last-child { margin-bottom: 0; }
+
+    .warning {
+      border-left: 3px solid #e76f51;
+      padding: 1rem 1.25rem;
+      margin: 1.5rem 0;
+      background: #fef5f2;
+      border-radius: 0 6px 6px 0;
+    }
+
+    .warning p { margin-bottom: 0.5rem; }
+    .warning p:last-child { margin-bottom: 0; }
+
+    .demo {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1.5rem;
+      margin: 1.5rem 0;
+      background: #fafafa;
+    }
+
+    .demo-label {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #888;
+      margin-bottom: 1rem;
+    }
+
+    /* Demo: --double function */
+    @function --double(--value) {
+      result: calc(var(--value) * 2);
+    }
+
+    .double-demo {
+      --base: 12px;
+      display: flex;
+      gap: 1rem;
+      align-items: flex-end;
+    }
+
+    .double-demo .box {
+      background: var(--accent);
+      border-radius: 4px;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+    }
+
+    .double-demo .box-base {
+      width: 60px;
+      height: 60px;
+      padding: var(--base);
+    }
+
+    .double-demo .box-doubled {
+      width: 60px;
+      height: 60px;
+      padding: --double(var(--base));
+    }
+
+    /* Demo: --tint function */
+    @function --tint(--color <color>, --amount <percentage>: 50%) returns <color> {
+      result: color-mix(in oklch, var(--color), white var(--amount));
+    }
+
+    @function --shade(--color <color>, --amount <percentage>: 50%) returns <color> {
+      result: color-mix(in oklch, var(--color), black var(--amount));
+    }
+
+    .tint-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 0.5rem;
+    }
+
+    .tint-swatch {
+      height: 50px;
+      border-radius: 6px;
+    }
+
+    /* Demo: responsive function */
+    @function --fluid(--min <length>, --max <length>, --vw <length>: 2vw) returns <length> {
+      result: clamp(var(--min), calc(var(--vw) + var(--min)), var(--max));
+    }
+
+    .fluid-text {
+      font-size: --fluid(1rem, 2rem);
+      padding: --fluid(0.75rem, 2rem, 3vw);
+      background: #f0f7ff;
+      border-radius: 6px;
+    }
+
+    .quiz {
+      background: #fffdf0;
+      border: 1px solid #e8e0c0;
+      border-radius: 8px;
+      padding: 1.5rem;
+      margin: 2rem 0;
+    }
+
+    .quiz h3 {
+      font-size: 1rem;
+      margin-bottom: 1rem;
+      margin-top: 0;
+      font-weight: 600;
+    }
+
+    .quiz-options {
+      list-style: none;
+      padding: 0;
+    }
+
+    .quiz-options li { margin-bottom: 0.5rem; }
+
+    .quiz-options button {
+      display: block;
+      width: 100%;
+      text-align: left;
+      padding: 0.75rem 1rem;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: white;
+      font-family: var(--mono);
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: border-color 0.15s;
+    }
+
+    .quiz-options button:hover { border-color: var(--accent); }
+    .quiz-options button.correct { border-color: #2a9d8f; background: #e8f8f5; }
+    .quiz-options button.incorrect { border-color: #e76f51; background: #fef0ed; }
+
+    .quiz-feedback {
+      margin-top: 1rem;
+      padding: 0.75rem;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      display: none;
+    }
+
+    .source-link {
+      margin-top: 3rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--border);
+    }
+
+    .source-link a {
+      color: var(--accent);
+      text-decoration: none;
+      border-bottom: 1px solid transparent;
+    }
+
+    .source-link a:hover { border-bottom-color: var(--accent); }
+
+    .followup {
+      margin-top: 2rem;
+      padding: 1rem 1.25rem;
+      background: #f9f9f9;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      color: #555;
+    }
+
+    @media (max-width: 500px) {
+      .tint-grid { grid-template-columns: repeat(3, 1fr); }
+    }
+
+    @media print {
+      body { max-width: 100%; padding: 1rem; }
+      .demo { break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+
+<p class="lesson-number">Lesson 04</p>
+<h1><code>@function</code> — Custom CSS Functions</h1>
+
+<p>In Lessons 1–3 you learned to store values (custom properties), type them (@property), and compute with them (calc, min, max, clamp, color-mix). Now: what if you could wrap all of that into a reusable function with parameters — like a Sass function, but native to CSS?</p>
+
+<p>That's <code>@function</code>. It's brand new — defined in the <a href="https://www.w3.org/TR/css-mixins-1/">CSS Functions and Mixins Module</a> (First Public Working Draft, May 2025).</p>
+
+<div class="warning">
+  <p><strong>Browser support:</strong> Chrome/Edge 139+ (June 2025). Not yet in Firefox or Safari. This is experimental but actively shipping. The demos in this lesson will only work in Chrome/Edge.</p>
+</div>
+
+<h2>The basic shape</h2>
+
+<p>A custom function has a name (starting with <code>--</code>), parameters, and a <code>result</code> descriptor that defines what it returns:</p>
+
+<pre><code>@function --double(--value) {
+  result: calc(var(--value) * 2);
+}</code></pre>
+
+<p>Call it anywhere you'd put a value:</p>
+
+<pre><code>.box {
+  padding: --double(8px);   /* → 16px */
+  margin: --double(1rem);   /* → 2rem */
+}</code></pre>
+
+<p>That's it. The function name starts with <code>--</code>, parameters are custom property names, and you use <code>var()</code> to read them inside the body.</p>
+
+<div class="key-insight">
+  <p><strong>Key mental model:</strong> A custom function is a parametrised custom property. Instead of returning one fixed value, it computes a value from its inputs. The <code>result</code> descriptor is what gets returned to the caller.</p>
+</div>
+
+<h2>Adding types</h2>
+
+<p>Just like <code>@property</code>, you can type your parameters and return value. This gives you validation and makes the function self-documenting:</p>
+
+<pre><code>@function --tint(--color &lt;color&gt;, --amount &lt;percentage&gt;: 50%) returns &lt;color&gt; {
+  result: color-mix(in oklch, var(--color), white var(--amount));
+}</code></pre>
+
+<p>Breaking that down:</p>
+<ul>
+  <li><code>--color &lt;color&gt;</code> — first parameter, must be a colour</li>
+  <li><code>--amount &lt;percentage&gt;: 50%</code> — second parameter, must be a percentage, <strong>defaults to 50%</strong> if omitted</li>
+  <li><code>returns &lt;color&gt;</code> — the return type (optional, but good practice)</li>
+  <li><code>result:</code> — the computed value that's returned</li>
+</ul>
+
+<p>Call it:</p>
+
+<pre><code>.card {
+  background: --tint(#3a86ff, 30%);       /* light blue */
+  border-color: --tint(#3a86ff);          /* uses default 50% */
+}</code></pre>
+
+<h2>Default values</h2>
+
+<p>Parameters can have defaults, specified after a colon. If the caller omits that argument, the default kicks in:</p>
+
+<pre><code>@function --fluid(--min &lt;length&gt;, --max &lt;length&gt;, --vw &lt;length&gt;: 2vw) returns &lt;length&gt; {
+  result: clamp(var(--min), calc(var(--vw) + var(--min)), var(--max));
+}
+
+/* Use with default --vw */
+font-size: --fluid(1rem, 2rem);
+
+/* Override --vw */
+padding: --fluid(0.75rem, 2rem, 3vw);</code></pre>
+
+<h2>Live demos</h2>
+
+<p><em>These demos require Chrome/Edge 139+. In other browsers you'll see fallback styling.</em></p>
+
+<div class="demo">
+  <p class="demo-label">--double(12px) applied to padding</p>
+  <div class="double-demo">
+    <div class="box box-base">12px pad</div>
+    <div class="box box-doubled">24px pad</div>
+  </div>
+</div>
+
+<div class="demo">
+  <p class="demo-label">--fluid(1rem, 2rem) on font-size — resize the window</p>
+  <div class="fluid-text">
+    This text uses a custom --fluid() function that wraps clamp().
+  </div>
+</div>
+
+<h2>Local variables inside functions</h2>
+
+<p>You can declare custom properties inside the function body as local constants:</p>
+
+<pre><code>@function --elevation(--level &lt;integer&gt;) {
+  --base-shadow: 0px;
+  --blur: calc(var(--level) * 4px);
+  --spread: calc(var(--level) * 1px);
+  --opacity: calc(0.1 + var(--level) * 0.03);
+  result: var(--base-shadow) var(--blur) var(--spread) rgba(0, 0, 0, var(--opacity));
+}
+
+.card-1 { box-shadow: --elevation(1); }
+.card-3 { box-shadow: --elevation(3); }
+.card-5 { box-shadow: --elevation(5); }</code></pre>
+
+<p>Local variables are scoped to the function — they don't leak out.</p>
+
+<h2>Calling functions from functions</h2>
+
+<p>Functions can call other functions. Inner functions can even access the outer function's parameters and locals:</p>
+
+<pre><code>@function --shade(--color &lt;color&gt;, --amount &lt;percentage&gt;: 30%) returns &lt;color&gt; {
+  result: color-mix(in oklch, var(--color), black var(--amount));
+}
+
+@function --tint(--color &lt;color&gt;, --amount &lt;percentage&gt;: 30%) returns &lt;color&gt; {
+  result: color-mix(in oklch, var(--color), white var(--amount));
+}
+
+@function --contrast-pair(--base &lt;color&gt;) {
+  /* Returns a lighter version — could call --shade for dark variant */
+  result: --tint(var(--base), 80%);
+}
+
+.hero {
+  background: --contrast-pair(navy);  /* very light navy */
+}</code></pre>
+
+<h2>Conditional logic with <code>@media</code> and <code>if()</code></h2>
+
+<p>You can include <code>@media</code> rules inside a function to return different values based on context:</p>
+
+<pre><code>@function --responsive-padding(--sm &lt;length&gt;, --lg &lt;length&gt;) {
+  result: var(--lg);
+
+  @media (width &lt; 768px) {
+    result: var(--sm);
+  }
+}
+
+.container {
+  padding: --responsive-padding(1rem, 3rem);
+}</code></pre>
+
+<div class="key-insight">
+  <p><strong>No early returns.</strong> Unlike JavaScript, CSS functions don't "return" at the first <code>result</code> they hit. They follow normal cascade rules: last matching <code>result</code> wins. So the <code>@media</code> version above works because when the media query matches, its <code>result</code> overrides the earlier one.</p>
+</div>
+
+<p>There's also a new <code>if()</code> function for inline conditionals:</p>
+
+<pre><code>@function --responsive-padding(--sm &lt;length&gt;, --lg &lt;length&gt;) {
+  result: if(media(width &lt; 768px): var(--sm); else: var(--lg));
+}</code></pre>
+
+<h2>Passing comma-separated values</h2>
+
+<p>If an argument itself contains commas (like a list of colours), wrap it in curly braces to avoid it being parsed as multiple arguments:</p>
+
+<pre><code>@function --longest(--list &lt;length&gt;#, --extra &lt;length&gt;) {
+  result: calc(max(var(--list)) + var(--extra));
+}
+
+.box {
+  width: --longest({10px, 40px, 25px}, 5px);  /* 45px */
+}</code></pre>
+
+<h2>How this compares to what you know</h2>
+
+<table style="width: 100%; border-collapse: collapse; font-size: 0.85rem; margin: 1.5rem 0;">
+  <thead>
+    <tr style="border-bottom: 2px solid var(--border); text-align: left;">
+      <th style="padding: 0.5rem;">Feature</th>
+      <th style="padding: 0.5rem;">Sass @function</th>
+      <th style="padding: 0.5rem;">CSS @function</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr style="border-bottom: 1px solid var(--border);">
+      <td style="padding: 0.5rem;">When it runs</td>
+      <td style="padding: 0.5rem;">Compile time</td>
+      <td style="padding: 0.5rem;">Runtime (browser)</td>
+    </tr>
+    <tr style="border-bottom: 1px solid var(--border);">
+      <td style="padding: 0.5rem;">Can use viewport/container units</td>
+      <td style="padding: 0.5rem;">No</td>
+      <td style="padding: 0.5rem;">Yes</td>
+    </tr>
+    <tr style="border-bottom: 1px solid var(--border);">
+      <td style="padding: 0.5rem;">Can respond to media queries</td>
+      <td style="padding: 0.5rem;">No</td>
+      <td style="padding: 0.5rem;">Yes</td>
+    </tr>
+    <tr style="border-bottom: 1px solid var(--border);">
+      <td style="padding: 0.5rem;">Loops / iteration</td>
+      <td style="padding: 0.5rem;">Yes (@for, @each)</td>
+      <td style="padding: 0.5rem;">No</td>
+    </tr>
+    <tr style="border-bottom: 1px solid var(--border);">
+      <td style="padding: 0.5rem;">String manipulation</td>
+      <td style="padding: 0.5rem;">Yes</td>
+      <td style="padding: 0.5rem;">No</td>
+    </tr>
+    <tr style="border-bottom: 1px solid var(--border);">
+      <td style="padding: 0.5rem;">Type checking</td>
+      <td style="padding: 0.5rem;">Manual</td>
+      <td style="padding: 0.5rem;">Built-in (syntax types)</td>
+    </tr>
+    <tr>
+      <td style="padding: 0.5rem;">Reactive to DOM state</td>
+      <td style="padding: 0.5rem;">No</td>
+      <td style="padding: 0.5rem;">Yes (inherits custom properties)</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="key-insight">
+  <p><strong>The big difference:</strong> CSS @function runs in the browser with full access to runtime context — viewport size, inherited properties, media queries, container queries. Sass functions are powerful but frozen at build time. CSS functions are alive.</p>
+</div>
+
+<h2>Practical patterns</h2>
+
+<h3>Design token utilities</h3>
+
+<pre><code>@function --space(--multiplier &lt;number&gt;: 1) returns &lt;length&gt; {
+  --base: 0.5rem;
+  result: calc(var(--base) * var(--multiplier));
+}
+
+.card {
+  padding: --space(3);    /* 1.5rem */
+  gap: --space(2);        /* 1rem */
+  margin-bottom: --space(4);  /* 2rem */
+}</code></pre>
+
+<h3>Colour palette generation</h3>
+
+<pre><code>@function --tint(--color &lt;color&gt;, --amount &lt;percentage&gt;: 50%) returns &lt;color&gt; {
+  result: color-mix(in oklch, var(--color), white var(--amount));
+}
+
+@function --shade(--color &lt;color&gt;, --amount &lt;percentage&gt;: 50%) returns &lt;color&gt; {
+  result: color-mix(in oklch, var(--color), black var(--amount));
+}
+
+:root {
+  --brand: #3a86ff;
+}
+
+.button {
+  background: var(--brand);
+  border-color: --shade(var(--brand), 20%);
+}
+
+.button:hover {
+  background: --tint(var(--brand), 15%);
+}</code></pre>
+
+<h3>Responsive typography</h3>
+
+<pre><code>@function --fluid-type(--min &lt;length&gt;, --max &lt;length&gt;) returns &lt;length&gt; {
+  /* Grows from min at 320px viewport to max at 1200px viewport */
+  --slope: calc((var(--max) - var(--min)) / (1200 - 320));
+  result: clamp(var(--min), calc(var(--min) + (100vw - 320px) * var(--slope)), var(--max));
+}
+
+h1 { font-size: --fluid-type(1.5rem, 3rem); }
+h2 { font-size: --fluid-type(1.25rem, 2rem); }
+p  { font-size: --fluid-type(1rem, 1.25rem); }</code></pre>
+
+<h2>What @function can't do (yet)</h2>
+
+<ul>
+  <li>No loops or iteration — you can't generate a list of values</li>
+  <li>No string manipulation — can't build selector names or property names</li>
+  <li>No side effects — functions can only return a value, not set properties on elements</li>
+  <li>No recursion — a function can't call itself</li>
+  <li>Can't be used in selectors or property names — only in values</li>
+</ul>
+
+<h2>Retrieval check</h2>
+
+<div class="quiz" id="quiz1">
+  <h3>What must a custom function name start with?</h3>
+  <ul class="quiz-options">
+    <li><button onclick="checkAnswer(this, false)">@ — like other at-rules</button></li>
+    <li><button onclick="checkAnswer(this, true)">-- — like custom properties</button></li>
+    <li><button onclick="checkAnswer(this, false)">fn- — a dedicated prefix</button></li>
+    <li><button onclick="checkAnswer(this, false)">Any valid identifier works</button></li>
+  </ul>
+  <div class="quiz-feedback"></div>
+</div>
+
+<div class="quiz" id="quiz2">
+  <h3>What descriptor do you use to specify what a @function returns?</h3>
+  <ul class="quiz-options">
+    <li><button onclick="checkAnswer(this, false)">return: value;</button></li>
+    <li><button onclick="checkAnswer(this, false)">output: value;</button></li>
+    <li><button onclick="checkAnswer(this, true)">result: value;</button></li>
+    <li><button onclick="checkAnswer(this, false)">value: value;</button></li>
+  </ul>
+  <div class="quiz-feedback"></div>
+</div>
+
+<div class="quiz" id="quiz3">
+  <h3>A function has two result descriptors — one inside @media and one outside. Which value is returned when the media query matches?</h3>
+  <ul class="quiz-options">
+    <li><button onclick="checkAnswer(this, false)">The first result — early return wins</button></li>
+    <li><button onclick="checkAnswer(this, true)">The @media result — last matching result wins</button></li>
+    <li><button onclick="checkAnswer(this, false)">Both are combined into a list</button></li>
+    <li><button onclick="checkAnswer(this, false)">It's invalid — only one result allowed</button></li>
+  </ul>
+  <div class="quiz-feedback"></div>
+</div>
+
+<div class="quiz" id="quiz4">
+  <h3>You define: @function --space(--n &lt;number&gt;: 1). How do you call it to get the default?</h3>
+  <ul class="quiz-options">
+    <li><button onclick="checkAnswer(this, false)">--space(default)</button></li>
+    <li><button onclick="checkAnswer(this, true)">--space()</button></li>
+    <li><button onclick="checkAnswer(this, false)">--space</button></li>
+    <li><button onclick="checkAnswer(this, false)">var(--space)</button></li>
+  </ul>
+  <div class="quiz-feedback"></div>
+</div>
+
+<div class="quiz" id="quiz5">
+  <h3>How do you pass a comma-separated value as a single argument?</h3>
+  <ul class="quiz-options">
+    <li><button onclick="checkAnswer(this, false)">Quote it: --fn("1px, 2px, 3px")</button></li>
+    <li><button onclick="checkAnswer(this, true)">Wrap in braces: --fn({1px, 2px, 3px})</button></li>
+    <li><button onclick="checkAnswer(this, false)">Escape commas: --fn(1px\, 2px\, 3px)</button></li>
+    <li><button onclick="checkAnswer(this, false)">Use semicolons: --fn(1px; 2px; 3px)</button></li>
+  </ul>
+  <div class="quiz-feedback"></div>
+</div>
+
+<div class="source-link">
+  <p><strong>Primary sources:</strong></p>
+  <ul>
+    <li><a href="https://developer.mozilla.org/en-US/docs/Web/CSS/@function">MDN — @function</a></li>
+    <li><a href="https://www.w3.org/TR/css-mixins-1/">W3C — CSS Functions and Mixins Module Level 1</a></li>
+    <li><a href="https://www.oddbird.net/2025/04/11/custom-functions/">OddBird — Custom CSS Functions in the Browser</a></li>
+  </ul>
+</div>
+
+<div class="followup">
+  <p>💬 That's Lesson 4. You now have the full "CSS as a programming language" stack: variables, types, built-in functions, and custom functions.</p>
+  <p><strong>Next options:</strong></p>
+  <ul>
+    <li><strong>Flexbox</strong> — deep dive into the flex algorithm, not just the properties</li>
+    <li><strong>Grid</strong> — template areas, auto-flow, subgrid, the implicit grid</li>
+    <li><strong>Advanced attr()</strong> — using HTML attributes as typed CSS values (also very new)</li>
+    <li><strong>Animations &amp; transitions</strong> — keyframes, timing functions, scroll-driven animations</li>
+  </ul>
+  <p>Your call — or I can pick the next logical step.</p>
+</div>
+
+<script>
+function checkAnswer(button, isCorrect) {
+  const quiz = button.closest('.quiz');
+  const buttons = quiz.querySelectorAll('button');
+  const feedback = quiz.querySelector('.quiz-feedback');
+
+  if (quiz.dataset.answered) return;
+  quiz.dataset.answered = 'true';
+
+  buttons.forEach(btn => btn.style.pointerEvents = 'none');
+
+  if (isCorrect) {
+    button.classList.add('correct');
+    feedback.textContent = '✓ Correct.';
+    feedback.style.background = '#e8f8f5';
+    feedback.style.color = '#1a7a6c';
+  } else {
+    button.classList.add('incorrect');
+    buttons.forEach(btn => {
+      if (btn.getAttribute('onclick').includes('true')) {
+        btn.classList.add('correct');
+      }
+    });
+    feedback.textContent = '✗ Not quite. The highlighted answer is correct.';
+    feedback.style.background = '#fef0ed';
+    feedback.style.color = '#c0392b';
+  }
+  feedback.style.display = 'block';
+}
+</script>
+
+</body>
+</html>

@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lesson 10: Container Queries — Responsive to Parent, Not Viewport</title>
+  <style>
+    :root {
+      --text: #1a1a2e;
+      --bg: #fefefe;
+      --accent: #3a86ff;
+      --code-bg: #f4f4f8;
+      --border: #e0e0e0;
+      --serif: 'Georgia', serif;
+      --mono: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+      --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+    * { box-sizing: border-box; margin: 0; }
+    body { font-family: var(--sans); color: var(--text); background: var(--bg); line-height: 1.7; max-width: 42rem; margin: 0 auto; padding: 3rem 1.5rem; }
+    h1 { font-family: var(--serif); font-size: 1.8rem; margin-bottom: 0.25rem; font-weight: normal; }
+    .lesson-number { font-size: 0.85rem; color: #666; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.25rem; }
+    h2 { font-family: var(--serif); font-size: 1.3rem; margin-top: 2.5rem; margin-bottom: 0.75rem; font-weight: normal; }
+    h3 { font-size: 1rem; margin-top: 1.5rem; margin-bottom: 0.5rem; }
+    p, li { margin-bottom: 1rem; }
+    ul, ol { padding-left: 1.5rem; }
+    code { font-family: var(--mono); font-size: 0.88em; background: var(--code-bg); padding: 0.15em 0.4em; border-radius: 3px; }
+    pre { background: var(--code-bg); border: 1px solid var(--border); border-radius: 6px; padding: 1.25rem; overflow-x: auto; margin: 1.25rem 0; line-height: 1.5; }
+    pre code { background: none; padding: 0; font-size: 0.85rem; }
+    .key-insight { border-left: 3px solid var(--accent); padding: 1rem 1.25rem; margin: 1.5rem 0; background: #f0f7ff; border-radius: 0 6px 6px 0; }
+    .key-insight p { margin-bottom: 0.5rem; }
+    .key-insight p:last-child { margin-bottom: 0; }
+    .example-group { border: 1px solid var(--border); border-radius: 8px; margin: 1.5rem 0; overflow: hidden; }
+    .example-group .demo { border: none; border-radius: 0; margin: 0; border-bottom: 1px solid var(--border); }
+    .example-group pre { margin: 0; border: none; border-radius: 0; }
+    .demo { border: 1px solid var(--border); border-radius: 8px; padding: 1.5rem; margin: 1.5rem 0; background: #fafafa; }
+    .demo-label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em; color: #888; margin-bottom: 1rem; }
+
+    /* Demo: resizable container */
+    .resize-wrapper {
+      resize: horizontal;
+      overflow: hidden;
+      border: 2px dashed var(--border);
+      border-radius: 6px;
+      padding: 1rem;
+      min-width: 200px;
+      max-width: 100%;
+      width: 100%;
+    }
+
+    .resize-hint {
+      font-size: 0.7rem;
+      color: #999;
+      margin-bottom: 0.75rem;
+      text-align: right;
+    }
+
+    /* Container query demos */
+    .cq-container {
+      container-type: inline-size;
+      container-name: card-container;
+    }
+
+    .cq-card {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .cq-card .card-title {
+      font-weight: 600;
+      font-size: 0.9rem;
+    }
+
+    .cq-card .card-body {
+      font-size: 0.8rem;
+      color: #555;
+    }
+
+    .cq-card .card-image {
+      width: 100%;
+      height: 60px;
+      background: var(--accent);
+      border-radius: 4px;
+    }
+
+    @container card-container (min-width: 350px) {
+      .cq-card {
+        flex-direction: row;
+        align-items: center;
+      }
+      .cq-card .card-image {
+        width: 80px;
+        height: 60px;
+        flex-shrink: 0;
+      }
+    }
+
+    @container card-container (min-width: 500px) {
+      .cq-card {
+        padding: 1.5rem;
+        gap: 1rem;
+      }
+      .cq-card .card-title {
+        font-size: 1.1rem;
+      }
+    }
+
+    /* Demo: container query units */
+    .cqu-container {
+      container-type: inline-size;
+    }
+
+    .cqu-text {
+      font-size: clamp(0.8rem, 3cqi, 1.5rem);
+      background: #f0f7ff;
+      padding: 1rem;
+      border-radius: 6px;
+    }
+
+    /* Demo: container style queries */
+    .style-container {
+      container-type: inline-size;
+      --theme: light;
+    }
+
+    .style-container.dark-theme {
+      --theme: dark;
+    }
+
+    .style-card {
+      padding: 1rem;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      background: #f0f7ff;
+      color: var(--text);
+    }
+
+    @container style(--theme: dark) {
+      .style-card {
+        background: #1a1a2e;
+        color: #f0f0f0;
+      }
+    }
+
+    .toggle-btn {
+      font-family: var(--sans);
+      font-size: 0.8rem;
+      padding: 0.4rem 0.8rem;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      background: white;
+      cursor: pointer;
+      margin-bottom: 0.75rem;
+    }
+
+    .quiz { background: #fffdf0; border: 1px solid #e8e0c0; border-radius: 8px; padding: 1.5rem; margin: 2rem 0; }
+    .quiz h3 { font-size: 1rem; margin-bottom: 1rem; margin-top: 0; font-weight: 600; }
+    .quiz-options { list-style: none; padding: 0; }
+    .quiz-options li { margin-bottom: 0.5rem; }
+    .quiz-options button { display: block; width: 100%; text-align: left; padding: 0.75rem 1rem; border: 1px solid var(--border); border-radius: 6px; background: white; font-family: var(--mono); font-size: 0.85rem; cursor: pointer; transition: border-color 0.15s; }
+    .quiz-options button:hover { border-color: var(--accent); }
+    .quiz-options button.correct { border-color: #2a9d8f; background: #e8f8f5; }
+    .quiz-options button.incorrect { border-color: #e76f51; background: #fef0ed; }
+    .quiz-feedback { margin-top: 1rem; padding: 0.75rem; border-radius: 6px; font-size: 0.9rem; display: none; }
+    .source-link { margin-top: 3rem; padding-top: 1.5rem; border-top: 1px solid var(--border); }
+    .source-link a { color: var(--accent); text-decoration: none; border-bottom: 1px solid transparent; }
+    .source-link a:hover { border-bottom-color: var(--accent); }
+    .followup { margin-top: 2rem; padding: 1rem 1.25rem; background: #f9f9f9; border-radius: 8px; font-size: 0.9rem; color: #555; }
+    @media print { body { max-width: 100%; padding: 1rem; } .example-group { break-inside: avoid; } }
+  </style>
+</head>
+<body>
+
+<p class="lesson-number">Lesson 10</p>
+<h1>Container Queries — Responsive to Parent, Not Viewport</h1>
+
+<p>Media queries ask: "How wide is the <strong>viewport</strong>?" Container queries ask: "How wide is the <strong>parent</strong>?" This lets components adapt to the space they're given — whether that's a full-width main area or a narrow sidebar — without knowing anything about the viewport.</p>
+
+<h2>The problem container queries solve</h2>
+
+<p>With media queries, a card component has to guess: "If the viewport is small, I'm probably in a narrow space." But that breaks when the same card appears in a sidebar (narrow) on a wide screen. The viewport is large, but the available space is small. Media queries can't handle this.</p>
+
+<div class="key-insight">
+  <p><strong>Mental model:</strong> Media queries are about the screen. Container queries are about the component's context. A component should respond to <em>how much space it has</em>, not <em>what device it's on</em>.</p>
+</div>
+
+<h2>Two steps: declare a container, then query it</h2>
+
+<p>Container queries require two things:</p>
+
+<ol>
+  <li><strong>Mark an element as a container</strong> with <code>container-type</code></li>
+  <li><strong>Write a <code>@container</code> rule</strong> that applies styles when the container meets a condition</li>
+</ol>
+
+<div class="example-group">
+<div class="demo">
+  <p class="demo-label">Drag the right edge to resize — the card layout changes based on container width</p>
+  <div class="resize-wrapper">
+    <p class="resize-hint">↔ drag to resize</p>
+    <div class="cq-container">
+      <div class="cq-card">
+        <div class="card-image"></div>
+        <div>
+          <div class="card-title">Card Title</div>
+          <div class="card-body">This card changes from vertical to horizontal layout when its container is wide enough. No media queries involved.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<pre><code>/* 1. Declare the container */
+.card-wrapper {
+  container-type: inline-size;
+  container-name: card-container;
+}
+
+/* 2. Query it */
+@container card-container (min-width: 350px) {
+  .card {
+    flex-direction: row;  /* switch from stacked to horizontal */
+  }
+}
+
+@container card-container (min-width: 500px) {
+  .card {
+    padding: 1.5rem;  /* more breathing room when space allows */
+  }
+}</code></pre>
+</div>
+
+<h2>container-type — what can be queried</h2>
+
+<p>The <code>container-type</code> property tells the browser what dimensions to track:</p>
+
+<ul>
+  <li><code>inline-size</code> — track the inline axis width (horizontal in LTR). <strong>This is what you almost always want.</strong></li>
+  <li><code>size</code> — track both inline and block (width AND height). Rarely needed and has performance implications.</li>
+  <li><code>normal</code> (default) — not a query container. Can still be queried for style queries (see below).</li>
+</ul>
+
+<div class="key-insight">
+  <p><strong>Why not just <code>size</code>?</strong> Tracking height requires the browser to know the element's height before laying out its children — which creates a circular dependency (children determine height, but height determines children's styles). <code>inline-size</code> avoids this because width is determined by the container's parent, not its children.</p>
+</div>
+
+<h2>container-name — targeting specific containers</h2>
+
+<p>If you have nested containers, naming lets you target a specific one:</p>
+
+<div class="example-group">
+<div class="demo">
+  <p class="demo-label">The card queries "card-container" specifically, not any ancestor container</p>
+  <div class="resize-wrapper" style="width: 80%;">
+    <p class="resize-hint">↔ drag to resize</p>
+    <div class="cq-container">
+      <div class="cq-card">
+        <div class="card-image"></div>
+        <div>
+          <div class="card-title">Named Query</div>
+          <div class="card-body">This targets container-name: card-container specifically.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<pre><code>.wrapper {
+  container-type: inline-size;
+  container-name: card-container;
+}
+
+/* Targets only "card-container", ignores other ancestors */
+@container card-container (min-width: 400px) {
+  .card { flex-direction: row; }
+}
+
+/* Without a name — queries the nearest ancestor container */
+@container (min-width: 400px) {
+  .card { flex-direction: row; }
+}</code></pre>
+</div>
+
+<p>The shorthand <code>container</code> combines both:</p>
+
+<pre><code>container: card-container / inline-size;
+/* equivalent to: container-name: card-container; container-type: inline-size; */</code></pre>
+
+<h2>Container query units — relative to the container</h2>
+
+<p>Just like viewport units (<code>vw</code>, <code>vh</code>), container queries introduce units relative to the container:</p>
+
+<ul>
+  <li><code>cqi</code> — 1% of the container's inline size (width)</li>
+  <li><code>cqb</code> — 1% of the container's block size (height)</li>
+  <li><code>cqw</code> — 1% of container width (same as cqi in horizontal writing)</li>
+  <li><code>cqh</code> — 1% of container height</li>
+  <li><code>cqmin</code> — the smaller of cqi and cqb</li>
+  <li><code>cqmax</code> — the larger of cqi and cqb</li>
+</ul>
+
+<div class="example-group">
+<div class="demo">
+  <p class="demo-label">Font size uses cqi — resize the container and the text scales with it</p>
+  <div class="resize-wrapper" style="width: 100%;">
+    <p class="resize-hint">↔ drag to resize</p>
+    <div class="cqu-container">
+      <div class="cqu-text">This text scales with the container width using <code>font-size: clamp(0.8rem, 3cqi, 1.5rem)</code></div>
+    </div>
+  </div>
+</div>
+<pre><code>.container {
+  container-type: inline-size;
+}
+
+.text {
+  /* Fluid font size relative to container, not viewport */
+  font-size: clamp(0.8rem, 3cqi, 1.5rem);
+
+  /* Padding relative to container width */
+  padding: 2cqi;
+}</code></pre>
+</div>
+
+<div class="key-insight">
+  <p><strong>cqi vs vw:</strong> <code>vw</code> is always relative to the viewport. <code>cqi</code> is relative to the nearest container. A component using <code>cqi</code> scales correctly whether it's full-width or in a narrow sidebar — because it responds to its own container, not the screen.</p>
+</div>
+
+<h2>Style queries — querying custom property values</h2>
+
+<p>Beyond size, you can query the <em>computed style</em> of a container — specifically custom property values. This lets you create style-based variants without extra classes:</p>
+
+<div class="example-group">
+<div class="demo">
+  <p class="demo-label">Click the button to toggle --theme: the card responds via a style query</p>
+  <button class="toggle-btn" onclick="document.getElementById('styleDemo').classList.toggle('dark-theme')">Toggle --theme: dark</button>
+  <div class="style-container" id="styleDemo">
+    <div class="style-card">I respond to <code>@container style(--theme: dark)</code>. No class on me — just the container's custom property value.</div>
+  </div>
+</div>
+<pre><code>.container {
+  container-type: normal;  /* style queries don't need inline-size */
+  --theme: light;
+}
+
+.container.dark { --theme: dark; }
+
+/* The child responds to the container's custom property */
+@container style(--theme: dark) {
+  .card {
+    background: #1a1a2e;
+    color: white;
+  }
+}</code></pre>
+</div>
+
+<div class="key-insight">
+  <p><strong>Style queries + custom properties = component variants without classes on the component itself.</strong> Set a custom property on an ancestor, and descendants respond. This is how design systems can propagate themes without threading classes through every component.</p>
+  <p><em>Browser support:</em> Style queries for custom properties are supported in Chrome 111+. Querying standard properties (like <code>style(color: red)</code>) is not yet supported.</p>
+</div>
+
+<h2>Media queries vs Container queries — when to use which</h2>
+
+<table style="width: 100%; border-collapse: collapse; font-size: 0.82rem; margin: 1.5rem 0;">
+  <thead>
+    <tr style="border-bottom: 2px solid var(--border); text-align: left;">
+      <th style="padding: 0.5rem;">Use media queries when...</th>
+      <th style="padding: 0.5rem;">Use container queries when...</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr style="border-bottom: 1px solid var(--border);">
+      <td style="padding: 0.4rem 0.5rem;">Page-level layout changes (sidebar collapses)</td>
+      <td style="padding: 0.4rem 0.5rem;">Component-level layout changes (card stacks/unstacks)</td>
+    </tr>
+    <tr style="border-bottom: 1px solid var(--border);">
+      <td style="padding: 0.4rem 0.5rem;">Global font size / spacing scale shifts</td>
+      <td style="padding: 0.4rem 0.5rem;">Component font/spacing adapts to available space</td>
+    </tr>
+    <tr style="border-bottom: 1px solid var(--border);">
+      <td style="padding: 0.4rem 0.5rem;">You need to respond to device capabilities (hover, pointer)</td>
+      <td style="padding: 0.4rem 0.5rem;">Same component used in different width contexts</td>
+    </tr>
+    <tr>
+      <td style="padding: 0.4rem 0.5rem;">The viewport IS the relevant context</td>
+      <td style="padding: 0.4rem 0.5rem;">The parent IS the relevant context</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2>Browser support</h2>
+
+<p>Container size queries: Chrome 105+, Safari 16+, Firefox 110+. Fully safe for production.</p>
+<p>Container style queries (custom properties): Chrome 111+, Safari 18+, Firefox 🚧 (in progress).</p>
+<p>Container query units (cqi, etc.): Chrome 105+, Safari 16+, Firefox 110+.</p>
+
+<h2>Retrieval check</h2>
+
+<div class="quiz" id="quiz1">
+  <h3>What property do you add to make an element a query container?</h3>
+  <ul class="quiz-options">
+    <li><button onclick="checkAnswer(this, false)">container-query: enabled;</button></li>
+    <li><button onclick="checkAnswer(this, true)">container-type: inline-size;</button></li>
+    <li><button onclick="checkAnswer(this, false)">display: container;</button></li>
+    <li><button onclick="checkAnswer(this, false)">query-container: true;</button></li>
+  </ul>
+  <div class="quiz-feedback"></div>
+</div>
+
+<div class="quiz" id="quiz2">
+  <h3>Why is container-type: inline-size preferred over container-type: size?</h3>
+  <ul class="quiz-options">
+    <li><button onclick="checkAnswer(this, false)">size isn't supported in any browser yet</button></li>
+    <li><button onclick="checkAnswer(this, true)">Tracking height creates circular dependencies (children determine height)</button></li>
+    <li><button onclick="checkAnswer(this, false)">inline-size is faster because it uses the GPU</button></li>
+    <li><button onclick="checkAnswer(this, false)">size only works with grid containers</button></li>
+  </ul>
+  <div class="quiz-feedback"></div>
+</div>
+
+<div class="quiz" id="quiz3">
+  <h3>What does the cqi unit represent?</h3>
+  <ul class="quiz-options">
+    <li><button onclick="checkAnswer(this, false)">1% of the viewport inline size</button></li>
+    <li><button onclick="checkAnswer(this, false)">1% of the container's content height</button></li>
+    <li><button onclick="checkAnswer(this, true)">1% of the container's inline size (width)</button></li>
+    <li><button onclick="checkAnswer(this, false)">A container-relative rem unit</button></li>
+  </ul>
+  <div class="quiz-feedback"></div>
+</div>
+
+<div class="quiz" id="quiz4">
+  <h3>You write @container (min-width: 400px) without a name. What does it query?</h3>
+  <ul class="quiz-options">
+    <li><button onclick="checkAnswer(this, false)">The viewport width</button></li>
+    <li><button onclick="checkAnswer(this, false)">The element's own width</button></li>
+    <li><button onclick="checkAnswer(this, true)">The nearest ancestor with container-type set</button></li>
+    <li><button onclick="checkAnswer(this, false)">All containers in the document</button></li>
+  </ul>
+  <div class="quiz-feedback"></div>
+</div>
+
+<div class="quiz" id="quiz5">
+  <h3>What can style queries currently check?</h3>
+  <ul class="quiz-options">
+    <li><button onclick="checkAnswer(this, false)">Any computed CSS property value</button></li>
+    <li><button onclick="checkAnswer(this, true)">Custom property values on the container</button></li>
+    <li><button onclick="checkAnswer(this, false)">Whether a class is present on the container</button></li>
+    <li><button onclick="checkAnswer(this, false)">The container's display type</button></li>
+  </ul>
+  <div class="quiz-feedback"></div>
+</div>
+
+<div class="source-link">
+  <p><strong>Primary sources:</strong></p>
+  <ul>
+    <li><a href="https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_containment/Container_queries">MDN — Container queries</a></li>
+    <li><a href="https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_containment/Container_size_and_style_queries">MDN — Container size and style queries</a></li>
+    <li><a href="https://developer.chrome.com/blog/css-container-queries-update">Chrome Developers — CSS container queries</a></li>
+  </ul>
+</div>
+
+<div class="followup">
+  <p>💬 That's Lesson 10. Container queries complete the responsive design picture: media queries for page-level, container queries for component-level, and container units for fluid sizing within a container.</p>
+  <p><strong>Next options:</strong></p>
+  <ul>
+    <li><strong>Cascade layers (@layer)</strong> — managing specificity at scale</li>
+    <li><strong>CSS nesting</strong> — native nesting syntax</li>
+    <li><strong>The cascade deep-dive</strong> — specificity, origin, layers, and how it all resolves</li>
+    <li><strong>Selectors</strong> — :has(), :is(), :where(), :not() and modern pseudo-classes</li>
+  </ul>
+  <p>Your call, or I'll pick.</p>
+</div>
+
+<script>
+function checkAnswer(button, isCorrect) {
+  const quiz = button.closest('.quiz');
+  const buttons = quiz.querySelectorAll('button');
+  const feedback = quiz.querySelector('.quiz-feedback');
+
+  if (quiz.dataset.answered) return;
+  quiz.dataset.answered = 'true';
+
+  buttons.forEach(btn => btn.style.pointerEvents = 'none');
+
+  if (isCorrect) {
+    button.classList.add('correct');
+    feedback.textContent = '✓ Correct.';
+    feedback.style.background = '#e8f8f5';
+    feedback.style.color = '#1a7a6c';
+  } else {
+    button.classList.add('incorrect');
+    buttons.forEach(btn => {
+      if (btn.getAttribute('onclick').includes('true')) {
+        btn.classList.add('correct');
+      }
+    });
+    feedback.textContent = '✗ Not quite. The highlighted answer is correct.';
+    feedback.style.background = '#fef0ed';
+    feedback.style.color = '#c0392b';
+  }
+  feedback.style.display = 'block';
+}
+</script>
+
+</body>
+</html>
