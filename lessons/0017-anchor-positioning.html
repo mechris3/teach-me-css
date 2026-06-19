@@ -1,0 +1,977 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lesson 17: Anchor Positioning — Position Relative to Any Element</title>
+  <style>
+    :root {
+      --text: #1a1a2e;
+      --bg: #fefefe;
+      --accent: #3a86ff;
+      --code-bg: #f4f4f8;
+      --border: #e0e0e0;
+      --serif: 'Georgia', serif;
+      --mono: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+      --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+    * { box-sizing: border-box; margin: 0; }
+    body { font-family: var(--sans); color: var(--text); background: var(--bg); line-height: 1.7; max-width: 60rem; margin: 0 auto; padding: 3rem 1.5rem; }
+    h1 { font-family: var(--serif); font-size: 1.8rem; margin-bottom: 0.25rem; font-weight: normal; }
+    .lesson-number { font-size: 0.85rem; color: #666; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.25rem; }
+    h2 { font-family: var(--serif); font-size: 1.3rem; margin-top: 2.5rem; margin-bottom: 0.75rem; font-weight: normal; }
+    h3 { font-size: 1rem; margin-top: 1.5rem; margin-bottom: 0.5rem; }
+    p, li { margin-bottom: 1rem; }
+    ul, ol { padding-left: 1.5rem; }
+    code { font-family: var(--mono); font-size: 0.88em; background: var(--code-bg); padding: 0.15em 0.4em; border-radius: 3px; }
+    pre { background: var(--code-bg); border: 1px solid var(--border); border-radius: 6px; padding: 1.25rem; overflow-x: auto; margin: 1.25rem 0; line-height: 1.5; }
+    pre code { background: none; padding: 0; font-size: 0.85rem; }
+    .key-insight { border-left: 3px solid var(--accent); padding: 1rem 1.25rem; margin: 1.5rem 0; background: #f0f7ff; border-radius: 0 6px 6px 0; }
+    .key-insight p { margin-bottom: 0.5rem; }
+    .key-insight p:last-child { margin-bottom: 0; }
+    .example-group { border: 1px solid var(--border); border-radius: 8px; margin: 1.5rem 0; overflow: hidden; }
+    .example-group .demo { border: none; border-radius: 0; margin: 0; border-bottom: 1px solid var(--border); }
+    .example-group pre { margin: 0; border: none; border-radius: 0; }
+    .demo { border: 1px solid var(--border); border-radius: 8px; padding: 1.5rem; margin: 1.5rem 0; background: #fafafa; }
+    .demo-label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em; color: #888; margin-bottom: 1rem; }
+
+    /* Demo: basic anchor */
+    .anchor-area {
+      position: relative;
+      height: 200px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      overflow: visible;
+    }
+
+    .anchor-target {
+      anchor-name: --my-button;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: var(--accent);
+      color: white;
+      padding: 0.5rem 1rem;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+
+    .anchor-tooltip {
+      position: absolute;
+      position-anchor: --my-button;
+      bottom: anchor(top);
+      left: anchor(center);
+      translate: -50% 0;
+      margin-bottom: 8px;
+      background: #1a1a2e;
+      color: white;
+      padding: 0.4rem 0.75rem;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      white-space: nowrap;
+    }
+
+    .anchor-tooltip::after {
+      content: '';
+      position: absolute;
+      top: 100%;
+      left: 50%;
+      translate: -50% 0;
+      border: 5px solid transparent;
+      border-top-color: #1a1a2e;
+    }
+
+    /* Demo: position-area */
+    .pa-anchor {
+      anchor-name: --pa-target;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 80px;
+      height: 80px;
+      background: var(--accent);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 0.7rem;
+      font-weight: 600;
+    }
+
+    .pa-positioned {
+      position: absolute;
+      position-anchor: --pa-target;
+      background: #e76f51;
+      color: white;
+      padding: 0.3rem 0.6rem;
+      border-radius: 4px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    /* Demo: draggable anchor */
+    .drag-area {
+      position: relative;
+      height: 250px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      overflow: visible;
+      touch-action: none;
+    }
+
+    .drag-target {
+      anchor-name: --drag-btn;
+      position: absolute;
+      top: 100px;
+      left: 150px;
+      background: var(--accent);
+      color: white;
+      padding: 0.5rem 1rem;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: grab;
+      user-select: none;
+    }
+
+    .drag-target:active { cursor: grabbing; }
+
+    .drag-tooltip {
+      position: absolute;
+      position-anchor: --drag-btn;
+      bottom: anchor(top);
+      left: anchor(center);
+      translate: -50% 0;
+      margin-bottom: 8px;
+      background: #1a1a2e;
+      color: white;
+      padding: 0.4rem 0.75rem;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      white-space: nowrap;
+      pointer-events: none;
+    }
+
+    .quiz { background: #fffdf0; border: 1px solid #e8e0c0; border-radius: 8px; padding: 1.5rem; margin: 2rem 0; }
+    .quiz h3 { font-size: 1rem; margin-bottom: 1rem; margin-top: 0; font-weight: 600; }
+    .quiz-options { list-style: none; padding: 0; }
+    .quiz-options li { margin-bottom: 0.5rem; }
+    .quiz-options button { display: block; width: 100%; text-align: left; padding: 0.75rem 1rem; border: 1px solid var(--border); border-radius: 6px; background: white; font-family: var(--mono); font-size: 0.85rem; cursor: pointer; transition: border-color 0.15s; }
+    .quiz-options button:hover { border-color: var(--accent); }
+    .quiz-options button.correct { border-color: #2a9d8f; background: #e8f8f5; }
+    .quiz-options button.incorrect { border-color: #e76f51; background: #fef0ed; }
+    .quiz-feedback { margin-top: 1rem; padding: 0.75rem; border-radius: 6px; font-size: 0.9rem; display: none; }
+    .source-link { margin-top: 3rem; padding-top: 1.5rem; border-top: 1px solid var(--border); }
+    .source-link a { color: var(--accent); text-decoration: none; border-bottom: 1px solid transparent; }
+    .source-link a:hover { border-bottom-color: var(--accent); }
+    .followup { margin-top: 2rem; padding: 1rem 1.25rem; background: #f9f9f9; border-radius: 8px; font-size: 0.9rem; color: #555; }
+    @media print { body { max-width: 100%; padding: 1rem; } .example-group { break-inside: avoid; } }
+  </style>
+</head>
+<body>
+<nav style="margin-bottom: 2rem;"><a href="index.html" style="font-size: 0.85rem; color: #3a86ff; text-decoration: none; border-bottom: 1px solid transparent;">← Course Contents</a></nav>
+
+<p class="lesson-number">Lesson 17</p>
+<h1>Anchor Positioning — Position Relative to Any Element</h1>
+
+<p>Traditional CSS positioning gives you three reference frames: the normal flow, a positioned parent (<code>position: relative</code>), or the viewport (<code>position: fixed</code>). But what if you want to position a tooltip relative to a button that's nowhere near it in the DOM? Previously: JavaScript. Now: <strong>CSS Anchor Positioning</strong>.</p>
+
+<h2>The mental model</h2>
+
+<p>Two roles:</p>
+<ul>
+  <li><strong>Anchor</strong> — the element you're positioning relative TO (the reference point). It gets <code>anchor-name</code>.</li>
+  <li><strong>Positioned element</strong> — the element being placed (tooltip, popover, dropdown). It uses <code>position-anchor</code> and <code>anchor()</code> functions to reference the anchor's edges.</li>
+</ul>
+
+<div class="key-insight">
+  <p><strong>The breakthrough:</strong> The positioned element doesn't need to be inside or adjacent to the anchor in the DOM. It can be anywhere in the document — it references the anchor by name. This decouples visual position from DOM structure.</p>
+</div>
+
+<h2>Basic anchor positioning — tooltip above a button</h2>
+
+<div class="example-group">
+<div class="demo">
+  <p class="demo-label">The tooltip is positioned relative to the button using anchor() — no JS, no position: relative parent needed</p>
+  <div class="anchor-area">
+    <div class="anchor-target">I'm the anchor</div>
+    <div class="anchor-tooltip">Tooltip above the button</div>
+  </div>
+</div>
+<pre><code>&lt;!-- HTML — the tooltip can be anywhere in the DOM --&gt;
+&lt;div class="button"&gt;I'm the anchor&lt;/div&gt;
+&lt;div class="tooltip"&gt;Tooltip above the button&lt;/div&gt;
+
+/* CSS */
+
+/* Step 1: Name the anchor */
+.button {
+  anchor-name: --my-button;
+}
+
+/* Step 2: Position relative to it */
+.tooltip {
+  position: absolute;
+  position-anchor: --my-button;     /* which anchor to reference */
+  bottom: anchor(top);              /* my bottom edge = anchor's top edge */
+  left: anchor(center);             /* my left edge = anchor's horizontal center */
+  translate: -50% 0;                /* shift left by half my width (center me) */
+  margin-bottom: 8px;               /* gap between tooltip and anchor */
+}</code></pre>
+</div>
+
+<h3>How anchor() works</h3>
+
+<p>The <code>anchor()</code> function returns a position value from the anchor element's edges:</p>
+
+<pre><code>/* anchor() takes a side of the anchor element: */
+anchor(top)      /* the anchor's top edge position */
+anchor(bottom)   /* the anchor's bottom edge position */
+anchor(left)     /* the anchor's left edge position */
+anchor(right)    /* the anchor's right edge position */
+anchor(center)   /* the anchor's center (horizontal or vertical depending on property) */
+
+/* Used in inset properties: */
+top: anchor(bottom);       /* "my top = anchor's bottom" → below the anchor */
+bottom: anchor(top);       /* "my bottom = anchor's top" → above the anchor */
+left: anchor(right);       /* "my left = anchor's right" → to the right of anchor */
+right: anchor(left);       /* "my right = anchor's left" → to the left of anchor */</code></pre>
+
+<div class="key-insight">
+  <p><strong>Reading anchor() declarations:</strong> The property you're setting is YOUR edge. The value inside <code>anchor()</code> is THEIR edge. So <code>top: anchor(bottom)</code> means "place my top edge at their bottom edge" — i.e. position me below them.</p>
+</div>
+
+<h2>The position-area shorthand</h2>
+
+<p>Instead of specifying individual edges, <code>position-area</code> lets you declare a position in plain English using a 3×3 grid around the anchor:</p>
+
+<div class="example-group">
+<div class="demo">
+  <p class="demo-label">All 9 positions in the 3×3 grid around the anchor</p>
+  <div class="anchor-area" style="height: 300px;">
+    <div class="pa-anchor">Anchor</div>
+    <div class="pa-positioned" style="position-area: top left;">top left</div>
+    <div class="pa-positioned" style="position-area: top center;">top center</div>
+    <div class="pa-positioned" style="position-area: top right;">top right</div>
+    <div class="pa-positioned" style="position-area: center left;">center left</div>
+    <div class="pa-positioned" style="position-area: center right;">center right</div>
+    <div class="pa-positioned" style="position-area: center center; font-size: 0.6rem; padding: 0.2rem 0.4rem; opacity: 0.9;">center center</div>
+    <div class="pa-positioned" style="position-area: bottom left;">bottom left</div>
+    <div class="pa-positioned" style="position-area: bottom center;">bottom center</div>
+    <div class="pa-positioned" style="position-area: bottom right;">bottom right</div>
+  </div>
+</div>
+<pre><code>&lt;!-- HTML --&gt;
+&lt;div class="anchor"&gt;Anchor&lt;/div&gt;
+&lt;div class="label"&gt;top left&lt;/div&gt;
+&lt;div class="label"&gt;top center&lt;/div&gt;
+&lt;div class="label"&gt;top right&lt;/div&gt;
+&lt;div class="label"&gt;center left&lt;/div&gt;
+&lt;div class="label"&gt;center right&lt;/div&gt;
+&lt;div class="label"&gt;bottom left&lt;/div&gt;
+&lt;div class="label"&gt;bottom center&lt;/div&gt;
+&lt;div class="label"&gt;bottom right&lt;/div&gt;
+
+/* CSS */
+.anchor {
+  anchor-name: --target;
+}
+
+.label {
+  position: absolute;
+  position-anchor: --target;
+}
+
+/* The full 3×3 grid of positions: */
+/*
+  ┌────────────┬────────────┬────────────┐
+  │ top left   │ top center │ top right  │
+  ├────────────┼────────────┼────────────┤
+  │center left │  [ANCHOR]  │center right│
+  ├────────────┼────────────┼────────────┤
+  │bottom left │bottom center│bottom right│
+  └────────────┴────────────┴────────────┘
+*/
+
+.tl { position-area: top left; }
+.tc { position-area: top center; }
+.tr { position-area: top right; }
+.cl { position-area: center left; }
+.cr { position-area: center right; }
+.cc { position-area: center center; }  /* directly over the anchor */
+.bl { position-area: bottom left; }
+.bc { position-area: bottom center; }
+.br { position-area: bottom right; }
+
+/* Spanning values: */
+/* position-area: top span-all;    → above, full width */
+/* position-area: center span-all; → same row as anchor, full width */
+/* position-area: span-all left;   → left column, full height */</code></pre>
+</div>
+
+<h2>The anchor follows the target — live demo</h2>
+
+<div class="example-group">
+<div class="demo">
+  <p class="demo-label">Drag the blue button — the tooltip follows it automatically (pure CSS positioning)</p>
+  <div class="drag-area" id="dragArea">
+    <div class="drag-target" id="dragTarget">Drag me</div>
+    <div class="drag-tooltip">I follow via CSS!</div>
+  </div>
+</div>
+<pre><code>&lt;!-- HTML --&gt;
+&lt;div class="button" id="draggable"&gt;Drag me&lt;/div&gt;
+&lt;div class="tooltip"&gt;I follow via CSS!&lt;/div&gt;
+
+/* CSS — the tooltip is anchored to the button */
+.button {
+  anchor-name: --drag-btn;
+  position: absolute;  /* moved by JS drag */
+}
+
+.tooltip {
+  position: absolute;
+  position-anchor: --drag-btn;
+  bottom: anchor(top);
+  left: anchor(center);
+  translate: -50% 0;
+  margin-bottom: 8px;
+}
+
+// JavaScript — only handles the drag. Tooltip follows automatically via CSS.
+const btn = document.getElementById('draggable');
+let isDragging = false, offsetX, offsetY;
+
+btn.addEventListener('pointerdown', (e) =&gt; {
+  isDragging = true;
+  offsetX = e.offsetX;
+  offsetY = e.offsetY;
+  btn.setPointerCapture(e.pointerId);
+});
+
+document.addEventListener('pointermove', (e) =&gt; {
+  if (!isDragging) return;
+  const area = btn.parentElement.getBoundingClientRect();
+  btn.style.left = (e.clientX - area.left - offsetX) + 'px';
+  btn.style.top = (e.clientY - area.top - offsetY) + 'px';
+});
+
+document.addEventListener('pointerup', () =&gt; { isDragging = false; });</code></pre>
+</div>
+
+<div class="key-insight">
+  <p><strong>The key insight here:</strong> The JavaScript only moves the button. The tooltip has zero JS — it follows the button purely through CSS anchor positioning. If the anchor moves (via drag, scroll, resize, animation), the positioned element tracks it automatically.</p>
+</div>
+
+<h2>position-try — fallback positions</h2>
+
+<p>What if the tooltip would overflow the viewport? <code>position-try-fallbacks</code> lets you define fallback positions the browser can try automatically:</p>
+
+<div class="example-group">
+<div class="demo">
+  <p class="demo-label">The button is near the top — the tooltip prefers to be above, but flips below because there's no room above</p>
+  <div class="anchor-area" style="height: 150px; overflow: hidden;">
+    <div style="anchor-name: --edge-btn; position: absolute; top: 10px; left: 50%; transform: translateX(-50%); background: var(--accent); color: white; padding: 0.5rem 1rem; border-radius: 6px; font-size: 0.8rem; font-weight: 600;">Near the top edge</div>
+    <div style="position: absolute; position-anchor: --edge-btn; bottom: anchor(top); left: anchor(center); translate: -50% 0; margin-bottom: 8px; position-try-fallbacks: flip-block; background: #1a1a2e; color: white; padding: 0.4rem 0.75rem; border-radius: 4px; font-size: 0.75rem; white-space: nowrap;">I flip below when no room above</div>
+  </div>
+</div>
+<pre><code>&lt;!-- HTML --&gt;
+&lt;div class="button"&gt;Near the top edge&lt;/div&gt;
+&lt;div class="tooltip"&gt;I flip below when no room above&lt;/div&gt;
+
+/* CSS */
+.button { anchor-name: --edge-btn; }
+
+.tooltip {
+  position: absolute;
+  position-anchor: --edge-btn;
+  bottom: anchor(top);          /* preferred: above the button */
+  left: anchor(center);
+  translate: -50% 0;
+  margin-bottom: 8px;
+
+  /* If above doesn't fit (overflows container), try below */
+  position-try-fallbacks: flip-block;
+}
+
+/* position-try-fallbacks values: */
+/* flip-block        → flip vertically (above ↔ below) */
+/* flip-inline       → flip horizontally (left ↔ right) */
+/* flip-block flip-inline → try both flips */
+
+/* Or define a CUSTOM fallback position: */
+@position-try --below {
+  bottom: auto;               /* clear the "above" positioning */
+  top: anchor(bottom);        /* position below instead */
+  margin-bottom: 0;
+  margin-top: 8px;
+}
+
+.tooltip {
+  position-try-fallbacks: --below;  /* use custom fallback */
+}</code></pre>
+</div>
+
+<div class="key-insight">
+  <p><strong>Why this matters:</strong> Previously, tooltip/popover libraries used JS to detect overflow and flip position. Anchor positioning with <code>position-try-fallbacks</code> does this natively in CSS — the browser checks if the element overflows its containing block and automatically tries fallback positions.</p>
+</div>
+
+<h2>anchor-name rules</h2>
+
+<ul>
+  <li>Names must start with <code>--</code> (just like custom properties)</li>
+  <li>Names must be unique within the anchor scope — two elements can't share the same <code>anchor-name</code></li>
+  <li>The anchor must be visible (not <code>display: none</code>) for positioning to work</li>
+  <li>The positioned element must be <code>position: absolute</code> or <code>position: fixed</code></li>
+</ul>
+
+<h2>z-index, stacking contexts, and the Popover API</h2>
+
+<h3>The z-index problem</h3>
+
+<p>Anchor-positioned elements are <code>position: absolute</code>, which means they participate in the stacking context of their containing block. This creates a classic gotcha:</p>
+
+<pre><code>/* The problem scenario: */
+.sidebar {
+  position: relative;
+  z-index: 1;  /* creates a stacking context */
+}
+
+.tooltip {
+  position: absolute;
+  position-anchor: --some-button;
+  z-index: 9999;  /* doesn't matter! trapped in sidebar's stacking context */
+}
+
+/* The tooltip can't appear above content outside .sidebar,
+   because z-index only competes WITHIN the same stacking context.
+   The sidebar's z-index: 1 caps everything inside it. */</code></pre>
+
+<div class="key-insight">
+  <p><strong>The rule:</strong> <code>z-index</code> only competes with elements in the same stacking context. A stacking context is created by any element with: <code>position</code> + <code>z-index</code>, <code>opacity < 1</code>, <code>transform</code>, <code>filter</code>, <code>will-change</code>, or being a flex/grid child with <code>z-index</code>. Once trapped in a lower stacking context, no <code>z-index</code> value can break out.</p>
+</div>
+
+<h3>The solution: the Popover API + top layer</h3>
+
+<p>The <strong>Popover API</strong> is an HTML feature that solves the z-index problem. An element with the <code>popover</code> attribute renders in the browser's <strong>top layer</strong> — a special layer that sits above ALL stacking contexts. Nothing can z-index over it.</p>
+
+<h3>Popover API deep-dive</h3>
+
+<p>The Popover API is primarily HTML-driven — you add attributes to elements and the browser handles show/hide, focus, and layering:</p>
+
+<div class="example-group">
+<div class="demo">
+  <p class="demo-label">Click the button — the popover opens anchored below it (light dismiss: click outside or Escape to close)</p>
+  <div style="position: relative;">
+    <button popovertarget="basic-popover" style="anchor-name: --basic-pop-btn; padding: 0.5rem 1rem; border: 1px solid var(--border); border-radius: 4px; background: white; cursor: pointer; font-size: 0.85rem;">Open basic popover</button>
+    <div id="basic-popover" popover style="position: absolute; position-anchor: --basic-pop-btn; top: anchor(bottom); left: anchor(left); margin-top: 4px; background: white; border: 1px solid var(--border); border-radius: 8px; padding: 1rem; box-shadow: 0 4px 16px rgba(0,0,0,0.12); font-size: 0.85rem; max-width: 300px;">
+      <p style="margin: 0 0 0.5rem; font-weight: 600;">I'm a popover!</p>
+      <p style="margin: 0; color: #555;">No JS needed. Click outside or press Escape to dismiss. I'm in the top layer AND anchored to the button.</p>
+    </div>
+  </div>
+</div>
+<pre><code>&lt;!-- HTML — minimal popover + anchor positioning combined --&gt;
+&lt;button popovertarget="my-popup"&gt;Open&lt;/button&gt;
+&lt;div id="my-popup" popover&gt;
+  I'm a popover! Click outside to dismiss.
+&lt;/div&gt;
+
+/* CSS — anchor it to the button */
+button {
+  anchor-name: --pop-btn;
+}
+
+[popover] {
+  position: absolute;
+  position-anchor: --pop-btn;
+  top: anchor(bottom);
+  left: anchor(left);
+  margin-top: 4px;
+}</code></pre>
+</div>
+
+<p><strong>HTML attributes:</strong></p>
+
+<table>
+  <thead>
+    <tr style="border-bottom: 2px solid var(--border); text-align: left;">
+      <th style="padding: 0.5rem;">Attribute</th>
+      <th style="padding: 0.5rem;">Goes on</th>
+      <th style="padding: 0.5rem;">What it does</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr style="border-bottom: 1px solid var(--border);">
+      <td style="padding: 0.4rem 0.5rem;"><code>popover</code></td>
+      <td style="padding: 0.4rem 0.5rem;">The popover element</td>
+      <td style="padding: 0.4rem 0.5rem;">Marks it as a popover (hidden by default, renders in top layer when open)</td>
+    </tr>
+    <tr style="border-bottom: 1px solid var(--border);">
+      <td style="padding: 0.4rem 0.5rem;"><code>popover="auto"</code></td>
+      <td style="padding: 0.4rem 0.5rem;">The popover element</td>
+      <td style="padding: 0.4rem 0.5rem;">Default — light dismiss (closes on outside click/Escape), only one open at a time</td>
+    </tr>
+    <tr style="border-bottom: 1px solid var(--border);">
+      <td style="padding: 0.4rem 0.5rem;"><code>popover="manual"</code></td>
+      <td style="padding: 0.4rem 0.5rem;">The popover element</td>
+      <td style="padding: 0.4rem 0.5rem;">No light dismiss — must be closed explicitly (multiple can be open)</td>
+    </tr>
+    <tr style="border-bottom: 1px solid var(--border);">
+      <td style="padding: 0.4rem 0.5rem;"><code>popovertarget="id"</code></td>
+      <td style="padding: 0.4rem 0.5rem;">The trigger button</td>
+      <td style="padding: 0.4rem 0.5rem;">Clicking this button toggles the popover with the matching ID</td>
+    </tr>
+    <tr>
+      <td style="padding: 0.4rem 0.5rem;"><code>popovertargetaction</code></td>
+      <td style="padding: 0.4rem 0.5rem;">The trigger button</td>
+      <td style="padding: 0.4rem 0.5rem;"><code>"toggle"</code> (default), <code>"show"</code>, or <code>"hide"</code></td>
+    </tr>
+  </tbody>
+</table>
+
+<p><strong>What you get for free (no JS):</strong></p>
+<ul>
+  <li><strong>Top layer</strong> — above all stacking contexts, no z-index needed</li>
+  <li><strong>Light dismiss</strong> — clicking outside or pressing Escape closes it (for <code>popover="auto"</code>)</li>
+  <li><strong>One-at-a-time</strong> — opening a new auto popover closes the previous one</li>
+  <li><strong>Focus trap</strong> — keyboard focus stays manageable</li>
+  <li><strong>Accessible</strong> — proper ARIA semantics built in</li>
+  <li><strong><code>::backdrop</code></strong> — styleable backdrop behind the popover (optional)</li>
+  <li><strong><code>:popover-open</code></strong> — CSS pseudo-class for styling the open state</li>
+</ul>
+
+<p><strong>JS API (when you need programmatic control):</strong></p>
+
+<pre><code>const popup = document.getElementById('my-popup');
+
+popup.showPopover();     // open it
+popup.hidePopover();     // close it
+popup.togglePopover();   // toggle
+
+// Events
+popup.addEventListener('toggle', (e) =&gt; {
+  console.log(e.newState);  // 'open' or 'closed'
+});
+</code></pre>
+
+<p><strong>CSS for styling popovers:</strong></p>
+
+<pre><code>/* Style when open */
+[popover]:popover-open {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* Style when closed (for entry/exit animation) */
+[popover] {
+  opacity: 0;
+  transform: scale(0.95);
+  transition: opacity 0.2s, transform 0.2s, display 0.2s allow-discrete;
+}
+
+/* Style the backdrop (only visible when popover is open) */
+[popover]::backdrop {
+  background: rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(2px);
+}
+</code></pre>
+
+<p><strong>Browser support:</strong> Chrome 114+, Safari 17+, Firefox 125+. Fully production-ready.</p>
+
+<h3>Combining popover + anchor positioning</h3>
+
+<div class="example-group">
+<div class="demo">
+  <p class="demo-label">Click the button — the popover opens in the top layer, positioned via anchor CSS</p>
+  <div style="position: relative;">
+    <button popovertarget="anchor-popover" style="anchor-name: --pop-trigger; padding: 0.5rem 1rem; border: 1px solid var(--border); border-radius: 4px; background: white; cursor: pointer; font-size: 0.85rem;">Open popover ▾</button>
+    <div id="anchor-popover" popover style="position: absolute; position-anchor: --pop-trigger; top: anchor(bottom); left: anchor(left); margin-top: 4px; background: white; border: 1px solid var(--border); border-radius: 6px; padding: 0.75rem; font-size: 0.85rem; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+      <p style="margin: 0 0 0.5rem; font-weight: 600;">Popover content</p>
+      <p style="margin: 0; color: #555;">I'm in the top layer — z-index battles are irrelevant. Click outside to dismiss.</p>
+    </div>
+  </div>
+</div>
+<pre><code>&lt;!-- HTML --&gt;
+&lt;button popovertarget="my-popup"&gt;Open popover ▾&lt;/button&gt;
+&lt;div id="my-popup" popover&gt;
+  Popover content — click outside to dismiss
+&lt;/div&gt;
+
+/* CSS — anchor the popover to the button */
+button {
+  anchor-name: --pop-trigger;
+}
+
+[popover] {
+  /* Popover is already in the top layer — no z-index needed */
+  position: absolute;
+  position-anchor: --pop-trigger;
+  top: anchor(bottom);
+  left: anchor(left);
+  margin-top: 4px;
+  position-try-fallbacks: flip-block;  /* flip above if no room */
+}
+
+/* Style the open/closed states */
+[popover]:popover-open {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Optional: animate the entry */
+[popover] {
+  opacity: 0;
+  transform: translateY(-4px);
+  transition: opacity 0.2s, transform 0.2s, display 0.2s allow-discrete;
+}</code></pre>
+</div>
+
+<h3>When to use popover vs plain absolute</h3>
+
+<table style="width: 100%; border-collapse: collapse; font-size: 0.82rem; margin: 1rem 0;">
+  <thead>
+    <tr style="border-bottom: 2px solid var(--border); text-align: left;">
+      <th style="padding: 0.5rem;">Use popover + anchor when...</th>
+      <th style="padding: 0.5rem;">Use plain position: absolute when...</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr style="border-bottom: 1px solid var(--border);">
+      <td style="padding: 0.4rem 0.5rem;">Needs to appear above everything (tooltips, dropdowns, modals)</td>
+      <td style="padding: 0.4rem 0.5rem;">Stays within its own visual area (badge on a card)</td>
+    </tr>
+    <tr style="border-bottom: 1px solid var(--border);">
+      <td style="padding: 0.4rem 0.5rem;">Needs light dismiss (close on outside click)</td>
+      <td style="padding: 0.4rem 0.5rem;">Always visible, doesn't need show/hide</td>
+    </tr>
+    <tr>
+      <td style="padding: 0.4rem 0.5rem;">Could be trapped behind stacking contexts</td>
+      <td style="padding: 0.4rem 0.5rem;">No z-index conflicts in your layout</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="key-insight">
+  <p><strong>The practical rule:</strong> If your anchor-positioned element is a popover, dropdown, or tooltip that needs to reliably appear above all page content — use the <code>popover</code> attribute. It puts the element in the top layer for free, and you get light-dismiss and accessibility baked in. Anchor positioning handles the "where", popover handles the "above everything."</p>
+</div>
+
+<h2>Dynamic anchors — lists and repeated elements</h2>
+
+<p>Anchor names must be unique, so what happens when you have a dynamic list (e.g. table rows from an API) where each row has a button that needs an anchored popover?</p>
+
+<h3>The pattern: one shared popover, many anchors</h3>
+
+<p>The most practical approach: give each button a unique anchor name via inline style binding, and re-point a single shared popover at whichever anchor was clicked.</p>
+
+<pre><code>&lt;!-- Angular template --&gt;
+
+&lt;!-- Each row's button gets a unique anchor name --&gt;
+&lt;tr *ngFor="let row of data"&gt;
+  &lt;td&gt;{{ row.name }}&lt;/td&gt;
+  &lt;td&gt;
+    &lt;button
+      [style.anchor-name]="'--btn-' + row.id"
+      (click)="openMenu(row.id)"&gt;
+      Actions ▾
+    &lt;/button&gt;
+  &lt;/td&gt;
+&lt;/tr&gt;
+
+&lt;!-- ONE shared popover — repositioned dynamically --&gt;
+&lt;div popover id="shared-menu"
+     [style.position-anchor]="'--btn-' + activeRowId"&gt;
+  &lt;a href="#"&gt;Edit&lt;/a&gt;
+  &lt;a href="#"&gt;Delete&lt;/a&gt;
+  &lt;a href="#"&gt;Duplicate&lt;/a&gt;
+&lt;/div&gt;
+
+/* CSS — positioning is static, only the anchor reference changes */
+[popover] {
+  position: absolute;
+  top: anchor(bottom);
+  left: anchor(left);
+  margin-top: 4px;
+  position-try-fallbacks: flip-block;
+}
+
+// TypeScript
+activeRowId = '';
+
+openMenu(rowId: string) {
+  this.activeRowId = rowId;
+  document.getElementById('shared-menu')?.showPopover();
+}</code></pre>
+
+<div class="key-insight">
+  <p><strong>Why this works:</strong> The CSS positioning rules (<code>top: anchor(bottom)</code>, etc.) are written once and never change. Only the <code>position-anchor</code> value changes — pointing at a different anchor name on each click. One popover element, N anchor buttons, zero positioning JS.</p>
+</div>
+
+<h3>Alternative: the HTML anchor attribute (no CSS name needed)</h3>
+
+<p>The spec also defines an <code>anchor</code> HTML attribute that creates an implicit anchor relationship by element ID — no <code>anchor-name</code> CSS needed:</p>
+
+<pre><code>&lt;!-- HTML — implicit anchoring via the anchor attribute --&gt;
+&lt;button id="btn-42" popovertarget="menu-42"&gt;Actions&lt;/button&gt;
+&lt;div popover id="menu-42" anchor="btn-42"&gt;
+  Menu for row 42
+&lt;/div&gt;
+
+/* CSS — no anchor-name needed; the anchor attribute does the linking */
+[popover] {
+  position: absolute;
+  top: anchor(bottom);
+  left: anchor(left);
+  margin-top: 4px;
+}</code></pre>
+
+<p>The downside: this requires one popover element per row (heavier DOM). The shared-popover pattern above is lighter for lists.</p>
+
+<h3>When inline anchor-name is acceptable</h3>
+
+<p>Setting <code>anchor-name</code> via inline style (framework binding) is an acceptable use of inline styles — the same pattern as <code>view-transition-name</code> per list item. The value is data-driven and unique per element, which means it can't be expressed in a static stylesheet. CSS owns the positioning; the framework just supplies the unique identifier.</p>
+
+<h2>Practical patterns</h2>
+
+<h3>Dropdown menu</h3>
+
+<div class="example-group">
+<div class="demo">
+  <p class="demo-label">Click the menu button — dropdown appears below, aligned to the left edge</p>
+  <div style="position: relative;">
+    <button popovertarget="pattern-dropdown" style="anchor-name: --menu-btn; padding: 0.5rem 1rem; border: 1px solid var(--border); border-radius: 4px; background: white; cursor: pointer; font-size: 0.85rem;">Menu ▾</button>
+    <div id="pattern-dropdown" popover style="position: absolute; position-anchor: --menu-btn; top: anchor(bottom); left: anchor(left); margin-top: 4px; background: white; border: 1px solid var(--border); border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); padding: 0.25rem 0; min-width: 150px;">
+      <a href="#" style="display: block; padding: 0.5rem 1rem; text-decoration: none; color: var(--text); font-size: 0.85rem;">Option 1</a>
+      <a href="#" style="display: block; padding: 0.5rem 1rem; text-decoration: none; color: var(--text); font-size: 0.85rem;">Option 2</a>
+      <a href="#" style="display: block; padding: 0.5rem 1rem; text-decoration: none; color: var(--text); font-size: 0.85rem;">Option 3</a>
+    </div>
+  </div>
+</div>
+<pre><code>&lt;!-- HTML --&gt;
+&lt;button popovertarget="dropdown"&gt;Menu ▾&lt;/button&gt;
+&lt;div id="dropdown" popover&gt;
+  &lt;a href="#"&gt;Option 1&lt;/a&gt;
+  &lt;a href="#"&gt;Option 2&lt;/a&gt;
+  &lt;a href="#"&gt;Option 3&lt;/a&gt;
+&lt;/div&gt;
+
+/* CSS */
+button {
+  anchor-name: --menu-btn;
+}
+
+[popover] {
+  position: absolute;
+  position-anchor: --menu-btn;
+  top: anchor(bottom);
+  left: anchor(left);
+  margin-top: 4px;
+  position-try-fallbacks: flip-block;
+}</code></pre>
+</div>
+
+<h3>Form field validation tooltip</h3>
+
+<div class="example-group">
+<div class="demo">
+  <p class="demo-label">Type an invalid email — the error tooltip appears below the field via :invalid</p>
+  <div style="position: relative;">
+    <input type="email" placeholder="Enter email..." value="not-an-email" style="anchor-name: --email-field; padding: 0.5rem; border: 1px solid var(--border); border-radius: 4px; font-size: 0.85rem; width: 250px;">
+    <div style="position: absolute; position-anchor: --email-field; top: anchor(bottom); left: anchor(left); margin-top: 4px; background: #fef0ed; color: #c0392b; padding: 0.4rem 0.75rem; border-radius: 4px; font-size: 0.75rem; border: 1px solid #f5c6cb;">Please enter a valid email</div>
+  </div>
+</div>
+<pre><code>&lt;!-- HTML --&gt;
+&lt;input type="email" class="field"&gt;
+&lt;div class="error-tip"&gt;Please enter a valid email&lt;/div&gt;
+
+/* CSS */
+.field {
+  anchor-name: --email-field;
+}
+
+.error-tip {
+  position: absolute;
+  position-anchor: --email-field;
+  top: anchor(bottom);
+  left: anchor(left);
+  margin-top: 4px;
+  display: none;
+}
+
+/* Show when field is invalid */
+.field:invalid ~ .error-tip {
+  display: block;
+}</code></pre>
+</div>
+
+<h3>Floating badge on a card corner</h3>
+
+<div class="example-group">
+<div class="demo">
+  <p class="demo-label">The "NEW" badge is anchored to the card's top-right corner</p>
+  <div style="position: relative; display: inline-block;">
+    <div style="anchor-name: --feature-card; background: white; border: 1px solid var(--border); border-radius: 8px; padding: 1.5rem; width: 200px; font-size: 0.85rem;">
+      <strong>Product Card</strong><br>Some card content here.
+    </div>
+    <span style="position: absolute; position-anchor: --feature-card; bottom: anchor(top); right: anchor(right); translate: 50% 50%; background: #e76f51; color: white; padding: 0.2rem 0.5rem; border-radius: 10px; font-size: 0.7rem; font-weight: 600;">NEW</span>
+  </div>
+</div>
+<pre><code>&lt;!-- HTML --&gt;
+&lt;div class="card"&gt;Product Card content&lt;/div&gt;
+&lt;span class="badge"&gt;NEW&lt;/span&gt;
+
+/* CSS */
+.card {
+  anchor-name: --feature-card;
+}
+
+.badge {
+  position: absolute;
+  position-anchor: --feature-card;
+  bottom: anchor(top);
+  right: anchor(right);
+  translate: 50% 50%;  /* overlap the corner */
+}</code></pre>
+</div>
+
+<h2>Browser support</h2>
+
+<p>Anchor positioning: Chrome 125+, Edge 125+. Not yet in Firefox or Safari (as of mid-2025). Progressive enhancement — without support, elements fall back to their normal position or can be positioned with a JS polyfill.</p>
+
+<h2>Retrieval check</h2>
+
+<div class="quiz" id="quiz1">
+  <h3>What property do you put on the reference element (the one you're positioning relative to)?</h3>
+  <ul class="quiz-options">
+    <li><button onclick="checkAnswer(this, false)">position-anchor</button></li>
+    <li><button onclick="checkAnswer(this, true)">anchor-name</button></li>
+    <li><button onclick="checkAnswer(this, false)">anchor-target</button></li>
+    <li><button onclick="checkAnswer(this, false)">position: anchor</button></li>
+  </ul>
+  <div class="quiz-feedback"></div>
+</div>
+
+<div class="quiz" id="quiz2">
+  <h3>What does bottom: anchor(top) mean?</h3>
+  <ul class="quiz-options">
+    <li><button onclick="checkAnswer(this, false)">Place me at the bottom-top corner</button></li>
+    <li><button onclick="checkAnswer(this, true)">Place my bottom edge at the anchor's top edge (= above the anchor)</button></li>
+    <li><button onclick="checkAnswer(this, false)">Place me at the top of the viewport bottom</button></li>
+    <li><button onclick="checkAnswer(this, false)">The anchor's bottom becomes my top</button></li>
+  </ul>
+  <div class="quiz-feedback"></div>
+</div>
+
+<div class="quiz" id="quiz3">
+  <h3>What does position-try-fallbacks: flip-block do?</h3>
+  <ul class="quiz-options">
+    <li><button onclick="checkAnswer(this, false)">Flips the element's content upside down</button></li>
+    <li><button onclick="checkAnswer(this, false)">Tries positioning as display: block first</button></li>
+    <li><button onclick="checkAnswer(this, true)">If preferred position overflows, tries flipping vertically (above ↔ below)</button></li>
+    <li><button onclick="checkAnswer(this, false)">Blocks the element from being positioned</button></li>
+  </ul>
+  <div class="quiz-feedback"></div>
+</div>
+
+<div class="quiz" id="quiz4">
+  <h3>Does the positioned element need to be a DOM child of the anchor?</h3>
+  <ul class="quiz-options">
+    <li><button onclick="checkAnswer(this, false)">Yes — it must be inside the anchor element</button></li>
+    <li><button onclick="checkAnswer(this, false)">Yes — it must be a direct sibling</button></li>
+    <li><button onclick="checkAnswer(this, true)">No — it can be anywhere in the document (references by name)</button></li>
+    <li><button onclick="checkAnswer(this, false)">Only if using position: fixed</button></li>
+  </ul>
+  <div class="quiz-feedback"></div>
+</div>
+
+<div class="quiz" id="quiz5">
+  <h3>What position value must the anchored element have?</h3>
+  <ul class="quiz-options">
+    <li><button onclick="checkAnswer(this, false)">position: relative</button></li>
+    <li><button onclick="checkAnswer(this, false)">position: static</button></li>
+    <li><button onclick="checkAnswer(this, true)">position: absolute or position: fixed</button></li>
+    <li><button onclick="checkAnswer(this, false)">position: anchor</button></li>
+  </ul>
+  <div class="quiz-feedback"></div>
+</div>
+
+<div class="source-link">
+  <p><strong>Primary sources:</strong></p>
+  <ul>
+    <li><a href="https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_anchor_positioning">MDN — CSS Anchor Positioning</a></li>
+    <li><a href="https://developer.chrome.com/blog/anchor-positioning-api">Chrome Developers — Anchor Positioning API</a></li>
+  </ul>
+</div>
+
+<div class="followup">
+  <p>💬 That's Lesson 17 — Anchor Positioning. You can now position any element relative to any other element, purely in CSS — with automatic overflow flipping. This replaces a huge category of "we need JS for that" problems (tooltips, popovers, dropdowns, floating labels).</p>
+  <p><strong>Remaining topics from your mission:</strong></p>
+  <ul>
+    <li><strong>@scope</strong> — proximity-based styling</li>
+    <li><strong>Advanced colour</strong> — oklch(), wide-gamut, relative colour syntax</li>
+  </ul>
+  <p>Or we could do a capstone project. 17 lessons in — you've covered the modern CSS landscape comprehensively.</p>
+</div>
+
+<script>
+// Drag demo
+const dragTarget = document.getElementById('dragTarget');
+const dragArea = document.getElementById('dragArea');
+let isDragging = false, offsetX = 0, offsetY = 0;
+
+if (dragTarget) {
+  dragTarget.addEventListener('pointerdown', (e) => {
+    isDragging = true;
+    offsetX = e.offsetX;
+    offsetY = e.offsetY;
+    dragTarget.setPointerCapture(e.pointerId);
+  });
+
+  document.addEventListener('pointermove', (e) => {
+    if (!isDragging) return;
+    const area = dragArea.getBoundingClientRect();
+    dragTarget.style.left = (e.clientX - area.left - offsetX) + 'px';
+    dragTarget.style.top = (e.clientY - area.top - offsetY) + 'px';
+    dragTarget.style.transform = 'none';
+  });
+
+  document.addEventListener('pointerup', () => { isDragging = false; });
+}
+
+// Quiz
+function checkAnswer(button, isCorrect) {
+  const quiz = button.closest('.quiz');
+  const buttons = quiz.querySelectorAll('button');
+  const feedback = quiz.querySelector('.quiz-feedback');
+
+  if (quiz.dataset.answered) return;
+  quiz.dataset.answered = 'true';
+
+  buttons.forEach(btn => btn.style.pointerEvents = 'none');
+
+  if (isCorrect) {
+    button.classList.add('correct');
+    feedback.textContent = '✓ Correct.';
+    feedback.style.background = '#e8f8f5';
+    feedback.style.color = '#1a7a6c';
+  } else {
+    button.classList.add('incorrect');
+    buttons.forEach(btn => {
+      if (btn.getAttribute('onclick').includes('true')) {
+        btn.classList.add('correct');
+      }
+    });
+    feedback.textContent = '✗ Not quite. The highlighted answer is correct.';
+    feedback.style.background = '#fef0ed';
+    feedback.style.color = '#c0392b';
+  }
+  feedback.style.display = 'block';
+}
+</script>
+
+</body>
+</html>

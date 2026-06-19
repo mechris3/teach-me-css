@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CSS Mastery — Course Contents</title>
+  <style>
+    :root {
+      --text: #1a1a2e;
+      --bg: #fefefe;
+      --accent: #3a86ff;
+      --code-bg: #f4f4f8;
+      --border: #e0e0e0;
+      --serif: 'Georgia', serif;
+      --mono: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+      --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+    * { box-sizing: border-box; margin: 0; }
+    body { font-family: var(--sans); color: var(--text); background: var(--bg); line-height: 1.7; max-width: 60rem; margin: 0 auto; padding: 3rem 1.5rem; }
+    h1 { font-family: var(--serif); font-size: 2rem; margin-bottom: 0.5rem; font-weight: normal; }
+    .subtitle { color: #666; font-size: 1rem; margin-bottom: 2rem; }
+    h2 { font-family: var(--serif); font-size: 1.3rem; margin-top: 2.5rem; margin-bottom: 1rem; font-weight: normal; color: #555; }
+
+    .lesson-list { list-style: none; padding: 0; }
+    .lesson-list li { margin-bottom: 0.5rem; }
+    .lesson-list a {
+      display: flex;
+      align-items: baseline;
+      gap: 0.75rem;
+      padding: 0.75rem 1rem;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      text-decoration: none;
+      color: var(--text);
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .lesson-list a:hover {
+      border-color: var(--accent);
+      background: #f0f7ff;
+    }
+    .lesson-num {
+      font-family: var(--mono);
+      font-size: 0.8rem;
+      color: var(--accent);
+      font-weight: 600;
+      min-width: 2rem;
+    }
+    .lesson-title { font-weight: 500; }
+    .lesson-desc { font-size: 0.8rem; color: #888; margin-left: auto; }
+  </style>
+</head>
+<body>
+
+<h1>CSS Mastery</h1>
+<p class="subtitle">A structured course from fundamentals to cutting-edge modern CSS.</p>
+
+<h2>Values & Types</h2>
+<ol class="lesson-list">
+  <li><a href="0001-custom-properties-fundamentals.html">
+    <span class="lesson-num">01</span>
+    <span class="lesson-title">Custom Properties from the Ground Up</span>
+    <span class="lesson-desc">Declaration, scoping, fallbacks, var()</span>
+  </a></li>
+  <li><a href="0002-registered-custom-properties.html">
+    <span class="lesson-num">02</span>
+    <span class="lesson-title">@property — Registered Custom Properties</span>
+    <span class="lesson-desc">Types, inheritance control, animating custom properties</span>
+  </a></li>
+  <li><a href="0003-css-value-functions.html">
+    <span class="lesson-num">03</span>
+    <span class="lesson-title">CSS Value Functions</span>
+    <span class="lesson-desc">calc(), min(), max(), clamp(), color-mix()</span>
+  </a></li>
+  <li><a href="0004-custom-css-functions.html">
+    <span class="lesson-num">04</span>
+    <span class="lesson-title">@function — Custom CSS Functions</span>
+    <span class="lesson-desc">Parametrised reusable logic in pure CSS</span>
+  </a></li>
+  <li><a href="0005-advanced-attr.html">
+    <span class="lesson-num">05</span>
+    <span class="lesson-title">Advanced attr()</span>
+    <span class="lesson-desc">HTML attributes as typed CSS values</span>
+  </a></li>
+</ol>
+
+<h2>Motion</h2>
+<ol class="lesson-list" start="6">
+  <li><a href="0006-transitions.html">
+    <span class="lesson-num">06</span>
+    <span class="lesson-title">CSS Transitions</span>
+    <span class="lesson-desc">Timing functions, performance, allow-discrete</span>
+  </a></li>
+  <li><a href="0007-animations.html">
+    <span class="lesson-num">07</span>
+    <span class="lesson-title">CSS Animations</span>
+    <span class="lesson-desc">@keyframes, fill modes, scroll-driven animations</span>
+  </a></li>
+</ol>
+
+<h2>Layout</h2>
+<ol class="lesson-list" start="8">
+  <li><a href="0008-flexbox.html">
+    <span class="lesson-num">08</span>
+    <span class="lesson-title">Flexbox — How the Algorithm Works</span>
+    <span class="lesson-desc">grow/shrink/basis, the axis model, practical patterns</span>
+  </a></li>
+  <li><a href="0009-grid.html">
+    <span class="lesson-num">09</span>
+    <span class="lesson-title">CSS Grid — Two-Dimensional Layout</span>
+    <span class="lesson-desc">fr, repeat, areas, subgrid, auto-flow</span>
+  </a></li>
+  <li><a href="0010-container-queries.html">
+    <span class="lesson-num">10</span>
+    <span class="lesson-title">Container Queries</span>
+    <span class="lesson-desc">Responsive to parent, not viewport</span>
+  </a></li>
+</ol>
+
+<h2>The Cascade & Selectors</h2>
+<ol class="lesson-list" start="11">
+  <li><a href="0011-cascade-layers.html">
+    <span class="lesson-num">11</span>
+    <span class="lesson-title">Cascade Layers (@layer)</span>
+    <span class="lesson-desc">Managing specificity at scale</span>
+  </a></li>
+  <li><a href="0012-css-nesting.html">
+    <span class="lesson-num">12</span>
+    <span class="lesson-title">CSS Nesting</span>
+    <span class="lesson-desc">Native nesting without preprocessors</span>
+  </a></li>
+  <li><a href="0013-modern-selectors.html">
+    <span class="lesson-num">13</span>
+    <span class="lesson-title">Modern Selectors</span>
+    <span class="lesson-desc">:has(), :is(), :where(), :not()</span>
+  </a></li>
+  <li><a href="0014-the-cascade.html">
+    <span class="lesson-num">14</span>
+    <span class="lesson-title">The Cascade — Complete Resolution Algorithm</span>
+    <span class="lesson-desc">Origin, layers, specificity, inheritance — unified</span>
+  </a></li>
+</ol>
+
+<h2>Modern Features</h2>
+<ol class="lesson-list" start="15">
+  <li><a href="0015-logical-properties.html">
+    <span class="lesson-num">15</span>
+    <span class="lesson-title">Logical Properties</span>
+    <span class="lesson-desc">Writing-mode-aware layout</span>
+  </a></li>
+  <li><a href="0016-view-transitions.html">
+    <span class="lesson-num">16</span>
+    <span class="lesson-title">View Transitions</span>
+    <span class="lesson-desc">Animating between states, Angular integration</span>
+  </a></li>
+  <li><a href="0017-anchor-positioning.html">
+    <span class="lesson-num">17</span>
+    <span class="lesson-title">Anchor Positioning</span>
+    <span class="lesson-desc">Position relative to any element, popover API, fallback flipping</span>
+  </a></li>
+  <li><a href="0018-advanced-colour.html">
+    <span class="lesson-num">18</span>
+    <span class="lesson-title">Advanced Colour</span>
+    <span class="lesson-desc">OKLCH, wide gamut, relative colour syntax, light-dark()</span>
+  </a></li>
+  <li><a href="0019-scope.html">
+    <span class="lesson-num">19</span>
+    <span class="lesson-title">@scope — Proximity-Based Styling</span>
+    <span class="lesson-desc">Scope boundaries, limits, proximity in the cascade</span>
+  </a></li>
+  <li><a href="0020-selectors-deep-dive.html">
+    <span class="lesson-num">20</span>
+    <span class="lesson-title">Selectors Deep-Dive</span>
+    <span class="lesson-desc">Structural, form state, attribute selectors, :nth-child formulas</span>
+  </a></li>
+  <li><a href="0021-theming-deep-dive.html">
+    <span class="lesson-num">21</span>
+    <span class="lesson-title">Theming Deep-Dive</span>
+    <span class="lesson-desc">Token architecture, multi-brand, light/dark, Angular integration</span>
+  </a></li>
+  <li><a href="0022-responsive-design-patterns.html">
+    <span class="lesson-num">22</span>
+    <span class="lesson-title">Responsive Design Patterns</span>
+    <span class="lesson-desc">Composing grid, flex, clamp(), and container queries into real layouts</span>
+  </a></li>
+  <li><a href="0023-scroll-driven-animations.html">
+    <span class="lesson-num">23</span>
+    <span class="lesson-title">Scroll-Driven Animations</span>
+    <span class="lesson-desc">scroll(), view(), animation-range — replacing JS scroll libraries with CSS</span>
+  </a></li>
+</ol>
+
+<h2>Reference Documents</h2>
+<ol class="lesson-list">
+  <li><a href="../reference/css-anatomy.html">
+    <span class="lesson-num">REF</span>
+    <span class="lesson-title">CSS Anatomy — Symbols, Structure & Terminology</span>
+    <span class="lesson-desc">Rules, selectors, @, ::, --, combinators, pseudo-classes</span>
+  </a></li>
+</ol>
+
+</body>
+</html>

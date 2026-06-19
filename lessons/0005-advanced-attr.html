@@ -23,7 +23,7 @@
       color: var(--text);
       background: var(--bg);
       line-height: 1.7;
-      max-width: 42rem;
+      max-width: 60rem;
       margin: 0 auto;
       padding: 3rem 1.5rem;
     }
@@ -94,6 +94,10 @@
 
     .key-insight p { margin-bottom: 0.5rem; }
     .key-insight p:last-child { margin-bottom: 0; }
+
+    .example-group { border: 1px solid var(--border); border-radius: 8px; margin: 1.5rem 0; overflow: hidden; }
+    .example-group .demo { border: none; border-radius: 0; margin: 0; border-bottom: 1px solid var(--border); }
+    .example-group pre { margin: 0; border: none; border-radius: 0; }
 
     .demo {
       border: 1px solid var(--border);
@@ -305,11 +309,12 @@
 
     @media print {
       body { max-width: 100%; padding: 1rem; }
-      .demo { break-inside: avoid; }
+      .demo, .example-group { break-inside: avoid; }
     }
   </style>
 </head>
 <body>
+<nav style="margin-bottom: 2rem;"><a href="index.html" style="font-size: 0.85rem; color: #3a86ff; text-decoration: none; border-bottom: 1px solid transparent;">← Course Contents</a></nav>
 
 <p class="lesson-number">Lesson 05</p>
 <h1>Advanced <code>attr()</code> — HTML Attributes as Typed CSS Values</h1>
@@ -322,15 +327,17 @@
 
 <p>This is what you may have seen before:</p>
 
+<div class="example-group">
+<div class="demo">
+  <p class="demo-label">Old attr() — tooltip via content property</p>
+  <p><span class="tooltip-old" data-tip="I'm a tooltip!">Hover this text</span> to see the attribute value used as content.</p>
+</div>
+
 <pre><code>&lt;span class="tooltip-old" data-tip="I'm a tooltip!"&gt;Hover this text&lt;/span&gt;
 
 .tooltip-old::after {
   content: attr(data-tip);  /* always a string, only works in content */
 }</code></pre>
-
-<div class="demo">
-  <p class="demo-label">Old attr() — tooltip via content property</p>
-  <p><span class="tooltip-old" data-tip="I'm a tooltip!">Hover this text</span> to see the attribute value used as content.</p>
 </div>
 
 <p>That's useful but limited. The value is always a string, and it can only appear in <code>content:</code>.</p>
@@ -394,6 +401,7 @@ grid-template-columns: repeat(attr(data-cols type(&lt;integer&gt;), 3), 1fr);</c
 
 <h2>Live demo: bar chart from data attributes</h2>
 
+<div class="example-group">
 <div class="demo">
   <p class="demo-label">Each bar reads its width from data-width — no custom properties or JS needed</p>
   <div class="bar" data-width="85%">85%</div>
@@ -412,6 +420,7 @@ grid-template-columns: repeat(attr(data-cols type(&lt;integer&gt;), 3), 1fr);</c
   height: 2rem;
   background: var(--accent);
 }</code></pre>
+</div>
 
 <div class="key-insight">
   <p><strong>Why this matters:</strong> The data lives in the HTML. No JavaScript needed to set widths. A server can render the attributes, a CMS can populate them, or you can generate them from a framework binding (<code>[attr.data-width]</code> in Angular). The CSS just reads them.</p>
@@ -419,6 +428,7 @@ grid-template-columns: repeat(attr(data-cols type(&lt;integer&gt;), 3), 1fr);</c
 
 <h2>Live demo: colours from attributes</h2>
 
+<div class="example-group">
 <div class="demo">
   <p class="demo-label">Background colour read directly from data-color attribute</p>
   <span class="color-chip" data-color="#3a86ff">Blue</span>
@@ -435,6 +445,7 @@ grid-template-columns: repeat(attr(data-cols type(&lt;integer&gt;), 3), 1fr);</c
 .color-chip {
   background: attr(data-color type(&lt;color&gt;), #ccc);
 }</code></pre>
+</div>
 
 <h2>Using attr() inside calc()</h2>
 
@@ -449,11 +460,22 @@ grid-template-columns: repeat(attr(data-cols type(&lt;integer&gt;), 3), 1fr);</c
   padding: calc(attr(data-pad type(&lt;length&gt;), 8px) * 2);
 }</code></pre>
 
+<div class="example-group">
 <div class="demo">
   <p class="demo-label">Padding doubled via calc() on attr()</p>
   <div class="grid-item" data-pad="8px">data-pad="8px" → padding: 16px</div>
   <div class="grid-item" data-pad="16px">data-pad="16px" → padding: 32px</div>
   <div class="grid-item" data-pad="4px">data-pad="4px" → padding: 8px</div>
+</div>
+
+<pre><code>&lt;div class="grid-item" data-pad="8px"&gt;...&lt;/div&gt;
+&lt;div class="grid-item" data-pad="16px"&gt;...&lt;/div&gt;
+&lt;div class="grid-item" data-pad="4px"&gt;...&lt;/div&gt;
+
+.grid-item {
+  /* Double the padding from the attribute */
+  padding: calc(attr(data-pad type(&lt;length&gt;), 8px) * 2);
+}</code></pre>
 </div>
 
 <h2>Fallbacks: var() inside attr()</h2>
@@ -471,10 +493,21 @@ grid-template-columns: repeat(attr(data-cols type(&lt;integer&gt;), 3), 1fr);</c
      Second box: 8px radius, light blue background (from fallbacks) */
 }</code></pre>
 
+<div class="example-group">
 <div class="demo">
   <p class="demo-label">First box has data-radius="20px", second has no attribute (uses --default-radius)</p>
   <div class="themed-box" data-radius="20px" data-bg="#fff3e0">data-radius="20px", data-bg="#fff3e0"</div>
   <div class="themed-box">No attributes — uses custom property defaults</div>
+</div>
+
+<pre><code>&lt;div class="themed-box" data-radius="20px" data-bg="#fff3e0"&gt;...&lt;/div&gt;
+&lt;div class="themed-box"&gt;No attributes — uses custom property defaults&lt;/div&gt;
+
+.themed-box {
+  --default-radius: 8px;
+  border-radius: attr(data-radius type(&lt;length&gt;), var(--default-radius));
+  background: attr(data-bg type(&lt;color&gt;), #f0f7ff);
+}</code></pre>
 </div>
 
 <h2>When to use attr() vs custom properties</h2>
@@ -553,6 +586,7 @@ bar.style.setProperty('--width', '80%');  // triggers smooth transition
 
 <h3>Progress bar without JS</h3>
 
+<div class="example-group">
 <div class="demo">
   <p class="demo-label">Width derived from data-value / data-max — pure CSS</p>
   <progress-bar data-value="73" data-max="100"></progress-bar>
@@ -581,9 +615,11 @@ progress-bar::after {
   background: var(--accent);
   border-radius: 4px;
 }</code></pre>
+</div>
 
 <h3>Responsive grid columns from markup</h3>
 
+<div class="example-group">
 <div class="demo">
   <p class="demo-label">Column count read from data-cols attribute</p>
   <div class="attr-grid" data-cols="4">
@@ -610,9 +646,11 @@ progress-bar::after {
   grid-template-columns: repeat(attr(data-cols type(&lt;integer&gt;), 3), 1fr);
   gap: 0.5rem;
 }</code></pre>
+</div>
 
 <h3>Icon sizing from attributes</h3>
 
+<div class="example-group">
 <div class="demo">
   <p class="demo-label">Size and colour from data attributes — no inline styles</p>
   <svg-icon data-size="16px" data-color="#3a86ff">▶</svg-icon>
@@ -631,6 +669,7 @@ svg-icon {
   height: attr(data-size type(&lt;length&gt;), 16px);
   color: attr(data-color type(&lt;color&gt;), currentColor);
 }</code></pre>
+</div>
 
 <h2>Retrieval check</h2>
 

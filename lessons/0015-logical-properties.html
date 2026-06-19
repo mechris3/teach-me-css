@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lesson 15: Logical Properties — Writing-Mode-Aware Layout</title>
+  <style>
+    :root {
+      --text: #1a1a2e;
+      --bg: #fefefe;
+      --accent: #3a86ff;
+      --code-bg: #f4f4f8;
+      --border: #e0e0e0;
+      --serif: 'Georgia', serif;
+      --mono: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+      --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+    * { box-sizing: border-box; margin: 0; }
+    body { font-family: var(--sans); color: var(--text); background: var(--bg); line-height: 1.7; max-width: 60rem; margin: 0 auto; padding: 3rem 1.5rem; }
+    h1 { font-family: var(--serif); font-size: 1.8rem; margin-bottom: 0.25rem; font-weight: normal; }
+    .lesson-number { font-size: 0.85rem; color: #666; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.25rem; }
+    h2 { font-family: var(--serif); font-size: 1.3rem; margin-top: 2.5rem; margin-bottom: 0.75rem; font-weight: normal; }
+    h3 { font-size: 1rem; margin-top: 1.5rem; margin-bottom: 0.5rem; }
+    p, li { margin-bottom: 1rem; }
+    ul, ol { padding-left: 1.5rem; }
+    code { font-family: var(--mono); font-size: 0.88em; background: var(--code-bg); padding: 0.15em 0.4em; border-radius: 3px; }
+    pre { background: var(--code-bg); border: 1px solid var(--border); border-radius: 6px; padding: 1.25rem; overflow-x: auto; margin: 1.25rem 0; line-height: 1.5; }
+    pre code { background: none; padding: 0; font-size: 0.85rem; }
+    .key-insight { border-left: 3px solid var(--accent); padding: 1rem 1.25rem; margin: 1.5rem 0; background: #f0f7ff; border-radius: 0 6px 6px 0; }
+    .key-insight p { margin-bottom: 0.5rem; }
+    .key-insight p:last-child { margin-bottom: 0; }
+    .example-group { border: 1px solid var(--border); border-radius: 8px; margin: 1.5rem 0; overflow: hidden; }
+    .example-group .demo { border: none; border-radius: 0; margin: 0; border-bottom: 1px solid var(--border); }
+    .example-group pre { margin: 0; border: none; border-radius: 0; }
+    .demo { border: 1px solid var(--border); border-radius: 8px; padding: 1.5rem; margin: 1.5rem 0; background: #fafafa; }
+    .demo-label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em; color: #888; margin-bottom: 1rem; }
+
+    .logical-box { background: #f0f7ff; border: 1px solid var(--border); border-radius: 6px; font-size: 0.8rem; display: inline-block; }
+    .rtl-wrapper { direction: rtl; }
+
+    .quiz { background: #fffdf0; border: 1px solid #e8e0c0; border-radius: 8px; padding: 1.5rem; margin: 2rem 0; }
+    .quiz h3 { font-size: 1rem; margin-bottom: 1rem; margin-top: 0; font-weight: 600; }
+    .quiz-options { list-style: none; padding: 0; }
+    .quiz-options li { margin-bottom: 0.5rem; }
+    .quiz-options button { display: block; width: 100%; text-align: left; padding: 0.75rem 1rem; border: 1px solid var(--border); border-radius: 6px; background: white; font-family: var(--mono); font-size: 0.85rem; cursor: pointer; transition: border-color 0.15s; }
+    .quiz-options button:hover { border-color: var(--accent); }
+    .quiz-options button.correct { border-color: #2a9d8f; background: #e8f8f5; }
+    .quiz-options button.incorrect { border-color: #e76f51; background: #fef0ed; }
+    .quiz-feedback { margin-top: 1rem; padding: 0.75rem; border-radius: 6px; font-size: 0.9rem; display: none; }
+    .source-link { margin-top: 3rem; padding-top: 1.5rem; border-top: 1px solid var(--border); }
+    .source-link a { color: var(--accent); text-decoration: none; border-bottom: 1px solid transparent; }
+    .source-link a:hover { border-bottom-color: var(--accent); }
+    .followup { margin-top: 2rem; padding: 1rem 1.25rem; background: #f9f9f9; border-radius: 8px; font-size: 0.9rem; color: #555; }
+    @media print { body { max-width: 100%; padding: 1rem; } .example-group { break-inside: avoid; } }
+  </style>
+</head>
+<body>
+<nav style="margin-bottom: 2rem;"><a href="index.html" style="font-size: 0.85rem; color: #3a86ff; text-decoration: none; border-bottom: 1px solid transparent;">← Course Contents</a></nav>
+
+<p class="lesson-number">Lesson 15</p>
+<h1>Logical Properties — Writing-Mode-Aware Layout</h1>
+
+<p>Traditional CSS uses physical directions: <code>top</code>, <code>right</code>, <code>bottom</code>, <code>left</code>. These are tied to the screen — they always mean the same thing regardless of language direction. Logical properties replace them with <strong>flow-relative</strong> directions that adapt to writing mode and text direction.</p>
+
+<h2>The mental model</h2>
+
+<p>Instead of thinking in physical directions (top/right/bottom/left), think in two axes:</p>
+
+<ul>
+  <li><strong>Block axis</strong> — the direction blocks stack (paragraphs, divs). In English: top → bottom.</li>
+  <li><strong>Inline axis</strong> — the direction text flows. In English: left → right. In Arabic: right → left.</li>
+</ul>
+
+<pre><code>English (LTR, horizontal):
+┌─────────────────────────────────────┐
+│  block-start (top)                  │
+│                                     │
+│  inline-start ──────► inline-end    │
+│  (left)               (right)       │
+│                                     │
+│  block-end (bottom)                 │
+└─────────────────────────────────────┘
+
+Arabic (RTL, horizontal):
+┌─────────────────────────────────────┐
+│  block-start (top)                  │
+│                                     │
+│  inline-end ◄────── inline-start    │
+│  (left)               (right)       │
+│                                     │
+│  block-end (bottom)                 │
+└─────────────────────────────────────┘</code></pre>
+
+<div class="key-insight">
+  <p><strong>The principle:</strong> "Block" = the axis things stack on. "Inline" = the axis text flows on. "Start" and "end" replace "top/left" and "bottom/right." When the writing mode changes, logical properties automatically flip — physical properties don't.</p>
+</div>
+
+<h2>The mapping — physical → logical</h2>
+
+<table style="width: 100%; border-collapse: collapse; font-size: 0.82rem; margin: 1.5rem 0;">
+  <thead>
+    <tr style="border-bottom: 2px solid var(--border); text-align: left;">
+      <th style="padding: 0.5rem;">Physical (old)</th>
+      <th style="padding: 0.5rem;">Logical (new)</th>
+      <th style="padding: 0.5rem;">In English LTR</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr style="border-bottom: 1px solid var(--border);">
+      <td style="padding: 0.4rem 0.5rem;"><code>margin-top</code></td>
+      <td style="padding: 0.4rem 0.5rem;"><code>margin-block-start</code></td>
+      <td style="padding: 0.4rem 0.5rem;">= top</td>
+    </tr>
+    <tr style="border-bottom: 1px solid var(--border);">
+      <td style="padding: 0.4rem 0.5rem;"><code>margin-bottom</code></td>
+      <td style="padding: 0.4rem 0.5rem;"><code>margin-block-end</code></td>
+      <td style="padding: 0.4rem 0.5rem;">= bottom</td>
+    </tr>
+    <tr style="border-bottom: 1px solid var(--border);">
+      <td style="padding: 0.4rem 0.5rem;"><code>margin-left</code></td>
+      <td style="padding: 0.4rem 0.5rem;"><code>margin-inline-start</code></td>
+      <td style="padding: 0.4rem 0.5rem;">= left (= right in RTL)</td>
+    </tr>
+    <tr style="border-bottom: 1px solid var(--border);">
+      <td style="padding: 0.4rem 0.5rem;"><code>margin-right</code></td>
+      <td style="padding: 0.4rem 0.5rem;"><code>margin-inline-end</code></td>
+      <td style="padding: 0.4rem 0.5rem;">= right (= left in RTL)</td>
+    </tr>
+    <tr style="border-bottom: 1px solid var(--border);">
+      <td style="padding: 0.4rem 0.5rem;"><code>width</code></td>
+      <td style="padding: 0.4rem 0.5rem;"><code>inline-size</code></td>
+      <td style="padding: 0.4rem 0.5rem;">= width</td>
+    </tr>
+    <tr style="border-bottom: 1px solid var(--border);">
+      <td style="padding: 0.4rem 0.5rem;"><code>height</code></td>
+      <td style="padding: 0.4rem 0.5rem;"><code>block-size</code></td>
+      <td style="padding: 0.4rem 0.5rem;">= height</td>
+    </tr>
+    <tr style="border-bottom: 1px solid var(--border);">
+      <td style="padding: 0.4rem 0.5rem;"><code>top</code></td>
+      <td style="padding: 0.4rem 0.5rem;"><code>inset-block-start</code></td>
+      <td style="padding: 0.4rem 0.5rem;">= top</td>
+    </tr>
+    <tr style="border-bottom: 1px solid var(--border);">
+      <td style="padding: 0.4rem 0.5rem;"><code>left</code></td>
+      <td style="padding: 0.4rem 0.5rem;"><code>inset-inline-start</code></td>
+      <td style="padding: 0.4rem 0.5rem;">= left (= right in RTL)</td>
+    </tr>
+    <tr style="border-bottom: 1px solid var(--border);">
+      <td style="padding: 0.4rem 0.5rem;"><code>border-top</code></td>
+      <td style="padding: 0.4rem 0.5rem;"><code>border-block-start</code></td>
+      <td style="padding: 0.4rem 0.5rem;">= top</td>
+    </tr>
+    <tr>
+      <td style="padding: 0.4rem 0.5rem;"><code>text-align: left</code></td>
+      <td style="padding: 0.4rem 0.5rem;"><code>text-align: start</code></td>
+      <td style="padding: 0.4rem 0.5rem;">= left (= right in RTL)</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2>Shorthand properties</h2>
+
+<p>Logical properties also have two-value shorthands for setting both sides of an axis at once:</p>
+
+<div class="example-group">
+<div class="demo">
+  <p class="demo-label">margin-block sets top + bottom. margin-inline sets left + right (in LTR).</p>
+  <div class="logical-box" style="margin-block: 1rem; margin-inline: 2rem; padding: 0.75rem;">
+    margin-block: 1rem (top+bottom)<br>
+    margin-inline: 2rem (left+right)
+  </div>
+</div>
+<pre><code>&lt;!-- HTML --&gt;
+&lt;div class="box"&gt;Content&lt;/div&gt;
+
+.box {
+  margin-block: 1rem;     /* = margin-top + margin-bottom */
+  margin-inline: 2rem;    /* = margin-left + margin-right (flips in RTL) */
+  padding-block: 0.5rem;  /* = padding-top + padding-bottom */
+  padding-inline: 1rem;   /* = padding-left + padding-right */
+  border-inline: 1px solid gray;  /* left + right borders */
+  inline-size: 300px;     /* = width */
+  block-size: auto;       /* = height */
+}</code></pre>
+</div>
+
+<h2>Live demo: LTR vs RTL</h2>
+
+<div class="example-group">
+<div class="demo">
+  <p class="demo-label">Same CSS, different direction — logical properties adapt automatically</p>
+  <div style="margin-bottom: 1rem;">
+    <p style="font-size: 0.75rem; color: #888; margin-bottom: 0.25rem;">direction: ltr (English)</p>
+    <div style="direction: ltr; background: #f0f7ff; border-inline-start: 4px solid var(--accent); padding-inline-start: 1rem; padding-block: 0.5rem; border-radius: 4px; font-size: 0.85rem;">
+      border-inline-start is on the LEFT
+    </div>
+  </div>
+  <div>
+    <p style="font-size: 0.75rem; color: #888; margin-bottom: 0.25rem;">direction: rtl (Arabic)</p>
+    <div style="direction: rtl; background: #fff3e0; border-inline-start: 4px solid #e76f51; padding-inline-start: 1rem; padding-block: 0.5rem; border-radius: 4px; font-size: 0.85rem;">
+      border-inline-start is on the RIGHT
+    </div>
+  </div>
+</div>
+<pre><code>.callout {
+  border-inline-start: 4px solid blue;  /* left in LTR, right in RTL */
+  padding-inline-start: 1rem;           /* same — adapts with direction */
+  padding-block: 0.5rem;                /* top + bottom — always the same */
+}</code></pre>
+</div>
+
+<div class="key-insight">
+  <p><strong>Why this matters even if you only build English sites:</strong></p>
+  <ul>
+    <li>Logical properties are shorter to write in many cases (<code>margin-inline: auto</code> vs <code>margin-left: auto; margin-right: auto</code>)</li>
+    <li>Future-proofs your CSS for i18n — if your app ever needs RTL support, it works out of the box</li>
+    <li>Aligns with how Flexbox and Grid already think (they use start/end, not left/right)</li>
+    <li>Modern linters (Stylelint) increasingly recommend logical properties as the default</li>
+  </ul>
+</div>
+
+<h2>The centering shorthand</h2>
+
+<div class="example-group">
+<div class="demo">
+  <p class="demo-label">margin-inline: auto centers horizontally — shorter than margin-left: auto + margin-right: auto</p>
+  <div style="inline-size: 200px; margin-inline: auto; background: var(--accent); color: white; padding: 0.75rem; border-radius: 6px; font-size: 0.8rem; text-align: center;">
+    margin-inline: auto
+  </div>
+</div>
+<pre><code>&lt;!-- HTML --&gt;
+&lt;div class="centered"&gt;Content&lt;/div&gt;
+
+.centered {
+  inline-size: 200px;     /* = width: 200px */
+  margin-inline: auto;    /* = margin-left: auto; margin-right: auto */
+  /* Centers horizontally — and flips correctly in RTL */
+}</code></pre>
+</div>
+
+<h2>Inset — logical positioning</h2>
+
+<p>For positioned elements, logical equivalents of <code>top</code>/<code>right</code>/<code>bottom</code>/<code>left</code>:</p>
+
+<div class="example-group">
+<div class="demo">
+  <p class="demo-label">inset-inline-start replaces "left" for positioned elements</p>
+  <div style="position: relative; height: 80px; background: #f0f7ff; border-radius: 6px;">
+    <div style="position: absolute; inset-block-start: 0.5rem; inset-inline-start: 0.5rem; background: var(--accent); color: white; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.75rem;">
+      inset-block-start + inset-inline-start
+    </div>
+  </div>
+</div>
+<pre><code>&lt;!-- HTML --&gt;
+&lt;div class="parent"&gt;
+  &lt;div class="positioned"&gt;Badge&lt;/div&gt;
+&lt;/div&gt;
+
+.positioned {
+  position: absolute;
+  inset-block-start: 0.5rem;    /* = top */
+  inset-inline-start: 0.5rem;   /* = left (= right in RTL) */
+}
+
+/* Shorthand for all four: */
+.overlay {
+  position: absolute;
+  inset: 0;  /* = top: 0; right: 0; bottom: 0; left: 0 */
+}</code></pre>
+</div>
+
+<h2>border-radius — logical values</h2>
+
+<p>Even border-radius has logical equivalents:</p>
+
+<pre><code>/* Physical */
+border-top-left-radius: 8px;
+
+/* Logical */
+border-start-start-radius: 8px;  /* block-start + inline-start corner */
+border-start-end-radius: 8px;    /* block-start + inline-end corner */
+border-end-start-radius: 8px;    /* block-end + inline-start corner */
+border-end-end-radius: 8px;      /* block-end + inline-end corner */</code></pre>
+
+<p>In practice, <code>border-radius: 8px</code> (uniform) is used far more often than individual corners, so the logical versions of border-radius are less common.</p>
+
+<h2>When to use logical vs physical</h2>
+
+<table style="width: 100%; border-collapse: collapse; font-size: 0.82rem; margin: 1.5rem 0;">
+  <thead>
+    <tr style="border-bottom: 2px solid var(--border); text-align: left;">
+      <th style="padding: 0.5rem;">Use logical when...</th>
+      <th style="padding: 0.5rem;">Use physical when...</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr style="border-bottom: 1px solid var(--border);">
+      <td style="padding: 0.4rem 0.5rem;">Spacing/alignment relates to text flow</td>
+      <td style="padding: 0.4rem 0.5rem;">Position is tied to the viewport (e.g. "stick to the screen bottom")</td>
+    </tr>
+    <tr style="border-bottom: 1px solid var(--border);">
+      <td style="padding: 0.4rem 0.5rem;">Building reusable components</td>
+      <td style="padding: 0.4rem 0.5rem;">Decorative effects not related to content direction</td>
+    </tr>
+    <tr>
+      <td style="padding: 0.4rem 0.5rem;">Your app may need RTL support (now or later)</td>
+      <td style="padding: 0.4rem 0.5rem;">Explicitly positioning relative to the physical screen</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="key-insight">
+  <p><strong>Practical rule:</strong> Default to logical properties for everything content-related (margin, padding, border, sizing). Only use physical properties when you genuinely mean "the physical left edge of the screen" regardless of language direction.</p>
+</div>
+
+<h2>Browser support</h2>
+
+<p>All logical properties: Chrome 87+, Safari 14.1+, Firefox 66+. Fully production-ready.</p>
+
+<h2>Retrieval check</h2>
+
+<div class="quiz" id="quiz1">
+  <h3>What does "block" mean in logical properties?</h3>
+  <ul class="quiz-options">
+    <li><button onclick="checkAnswer(this, false)">Block-level elements (divs, sections)</button></li>
+    <li><button onclick="checkAnswer(this, true)">The axis blocks stack on (vertical in English)</button></li>
+    <li><button onclick="checkAnswer(this, false)">The display: block value</button></li>
+    <li><button onclick="checkAnswer(this, false)">A CSS containment boundary</button></li>
+  </ul>
+  <div class="quiz-feedback"></div>
+</div>
+
+<div class="quiz" id="quiz2">
+  <h3>In an RTL language, what physical side does margin-inline-start apply to?</h3>
+  <ul class="quiz-options">
+    <li><button onclick="checkAnswer(this, false)">Left — inline-start is always left</button></li>
+    <li><button onclick="checkAnswer(this, true)">Right — inline-start follows text direction</button></li>
+    <li><button onclick="checkAnswer(this, false)">Top — RTL swaps block and inline</button></li>
+    <li><button onclick="checkAnswer(this, false)">It's ignored in RTL</button></li>
+  </ul>
+  <div class="quiz-feedback"></div>
+</div>
+
+<div class="quiz" id="quiz3">
+  <h3>What is the logical equivalent of width?</h3>
+  <ul class="quiz-options">
+    <li><button onclick="checkAnswer(this, false)">block-size</button></li>
+    <li><button onclick="checkAnswer(this, true)">inline-size</button></li>
+    <li><button onclick="checkAnswer(this, false)">logical-width</button></li>
+    <li><button onclick="checkAnswer(this, false)">flow-size</button></li>
+  </ul>
+  <div class="quiz-feedback"></div>
+</div>
+
+<div class="quiz" id="quiz4">
+  <h3>What does margin-inline: auto do?</h3>
+  <ul class="quiz-options">
+    <li><button onclick="checkAnswer(this, false)">Sets all four margins to auto</button></li>
+    <li><button onclick="checkAnswer(this, true)">Sets left + right margins to auto (centers horizontally)</button></li>
+    <li><button onclick="checkAnswer(this, false)">Sets top + bottom margins to auto</button></li>
+    <li><button onclick="checkAnswer(this, false)">Only works inside a flex container</button></li>
+  </ul>
+  <div class="quiz-feedback"></div>
+</div>
+
+<div class="quiz" id="quiz5">
+  <h3>What does inset: 0 do on a positioned element?</h3>
+  <ul class="quiz-options">
+    <li><button onclick="checkAnswer(this, false)">Removes all positioning</button></li>
+    <li><button onclick="checkAnswer(this, true)">Sets top, right, bottom, left all to 0 (fills the positioned parent)</button></li>
+    <li><button onclick="checkAnswer(this, false)">Resets the element to static positioning</button></li>
+    <li><button onclick="checkAnswer(this, false)">Same as margin: 0</button></li>
+  </ul>
+  <div class="quiz-feedback"></div>
+</div>
+
+<div class="source-link">
+  <p><strong>Primary sources:</strong></p>
+  <ul>
+    <li><a href="https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_logical_properties_and_values">MDN — CSS logical properties and values</a></li>
+    <li><a href="https://web.dev/learn/css/logical-properties/">web.dev — Logical properties</a></li>
+  </ul>
+</div>
+
+<div class="followup">
+  <p>💬 That's Lesson 15. Logical properties are a simple concept with broad impact — they make your CSS writing-mode-aware by default, shorter in many cases, and aligned with how Flexbox/Grid already think about direction.</p>
+  <p><strong>Next options:</strong></p>
+  <ul>
+    <li><strong>@scope</strong> — proximity-based styling (the newest cascade addition)</li>
+    <li><strong>View transitions</strong> — animating between page/element states</li>
+    <li><strong>Advanced colour</strong> — oklch, wide-gamut, relative colour syntax</li>
+  </ul>
+  <p>Your call, or I'll pick. You've now covered 15 lessons — the core of modern CSS is solid.</p>
+</div>
+
+<script>
+function checkAnswer(button, isCorrect) {
+  const quiz = button.closest('.quiz');
+  const buttons = quiz.querySelectorAll('button');
+  const feedback = quiz.querySelector('.quiz-feedback');
+
+  if (quiz.dataset.answered) return;
+  quiz.dataset.answered = 'true';
+
+  buttons.forEach(btn => btn.style.pointerEvents = 'none');
+
+  if (isCorrect) {
+    button.classList.add('correct');
+    feedback.textContent = '✓ Correct.';
+    feedback.style.background = '#e8f8f5';
+    feedback.style.color = '#1a7a6c';
+  } else {
+    button.classList.add('incorrect');
+    buttons.forEach(btn => {
+      if (btn.getAttribute('onclick').includes('true')) {
+        btn.classList.add('correct');
+      }
+    });
+    feedback.textContent = '✗ Not quite. The highlighted answer is correct.';
+    feedback.style.background = '#fef0ed';
+    feedback.style.color = '#c0392b';
+  }
+  feedback.style.display = 'block';
+}
+</script>
+
+</body>
+</html>

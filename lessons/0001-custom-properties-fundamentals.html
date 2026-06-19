@@ -23,7 +23,7 @@
       color: var(--text);
       background: var(--bg);
       line-height: 1.7;
-      max-width: 42rem;
+      max-width: 60rem;
       margin: 0 auto;
       padding: 3rem 1.5rem;
     }
@@ -116,6 +116,10 @@
       color: #888;
       margin-bottom: 0.75rem;
     }
+
+    .example-group { border: 1px solid var(--border); border-radius: 8px; margin: 1.5rem 0; overflow: hidden; }
+    .example-group .demo { border: none; border-radius: 0; margin: 0; border-bottom: 1px solid var(--border); }
+    .example-group pre { margin: 0; border: none; border-radius: 0; }
 
     .demo {
       border: 1px solid var(--border);
@@ -287,11 +291,12 @@
 
     @media print {
       body { max-width: 100%; padding: 1rem; }
-      .demo { break-inside: avoid; }
+      .demo, .example-group { break-inside: avoid; }
     }
   </style>
 </head>
 <body>
+<nav style="margin-bottom: 2rem;"><a href="index.html" style="font-size: 0.85rem; color: #3a86ff; text-decoration: none; border-bottom: 1px solid transparent;">← Course Contents</a></nav>
 
 <p class="lesson-number">Lesson 01</p>
 <h1>CSS Custom Properties from the Ground Up</h1>
@@ -340,16 +345,42 @@
 
 <h2>Live demo: scoping in action</h2>
 
-<div class="demo">
-  <p class="demo-label">Same class, different --demo-color values</p>
-  <div class="scope-demo">
-    <strong>Parent: --demo-color is #3a86ff (blue)</strong>
-    <div class="child">Child inherits --demo-color → blue background</div>
+<div class="example-group">
+  <div class="demo">
+    <p class="demo-label">Same class, different --demo-color values</p>
+    <div class="scope-demo">
+      <strong>Parent: --demo-color is #3a86ff (blue)</strong>
+      <div class="child">Child inherits --demo-color → blue background</div>
+    </div>
+    <div class="scope-demo override">
+      <strong>Parent: --demo-color is #e76f51 (orange)</strong>
+      <div class="child">Child inherits --demo-color → orange background</div>
+    </div>
   </div>
-  <div class="scope-demo override">
-    <strong>Parent: --demo-color is #e76f51 (orange)</strong>
-    <div class="child">Child inherits --demo-color → orange background</div>
-  </div>
+  <pre><code>&lt;!-- HTML --&gt;
+&lt;div class="scope-demo"&gt;
+  &lt;strong&gt;Parent: --demo-color is #3a86ff (blue)&lt;/strong&gt;
+  &lt;div class="child"&gt;Child inherits --demo-color → blue background&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class="scope-demo override"&gt;
+  &lt;strong&gt;Parent: --demo-color is #e76f51 (orange)&lt;/strong&gt;
+  &lt;div class="child"&gt;Child inherits --demo-color → orange background&lt;/div&gt;
+&lt;/div&gt;
+
+/* CSS */
+.scope-demo {
+  --demo-color: #3a86ff;
+  border: 2px solid var(--demo-color);
+}
+
+.scope-demo .child {
+  background: var(--demo-color);
+  color: white;
+}
+
+.scope-demo.override {
+  --demo-color: #e76f51;
+}</code></pre>
 </div>
 
 <p>Both <code>.child</code> elements use the same CSS rule (<code>background: var(--demo-color)</code>), but they resolve to different colours because the custom property was set differently on their parents. This is impossible with Sass variables.</p>
@@ -381,9 +412,22 @@
   color: var(--theme-text, var(--color-text, black));
 }</code></pre>
 
-<div class="demo">
-  <p class="demo-label">This box uses var(--custom-bg, #e8f8f5) — since --custom-bg isn't set, the fallback applies</p>
-  <div class="fallback-demo">I'm using the fallback background colour.</div>
+<div class="example-group">
+  <div class="demo">
+    <p class="demo-label">This box uses var(--custom-bg, #e8f8f5) — since --custom-bg isn't set, the fallback applies</p>
+    <div class="fallback-demo">I'm using the fallback background colour.</div>
+  </div>
+  <pre><code>&lt;!-- HTML --&gt;
+&lt;div class="fallback-demo"&gt;I'm using the fallback background colour.&lt;/div&gt;
+
+/* CSS */
+.fallback-demo {
+  /* --custom-bg is NOT set here or on any ancestor */
+  background: var(--custom-bg, #e8f8f5);
+  margin: var(--custom-margin, 0.5rem);
+  border-radius: 6px;
+  padding: 1rem;
+}</code></pre>
 </div>
 
 <div class="key-insight">
@@ -421,13 +465,40 @@ $color: red;
 
 <h2>Live demo: theming with custom properties</h2>
 
-<div class="demo">
-  <p class="demo-label">Click to toggle dark theme — same HTML, different property values</p>
-  <button class="theme-toggle" onclick="document.getElementById('themeCard').classList.toggle('dark')">Toggle dark mode</button>
-  <div class="theme-demo" id="themeCard">
-    <p><strong>Card component</strong></p>
-    <p>This card uses <code>--card-bg</code>, <code>--card-text</code>, and <code>--card-border</code>. The <code>.dark</code> class just redefines those three properties — no other CSS changes.</p>
+<div class="example-group">
+  <div class="demo">
+    <p class="demo-label">Click to toggle dark theme — same HTML, different property values</p>
+    <button class="theme-toggle" onclick="document.getElementById('themeCard').classList.toggle('dark')">Toggle dark mode</button>
+    <div class="theme-demo" id="themeCard">
+      <p><strong>Card component</strong></p>
+      <p>This card uses <code>--card-bg</code>, <code>--card-text</code>, and <code>--card-border</code>. The <code>.dark</code> class just redefines those three properties — no other CSS changes.</p>
+    </div>
   </div>
+  <pre><code>&lt;!-- HTML --&gt;
+&lt;button onclick="document.getElementById('themeCard').classList.toggle('dark')"&gt;
+  Toggle dark mode
+&lt;/button&gt;
+&lt;div class="theme-demo" id="themeCard"&gt;
+  &lt;p&gt;&lt;strong&gt;Card component&lt;/strong&gt;&lt;/p&gt;
+  &lt;p&gt;This card uses custom properties for theming.&lt;/p&gt;
+&lt;/div&gt;
+
+/* CSS */
+.theme-demo {
+  --card-bg: #fff;
+  --card-text: #1a1a2e;
+  --card-border: #e0e0e0;
+  background: var(--card-bg);
+  color: var(--card-text);
+  border: 1px solid var(--card-border);
+  transition: background 0.3s, color 0.3s;
+}
+
+.theme-demo.dark {
+  --card-bg: #1a1a2e;
+  --card-text: #f0f0f0;
+  --card-border: #333;
+}</code></pre>
 </div>
 
 <h2>They're live and reactive</h2>

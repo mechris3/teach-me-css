@@ -23,7 +23,7 @@
       color: var(--text);
       background: var(--bg);
       line-height: 1.7;
-      max-width: 42rem;
+      max-width: 60rem;
       margin: 0 auto;
       padding: 3rem 1.5rem;
     }
@@ -42,6 +42,10 @@
     .key-insight { border-left: 3px solid var(--accent); padding: 1rem 1.25rem; margin: 1.5rem 0; background: #f0f7ff; border-radius: 0 6px 6px 0; }
     .key-insight p { margin-bottom: 0.5rem; }
     .key-insight p:last-child { margin-bottom: 0; }
+
+    .example-group { border: 1px solid var(--border); border-radius: 8px; margin: 1.5rem 0; overflow: hidden; }
+    .example-group .demo { border: none; border-radius: 0; margin: 0; border-bottom: 1px solid var(--border); }
+    .example-group pre { margin: 0; border: none; border-radius: 0; }
 
     .demo { border: 1px solid var(--border); border-radius: 8px; padding: 1.5rem; margin: 1.5rem 0; background: #fafafa; }
     .demo-label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em; color: #888; margin-bottom: 1rem; }
@@ -222,10 +226,11 @@
     .source-link a:hover { border-bottom-color: var(--accent); }
     .followup { margin-top: 2rem; padding: 1rem 1.25rem; background: #f9f9f9; border-radius: 8px; font-size: 0.9rem; color: #555; }
 
-    @media print { body { max-width: 100%; padding: 1rem; } .demo { break-inside: avoid; } }
+    @media print { body { max-width: 100%; padding: 1rem; } .demo, .example-group { break-inside: avoid; } }
   </style>
 </head>
 <body>
+<nav style="margin-bottom: 2rem;"><a href="index.html" style="font-size: 0.85rem; color: #3a86ff; text-decoration: none; border-bottom: 1px solid transparent;">← Course Contents</a></nav>
 
 <p class="lesson-number">Lesson 06</p>
 <h1>CSS Transitions</h1>
@@ -275,26 +280,35 @@ transition:
 
 <h2>Live demo: basic transition</h2>
 
+<div class="example-group">
 <div class="demo">
   <p class="demo-label">Hover to transition width and background simultaneously</p>
   <div class="basic-box">Hover me</div>
 </div>
 
-<pre><code>.box {
+<pre><code>&lt;!-- HTML --&gt;
+&lt;div class="basic-box"&gt;Hover me&lt;/div&gt;
+
+/* CSS */
+.basic-box {
   width: 100px;
-  background: blue;
+  height: 60px;
+  background: var(--accent);
+  border-radius: 6px;
   transition: width 0.4s ease, background 0.4s ease;
 }
 
-.box:hover {
+.basic-box:hover {
   width: 300px;
-  background: coral;
+  background: #e76f51;
 }</code></pre>
+</div>
 
 <h2>Timing functions — the acceleration curve</h2>
 
 <p>The timing function controls how the value changes over time. It doesn't change the start/end — just how you get there.</p>
 
+<div class="example-group">
 <div class="demo">
   <p class="demo-label">Hover anywhere in this box — all bars transition to full width with different timing</p>
   <div class="timing-row">
@@ -305,6 +319,27 @@ transition:
     <div class="timing-bar">ease-in-out</div>
     <div class="timing-bar">cubic-bezier</div>
   </div>
+</div>
+
+<pre><code>&lt;!-- HTML --&gt;
+&lt;div class="timing-row"&gt;
+  &lt;div class="timing-bar"&gt;ease&lt;/div&gt;
+  &lt;div class="timing-bar"&gt;linear&lt;/div&gt;
+  &lt;div class="timing-bar"&gt;ease-in&lt;/div&gt;
+  &lt;div class="timing-bar"&gt;ease-out&lt;/div&gt;
+  &lt;div class="timing-bar"&gt;ease-in-out&lt;/div&gt;
+  &lt;div class="timing-bar"&gt;cubic-bezier&lt;/div&gt;
+&lt;/div&gt;
+
+/* CSS */
+.timing-bar:nth-child(1) { transition: width 1s ease; }
+.timing-bar:nth-child(2) { transition: width 1s linear; }
+.timing-bar:nth-child(3) { transition: width 1s ease-in; }
+.timing-bar:nth-child(4) { transition: width 1s ease-out; }
+.timing-bar:nth-child(5) { transition: width 1s ease-in-out; }
+.timing-bar:nth-child(6) { transition: width 1s cubic-bezier(0.68, -0.55, 0.27, 1.55); }
+
+.timing-row:hover .timing-bar { width: 100%; }</code></pre>
 </div>
 
 <p>The built-in keywords:</p>
@@ -338,6 +373,7 @@ ease-in-out: cubic-bezier(0.42, 0, 0.58, 1.0)</code></pre>
 
 <p>A delay makes the transition wait before starting. Combined with different delays per element, you get stagger effects:</p>
 
+<div class="example-group">
 <div class="demo">
   <p class="demo-label">Hover the row — each box starts its transition slightly later</p>
   <div class="delay-row">
@@ -349,7 +385,17 @@ ease-in-out: cubic-bezier(0.42, 0, 0.58, 1.0)</code></pre>
   </div>
 </div>
 
-<pre><code>.delay-box {
+<pre><code>&lt;!-- HTML --&gt;
+&lt;div class="delay-row"&gt;
+  &lt;div class="delay-box"&gt;&lt;/div&gt;
+  &lt;div class="delay-box"&gt;&lt;/div&gt;
+  &lt;div class="delay-box"&gt;&lt;/div&gt;
+  &lt;div class="delay-box"&gt;&lt;/div&gt;
+  &lt;div class="delay-box"&gt;&lt;/div&gt;
+&lt;/div&gt;
+
+/* CSS */
+.delay-box {
   transition: transform 0.3s ease, background 0.3s ease;
 }
 
@@ -359,21 +405,32 @@ ease-in-out: cubic-bezier(0.42, 0, 0.58, 1.0)</code></pre>
 .delay-box:nth-child(4) { transition-delay: 0.3s; }
 .delay-box:nth-child(5) { transition-delay: 0.4s; }
 
-.row:hover .delay-box {
+.delay-row:hover .delay-box {
   transform: translateY(-10px);
   background: teal;
 }</code></pre>
+</div>
 
 <h2>Multiple properties — independent timing</h2>
 
 <p>You can give each property its own duration, timing, and delay:</p>
 
+<div class="example-group">
 <div class="demo">
   <p class="demo-label">Hover — each property transitions at its own speed</p>
   <div class="multi-box">Hover</div>
 </div>
 
-<pre><code>.box {
+<pre><code>&lt;!-- HTML --&gt;
+&lt;div class="multi-box"&gt;Hover&lt;/div&gt;
+
+/* CSS */
+.multi-box {
+  width: 100px;
+  height: 60px;
+  background: var(--accent);
+  border-radius: 6px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
   transition:
     background 0.3s ease,
     transform 0.2s ease,
@@ -381,12 +438,13 @@ ease-in-out: cubic-bezier(0.42, 0, 0.58, 1.0)</code></pre>
     border-radius 0.4s ease;
 }
 
-.box:hover {
-  background: coral;
+.multi-box:hover {
+  background: #e76f51;
   transform: scale(1.1);
   box-shadow: 0 8px 24px rgba(0,0,0,0.2);
   border-radius: 50%;
 }</code></pre>
+</div>
 
 <h2><code>transition: all</code> — convenient but risky</h2>
 
@@ -435,6 +493,7 @@ transition: all 0.3s ease;</code></pre>
 
 <p>Remember: unregistered custom properties can't be transitioned. But with <code>@property</code>, you can transition anything that has a numeric component inside it. Here's a gradient angle rotating on hover:</p>
 
+<div class="example-group">
 <div class="demo">
   <p class="demo-label">Hover — the gradient angle transitions from 0deg to 180deg</p>
   <div class="gradient-angle-box">Hover me</div>
@@ -446,14 +505,19 @@ transition: all 0.3s ease;</code></pre>
   initial-value: 0deg;
 }
 
-.box {
+&lt;!-- HTML --&gt;
+&lt;div class="gradient-angle-box"&gt;Hover me&lt;/div&gt;
+
+/* CSS */
+.gradient-angle-box {
   background: linear-gradient(var(--gradient-angle), blue, coral);
   transition: --gradient-angle 0.8s ease-in-out;
 }
 
-.box:hover {
+.gradient-angle-box:hover {
   --gradient-angle: 180deg;
 }</code></pre>
+</div>
 
 <div class="key-insight">
   <p><strong>The pattern:</strong> Extract → Register → Transition. Pull a numeric part out of a compound value into a custom property, register it with @property, then transition the property. Works for gradient stops, hues, angles, individual transform values — anything.</p>

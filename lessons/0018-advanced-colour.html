@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lesson 18: Advanced Colour — OKLCH, Wide Gamut & Relative Colour Syntax</title>
+  <style>
+    :root {
+      --text: #1a1a2e;
+      --bg: #fefefe;
+      --accent: #3a86ff;
+      --code-bg: #f4f4f8;
+      --border: #e0e0e0;
+      --serif: 'Georgia', serif;
+      --mono: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+      --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+    * { box-sizing: border-box; margin: 0; }
+    body { font-family: var(--sans); color: var(--text); background: var(--bg); line-height: 1.7; max-width: 60rem; margin: 0 auto; padding: 3rem 1.5rem; }
+    h1 { font-family: var(--serif); font-size: 1.8rem; margin-bottom: 0.25rem; font-weight: normal; }
+    .lesson-number { font-size: 0.85rem; color: #666; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.25rem; }
+    h2 { font-family: var(--serif); font-size: 1.3rem; margin-top: 2.5rem; margin-bottom: 0.75rem; font-weight: normal; }
+    h3 { font-size: 1rem; margin-top: 1.5rem; margin-bottom: 0.5rem; }
+    p, li { margin-bottom: 1rem; }
+    ul, ol { padding-left: 1.5rem; }
+    code { font-family: var(--mono); font-size: 0.88em; background: var(--code-bg); padding: 0.15em 0.4em; border-radius: 3px; }
+    pre { background: var(--code-bg); border: 1px solid var(--border); border-radius: 6px; padding: 1.25rem; overflow-x: auto; margin: 1.25rem 0; line-height: 1.5; }
+    pre code { background: none; padding: 0; font-size: 0.85rem; }
+    .key-insight { border-left: 3px solid var(--accent); padding: 1rem 1.25rem; margin: 1.5rem 0; background: #f0f7ff; border-radius: 0 6px 6px 0; }
+    .key-insight p { margin-bottom: 0.5rem; }
+    .key-insight p:last-child { margin-bottom: 0; }
+    .example-group { border: 1px solid var(--border); border-radius: 8px; margin: 1.5rem 0; overflow: hidden; }
+    .example-group .demo { border: none; border-radius: 0; margin: 0; border-bottom: 1px solid var(--border); }
+    .example-group pre { margin: 0; border: none; border-radius: 0; }
+    .demo { border: 1px solid var(--border); border-radius: 8px; padding: 1.5rem; margin: 1.5rem 0; background: #fafafa; }
+    .demo-label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em; color: #888; margin-bottom: 1rem; }
+    .swatch-row { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+    .swatch { width: 60px; height: 60px; border-radius: 6px; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 0.3rem; font-size: 0.6rem; color: white; text-shadow: 0 1px 2px rgba(0,0,0,0.4); }
+    .quiz { background: #fffdf0; border: 1px solid #e8e0c0; border-radius: 8px; padding: 1.5rem; margin: 2rem 0; }
+    .quiz h3 { font-size: 1rem; margin-bottom: 1rem; margin-top: 0; font-weight: 600; }
+    .quiz-options { list-style: none; padding: 0; }
+    .quiz-options li { margin-bottom: 0.5rem; }
+    .quiz-options button { display: block; width: 100%; text-align: left; padding: 0.75rem 1rem; border: 1px solid var(--border); border-radius: 6px; background: white; font-family: var(--mono); font-size: 0.85rem; cursor: pointer; transition: border-color 0.15s; }
+    .quiz-options button:hover { border-color: var(--accent); }
+    .quiz-options button.correct { border-color: #2a9d8f; background: #e8f8f5; }
+    .quiz-options button.incorrect { border-color: #e76f51; background: #fef0ed; }
+    .quiz-feedback { margin-top: 1rem; padding: 0.75rem; border-radius: 6px; font-size: 0.9rem; display: none; }
+    .source-link { margin-top: 3rem; padding-top: 1.5rem; border-top: 1px solid var(--border); }
+    .source-link a { color: var(--accent); text-decoration: none; border-bottom: 1px solid transparent; }
+    .source-link a:hover { border-bottom-color: var(--accent); }
+    .followup { margin-top: 2rem; padding: 1rem 1.25rem; background: #f9f9f9; border-radius: 8px; font-size: 0.9rem; color: #555; }
+    @media print { body { max-width: 100%; padding: 1rem; } .example-group { break-inside: avoid; } }
+  </style>
+</head>
+<body>
+
+<nav style="margin-bottom: 2rem;"><a href="index.html" style="font-size: 0.85rem; color: #3a86ff; text-decoration: none;">← Course Contents</a></nav>
+
+<p class="lesson-number">Lesson 18</p>
+<h1>Advanced Colour — OKLCH, Wide Gamut & Relative Colour Syntax</h1>
+
+<p>For 25 years, web colour meant hex (<code>#ff6600</code>), <code>rgb()</code>, and maybe <code>hsl()</code>. These all describe colours within the <strong>sRGB gamut</strong> — a limited range of colours defined in 1996. Modern displays (P3 screens on MacBooks, iPhones, etc.) can show about 50% more colours than sRGB can represent. And perceptually, sRGB tools are broken — "50% lightness" in HSL doesn't look half as bright to your eyes.</p>
+
+<p>Modern CSS fixes both problems with new colour spaces and syntax.</p>
+
+<h2>The mental model: why oklch matters</h2>
+
+<p>OKLCH has three channels:</p>
+<ul>
+  <li><strong>L</strong> (Lightness) — 0% = black, 100% = white. <em>Perceptually uniform</em>: L=50 genuinely looks "half-bright" to human eyes.</li>
+  <li><strong>C</strong> (Chroma) — how saturated/vivid the colour is. 0 = grey, higher = more vivid. No fixed max (depends on the hue).</li>
+  <li><strong>H</strong> (Hue) — the colour angle on the colour wheel (0–360°). 0=red, 90=yellow, 180=cyan, 270=blue.</li>
+</ul>
+
+<h3>The colour wheel — what hue angles mean</h3>
+
+<p>Hue is an angle (in degrees) on a circular colour wheel. Think of it as a clock face where different colours sit at different positions:</p>
+
+<div class="example-group">
+<div class="demo">
+  <p class="demo-label">The hue wheel — 12 positions around 360°</p>
+  <div style="position: relative; width: 240px; height: 240px; margin: 0 auto 1rem;">
+    <!-- CSS conic gradient wheel -->
+    <div style="width: 240px; height: 240px; border-radius: 50%; background: conic-gradient(from 0deg, oklch(65% 0.2 0), oklch(65% 0.2 30), oklch(65% 0.2 60), oklch(65% 0.2 90), oklch(65% 0.2 120), oklch(65% 0.2 150), oklch(65% 0.2 180), oklch(65% 0.2 210), oklch(65% 0.2 240), oklch(65% 0.2 270), oklch(65% 0.2 300), oklch(65% 0.2 330), oklch(65% 0.2 360)); opacity: 0.9;"></div>
+    <!-- Center white circle -->
+    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 80px; height: 80px; border-radius: 50%; background: white; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; color: #666; text-align: center; line-height: 1.3;">Hue<br>0–360°</div>
+    <!-- Labels positioned around the wheel -->
+    <span style="position: absolute; top: -18px; left: 50%; transform: translateX(-50%); font-size: 0.65rem; font-weight: 600;">0° red</span>
+    <span style="position: absolute; top: 10px; right: -8px; font-size: 0.65rem; font-weight: 600;">90° yellow</span>
+    <span style="position: absolute; bottom: -18px; left: 50%; transform: translateX(-50%); font-size: 0.65rem; font-weight: 600;">180° cyan</span>
+    <span style="position: absolute; top: 10px; left: -14px; font-size: 0.65rem; font-weight: 600;">270° blue</span>
+  </div>
+  <p style="font-size: 0.8rem; color: #555; text-align: center; margin: 0;">The same colour wheel as a linear strip:</p>
+  <div style="display: flex; flex-wrap: wrap; gap: 0.4rem; justify-content: center; margin-top: 0.5rem;">
+    <div class="swatch" style="background: oklch(65% 0.2 0);">0° red</div>
+    <div class="swatch" style="background: oklch(65% 0.2 30);">30°</div>
+    <div class="swatch" style="background: oklch(65% 0.2 60);">60° orange</div>
+    <div class="swatch" style="background: oklch(65% 0.2 90);">90° yellow</div>
+    <div class="swatch" style="background: oklch(65% 0.2 120);">120°</div>
+    <div class="swatch" style="background: oklch(65% 0.2 150);">150° green</div>
+    <div class="swatch" style="background: oklch(65% 0.2 180);">180° cyan</div>
+    <div class="swatch" style="background: oklch(65% 0.2 210);">210°</div>
+    <div class="swatch" style="background: oklch(65% 0.2 240);">240° blue</div>
+    <div class="swatch" style="background: oklch(65% 0.2 270);">270°</div>
+    <div class="swatch" style="background: oklch(65% 0.2 300);">300° pink</div>
+    <div class="swatch" style="background: oklch(65% 0.2 330);">330°</div>
+  </div>
+</div>
+<pre><code>/* Hue is an angle on the colour wheel: */
+/*
+        90° (yellow)
+          │
+  180° ───┼─── 0°/360° (red)
+ (cyan)   │
+        270° (blue)
+*/
+
+/* Key positions to remember: */
+  0° = red
+ 30° = orange-red
+ 60° = orange
+ 90° = yellow
+120° = yellow-green
+150° = green
+180° = cyan
+210° = sky blue
+240° = blue
+270° = indigo/violet
+300° = magenta/pink
+330° = rose
+
+/* Colour relationships (design theory): */
+/* Complementary: +180° (opposite on wheel) */
+/* Analogous: ±30° (neighbours) */
+/* Triadic: +120° each (three equally spaced) */
+/* Split-complementary: +150° and +210° */</code></pre>
+</div>
+
+<p>Because hue is an angle, it wraps: 370° = 10°. And you can use <code>calc(h + 180)</code> in relative colour syntax to get the complementary colour — the one directly opposite on the wheel.</p>
+
+<div class="key-insight">
+  <p><strong>Why not just HSL?</strong> HSL lies to you. <code>hsl(60, 100%, 50%)</code> (yellow) looks FAR brighter than <code>hsl(240, 100%, 50%)</code> (blue) — even though both claim "50% lightness." That's because HSL's lightness is a mathematical average of RGB channels, not a perceptual measurement. OKLCH's lightness is calibrated to human vision — same L value = same perceived brightness regardless of hue.</p>
+</div>
+
+<h2>oklch() syntax</h2>
+
+<div class="example-group">
+<div class="demo">
+  <p class="demo-label">Same lightness (65%), same chroma (0.2), different hues — they look equally bright</p>
+  <div class="swatch-row">
+    <div class="swatch" style="background: oklch(65% 0.2 0);">0° red</div>
+    <div class="swatch" style="background: oklch(65% 0.2 60);">60° orange</div>
+    <div class="swatch" style="background: oklch(65% 0.2 120);">120° green</div>
+    <div class="swatch" style="background: oklch(65% 0.2 180);">180° cyan</div>
+    <div class="swatch" style="background: oklch(65% 0.2 240);">240° blue</div>
+    <div class="swatch" style="background: oklch(65% 0.2 300);">300° pink</div>
+  </div>
+</div>
+<pre><code>&lt;!-- HTML --&gt;
+&lt;div class="swatch" style="background: oklch(65% 0.2 0);"&gt;red&lt;/div&gt;
+&lt;div class="swatch" style="background: oklch(65% 0.2 120);"&gt;green&lt;/div&gt;
+&lt;div class="swatch" style="background: oklch(65% 0.2 240);"&gt;blue&lt;/div&gt;
+
+/* oklch syntax */
+color: oklch(65% 0.2 240);
+/*           L    C    H
+             │    │    └── Hue angle (0–360°)
+             │    └─────── Chroma (0 = grey, ~0.4 = max vivid)
+             └──────────── Lightness (0% = black, 100% = white)
+*/
+
+/* With alpha (transparency) */
+color: oklch(65% 0.2 240 / 0.5);  /* 50% transparent */</code></pre>
+</div>
+
+<h2>Comparison: HSL vs OKLCH at "same lightness"</h2>
+
+<div class="example-group">
+<div class="demo">
+  <p class="demo-label">HSL: all "50% lightness" — but yellow looks much brighter than blue</p>
+  <div class="swatch-row">
+    <div class="swatch" style="background: hsl(0, 100%, 50%);">hsl red</div>
+    <div class="swatch" style="background: hsl(60, 100%, 50%);">hsl yellow</div>
+    <div class="swatch" style="background: hsl(120, 100%, 50%);">hsl green</div>
+    <div class="swatch" style="background: hsl(240, 100%, 50%);">hsl blue</div>
+  </div>
+  <p class="demo-label" style="margin-top: 1rem;">OKLCH: all 65% lightness — genuinely equal perceived brightness</p>
+  <div class="swatch-row">
+    <div class="swatch" style="background: oklch(65% 0.25 25);">oklch red</div>
+    <div class="swatch" style="background: oklch(65% 0.25 90);">oklch yellow</div>
+    <div class="swatch" style="background: oklch(65% 0.25 145);">oklch green</div>
+    <div class="swatch" style="background: oklch(65% 0.25 265);">oklch blue</div>
+  </div>
+</div>
+<pre><code>/* HSL: "50% lightness" is a lie — yellow looks way brighter than blue */
+color: hsl(60, 100%, 50%);   /* yellow — very bright to your eyes */
+color: hsl(240, 100%, 50%);  /* blue — very dark to your eyes */
+
+/* OKLCH: 65% lightness is 65% lightness, period */
+color: oklch(65% 0.25 90);   /* yellow — same perceived brightness */
+color: oklch(65% 0.25 265);  /* blue — same perceived brightness */</code></pre>
+</div>
+
+<div class="key-insight">
+  <p><strong>This is why OKLCH matters for design systems:</strong> You can create a palette where all colours at the same lightness level are actually interchangeable as backgrounds without adjusting text contrast. In HSL, you'd need manual tweaks per hue.</p>
+</div>
+
+<h2>Wide gamut — colours beyond sRGB</h2>
+
+<p>sRGB can only represent a subset of colours visible to the human eye. Modern displays (Apple P3, Rec.2020) can show more. OKLCH and <code>color()</code> can express these wider-gamut colours:</p>
+
+<div class="example-group">
+<div class="demo">
+  <p class="demo-label">On a P3 display, the top row (P3 gamut) will appear more vivid than the bottom (sRGB). On sRGB displays, they'll look the same.</p>
+  <p style="font-size: 0.75rem; color: #888; margin-bottom: 0.5rem;">Wide gamut (P3):</p>
+  <div class="swatch-row">
+    <div class="swatch" style="background: oklch(65% 0.3 25); width: 80px;">P3 red</div>
+    <div class="swatch" style="background: oklch(75% 0.3 145); width: 80px;">P3 green</div>
+    <div class="swatch" style="background: oklch(55% 0.3 265); width: 80px;">P3 blue</div>
+  </div>
+  <p style="font-size: 0.75rem; color: #888; margin-bottom: 0.5rem; margin-top: 0.75rem;">sRGB equivalent (clamped):</p>
+  <div class="swatch-row">
+    <div class="swatch" style="background: rgb(255, 59, 48); width: 80px;">sRGB red</div>
+    <div class="swatch" style="background: rgb(52, 199, 89); width: 80px;">sRGB green</div>
+    <div class="swatch" style="background: rgb(0, 122, 255); width: 80px;">sRGB blue</div>
+  </div>
+</div>
+<pre><code>/* Wide gamut — more vivid on P3 displays */
+color: oklch(65% 0.3 25);      /* a red more vivid than #ff0000 can express */
+color: color(display-p3 1 0 0); /* pure P3 red — outside sRGB entirely */
+
+/* The color() function for specific colour spaces */
+color: color(display-p3 0.2 0.8 0.35);  /* P3 green */
+color: color(srgb 0.2 0.5 1.0);          /* explicit sRGB */
+
+/* Fallback for browsers/displays without wide gamut */
+.vibrant {
+  color: rgb(255, 59, 48);              /* sRGB fallback */
+  color: oklch(65% 0.3 25);            /* wide gamut (used if supported) */
+}</code></pre>
+</div>
+
+<div class="key-insight">
+  <p><strong>Graceful degradation:</strong> If a browser or display can't show a wide-gamut colour, it <em>gamut maps</em> — clamps it to the closest representable colour in the display's gamut. The page doesn't break; it just looks slightly less vivid. You can safely use oklch everywhere.</p>
+</div>
+
+<h2>Relative colour syntax — derive colours from other colours</h2>
+
+<p>This is where it gets powerful. Relative colour syntax lets you take any colour and create variations by modifying individual channels:</p>
+
+<div class="example-group">
+<div class="demo">
+  <p class="demo-label">One base colour → an entire tint/shade scale by modifying lightness</p>
+  <div class="swatch-row">
+    <div class="swatch" style="background: oklch(from #3a86ff 95% c h);">L: 95%</div>
+    <div class="swatch" style="background: oklch(from #3a86ff 85% c h);">L: 85%</div>
+    <div class="swatch" style="background: oklch(from #3a86ff 75% c h);">L: 75%</div>
+    <div class="swatch" style="background: oklch(from #3a86ff 65% c h);">L: 65%</div>
+    <div class="swatch" style="background: oklch(from #3a86ff 50% c h);">L: 50%</div>
+    <div class="swatch" style="background: oklch(from #3a86ff 35% c h);">L: 35%</div>
+    <div class="swatch" style="background: oklch(from #3a86ff 20% c h);">L: 20%</div>
+  </div>
+</div>
+<pre><code>/* Relative colour syntax: oklch(from &lt;origin&gt; L C H) */
+/* "from" converts the origin colour into oklch, then you override channels */
+
+:root {
+  --brand: #3a86ff;
+}
+
+/* Lighten — keep chroma and hue, increase lightness */
+--brand-100: oklch(from var(--brand) 95% c h);
+--brand-200: oklch(from var(--brand) 85% c h);
+--brand-300: oklch(from var(--brand) 75% c h);
+
+/* Darken — decrease lightness */
+--brand-700: oklch(from var(--brand) 35% c h);
+--brand-900: oklch(from var(--brand) 20% c h);
+
+/* Desaturate — reduce chroma */
+--brand-muted: oklch(from var(--brand) l 0.05 h);
+
+/* Shift hue — create complementary/analogous */
+--complement: oklch(from var(--brand) l c calc(h + 180));
+--analogous:  oklch(from var(--brand) l c calc(h + 30));</code></pre>
+</div>
+
+<h3>The syntax explained</h3>
+
+<pre><code>oklch(from &lt;origin-color&gt; &lt;L&gt; &lt;C&gt; &lt;H&gt; / &lt;alpha&gt;)
+
+/* "from" converts the origin into oklch channels: l, c, h */
+/* You can then use those channel names in expressions: */
+
+oklch(from red l c h)              /* = red (no changes) */
+oklch(from red 80% c h)           /* = lighter red (L overridden to 80%) */
+oklch(from red l 0.1 h)           /* = desaturated red (C reduced) */
+oklch(from red l c calc(h + 90))  /* = hue-shifted 90° (red → yellow-ish) */
+oklch(from red l c h / 0.5)       /* = 50% transparent red */</code></pre>
+
+<div class="key-insight">
+  <p><strong>The power here:</strong> You define ONE brand colour, and derive your entire palette mathematically. Change the brand colour → the whole palette updates. No manual tuning per shade. And because it's in oklch, the lightness steps look perceptually even.</p>
+</div>
+
+<h2>Relative colour syntax with other spaces</h2>
+
+<p>It works with any colour function, not just oklch:</p>
+
+<pre><code>/* In HSL — shift hue */
+color: hsl(from var(--brand) calc(h + 30) s l);
+
+/* In sRGB — halve the red channel */
+color: rgb(from var(--brand) calc(r / 2) g b);
+
+/* Make any colour semi-transparent */
+color: oklch(from var(--brand) l c h / 0.5);
+color: rgb(from var(--brand) r g b / 0.7);</code></pre>
+
+<h2>Practical: building a design token palette</h2>
+
+<div class="example-group">
+<div class="demo">
+  <p class="demo-label">A complete colour scale from one variable — all shades derived automatically</p>
+  <div class="swatch-row">
+    <div class="swatch" style="background: oklch(from #e76f51 95% 0.05 h); color: #333;">50</div>
+    <div class="swatch" style="background: oklch(from #e76f51 88% 0.08 h); color: #333;">100</div>
+    <div class="swatch" style="background: oklch(from #e76f51 78% 0.12 h);">200</div>
+    <div class="swatch" style="background: oklch(from #e76f51 68% 0.18 h);">300</div>
+    <div class="swatch" style="background: oklch(from #e76f51 58% 0.2 h);">400</div>
+    <div class="swatch" style="background: oklch(from #e76f51 50% 0.2 h);">500</div>
+    <div class="swatch" style="background: oklch(from #e76f51 40% 0.18 h);">600</div>
+    <div class="swatch" style="background: oklch(from #e76f51 30% 0.14 h);">700</div>
+    <div class="swatch" style="background: oklch(from #e76f51 22% 0.08 h);">800</div>
+    <div class="swatch" style="background: oklch(from #e76f51 15% 0.05 h);">900</div>
+  </div>
+</div>
+<pre><code>:root {
+  --brand: #e76f51;
+
+  /* Full palette from one colour — relative colour syntax */
+  --brand-50:  oklch(from var(--brand) 95% 0.05 h);
+  --brand-100: oklch(from var(--brand) 88% 0.08 h);
+  --brand-200: oklch(from var(--brand) 78% 0.12 h);
+  --brand-300: oklch(from var(--brand) 68% 0.18 h);
+  --brand-400: oklch(from var(--brand) 58% 0.2 h);
+  --brand-500: oklch(from var(--brand) 50% 0.2 h);
+  --brand-600: oklch(from var(--brand) 40% 0.18 h);
+  --brand-700: oklch(from var(--brand) 30% 0.14 h);
+  --brand-800: oklch(from var(--brand) 22% 0.08 h);
+  --brand-900: oklch(from var(--brand) 15% 0.05 h);
+
+  /* Change --brand and the ENTIRE palette updates */
+}</code></pre>
+</div>
+
+<h2>light-dark() — theme-aware colour in one line</h2>
+
+<div class="example-group">
+<div class="demo">
+  <p class="demo-label">light-dark() picks between two values based on the user's colour-scheme preference</p>
+  <div style="color-scheme: light; background: light-dark(white, #1a1a2e); color: light-dark(#1a1a2e, #f0f0f0); padding: 1rem; border-radius: 6px; border: 1px solid var(--border); font-size: 0.85rem;">
+    I use <code>light-dark()</code> — my background is white in light mode, dark in dark mode.
+  </div>
+</div>
+<pre><code>&lt;!-- HTML --&gt;
+&lt;div class="card"&gt;Theme-aware card&lt;/div&gt;
+
+/* CSS — one-line theme-aware values */
+:root {
+  color-scheme: light dark;  /* opt into both modes */
+}
+
+.card {
+  background: light-dark(white, #1a1a2e);
+  color: light-dark(#1a1a2e, #f0f0f0);
+  border-color: light-dark(#e0e0e0, #333);
+}
+
+/* No @media (prefers-color-scheme) needed!
+   light-dark() automatically picks based on the active scheme */</code></pre>
+</div>
+
+<div class="key-insight">
+  <p><strong>light-dark() replaces the pattern of duplicate @media blocks for dark mode.</strong> Instead of defining every colour twice in separate media queries, you define it once with both values inline. Requires <code>color-scheme: light dark</code> on the root.</p>
+</div>
+
+<h2>Implementing theme modes — the full picture</h2>
+
+<h3>How light-dark() knows which value to pick</h3>
+
+<p><code>light-dark()</code> reads from the <code>color-scheme</code> CSS property on the element (or its ancestors). The <code>color-scheme</code> property tells the browser which mode is active:</p>
+
+<pre><code>/* "I support both — use whatever the OS says" */
+:root { color-scheme: light dark; }
+/* → light-dark() picks based on the user's OS appearance setting */
+
+/* "Force light mode regardless of OS" */
+:root { color-scheme: light; }
+/* → light-dark() ALWAYS picks the first value */
+
+/* "Force dark mode regardless of OS" */
+:root { color-scheme: dark; }
+/* → light-dark() ALWAYS picks the second value */</code></pre>
+
+<p>The resolution order:</p>
+<ol>
+  <li><strong>OS preference</strong> — the user's system setting (macOS Appearance, Windows Personalisation). Detected by <code>prefers-color-scheme</code>.</li>
+  <li><strong><code>color-scheme</code> property</strong> — tells the browser which modes you support. <code>light dark</code> = follow OS. <code>light</code> or <code>dark</code> alone = override OS.</li>
+  <li><strong><code>light-dark()</code></strong> — reads the resolved mode from <code>color-scheme</code> and picks the corresponding value.</li>
+</ol>
+
+<div class="key-insight">
+  <p><strong>The toggle mechanism:</strong> To switch modes, you change the <code>color-scheme</code> value. The simplest way: add a class to <code>&lt;html&gt;</code> that overrides it. All <code>light-dark()</code> calls on the page respond automatically — no redefinition of colours needed.</p>
+</div>
+
+<pre><code>/* CSS */
+:root { color-scheme: light dark; }        /* default: follow OS */
+:root.force-light { color-scheme: light; } /* user chose light */
+:root.force-dark  { color-scheme: dark; }  /* user chose dark */
+
+// JS — toggle is just a class swap
+document.documentElement.classList.remove('force-light', 'force-dark');
+document.documentElement.classList.add('force-dark');
+// → Every light-dark() on the page now picks its second value</code></pre>
+
+<p>There are several approaches to building on this. Here's how they compare:</p>
+
+<h3>Approach 1: System preference only (CSS-only, no toggle)</h3>
+
+<pre><code>/* Respects the user's OS setting — no manual toggle */
+:root {
+  color-scheme: light dark;  /* tells the browser both schemes are supported */
+}
+
+.card {
+  background: light-dark(white, #1a1a2e);
+  color: light-dark(#1a1a2e, #f0f0f0);
+  border-color: light-dark(#e0e0e0, #333);
+}
+
+/* What color-scheme: light dark does:
+   - Tells the browser to use the user's OS preference
+   - Enables light-dark() to pick the right value
+   - Also affects form controls, scrollbars, etc. (they theme automatically)
+*/</code></pre>
+
+<h3>Approach 2: System preference + user override toggle</h3>
+
+<p>Most apps want both: respect the OS default, but let the user override it. The cleanest pattern uses custom properties + a class on the root:</p>
+
+<div class="example-group">
+<div class="demo">
+  <p class="demo-label">Click to cycle modes — note how the card responds</p>
+  <div style="margin-bottom: 0.75rem;">
+    <button onclick="cycleTheme()" style="padding: 0.5rem 1rem; border: 1px solid var(--border); border-radius: 4px; background: white; cursor: pointer; font-size: 0.85rem;" id="themeBtn">Mode: system</button>
+  </div>
+  <div id="themeDemoCard" style="padding: 1rem; border-radius: 6px; border: 1px solid; font-size: 0.85rem; transition: background 0.3s, color 0.3s; background: white; color: #1a1a2e; border-color: #e0e0e0;">
+    This card adapts to the theme mode.
+  </div>
+</div>
+<pre><code>&lt;!-- HTML --&gt;
+&lt;html class="light"&gt;  &lt;!-- or "dark", or no class for system --&gt;
+  &lt;button onclick="cycleTheme()"&gt;Toggle&lt;/button&gt;
+  &lt;div class="card"&gt;Content&lt;/div&gt;
+&lt;/html&gt;
+
+/* CSS — define tokens per theme */
+:root {
+  color-scheme: light dark;
+
+  /* Default: system preference via light-dark() */
+  --color-bg: light-dark(white, #1a1a2e);
+  --color-text: light-dark(#1a1a2e, #f0f0f0);
+  --color-border: light-dark(#e0e0e0, #333);
+  --color-surface: light-dark(#f8f8f8, #2a2a3e);
+}
+
+/* Override: force light */
+:root.light {
+  color-scheme: light;
+  --color-bg: white;
+  --color-text: #1a1a2e;
+  --color-border: #e0e0e0;
+  --color-surface: #f8f8f8;
+}
+
+/* Override: force dark */
+:root.dark {
+  color-scheme: dark;
+  --color-bg: #1a1a2e;
+  --color-text: #f0f0f0;
+  --color-border: #333;
+  --color-surface: #2a2a3e;
+}
+
+/* Components just use the tokens — no theme logic here */
+.card {
+  background: var(--color-bg);
+  color: var(--color-text);
+  border-color: var(--color-border);
+}
+
+// JavaScript — cycle between system/light/dark
+const modes = ['system', 'light', 'dark'];
+let currentMode = 0;
+
+function cycleTheme() {
+  currentMode = (currentMode + 1) % modes.length;
+  const mode = modes[currentMode];
+  document.documentElement.classList.remove('light', 'dark');
+  if (mode !== 'system') {
+    document.documentElement.classList.add(mode);
+  }
+  // Persist choice
+  localStorage.setItem('theme', mode);
+}</code></pre>
+</div>
+
+<h3>Approach 3: Using container style queries for scoped themes</h3>
+
+<p>From Lesson 10 — you can use style queries to scope themes to a specific section without affecting the whole page:</p>
+
+<pre><code>/* Set a theme custom property on a container */
+.sidebar {
+  --theme: dark;
+}
+
+/* Children respond to the container's --theme */
+@container style(--theme: dark) {
+  .card {
+    background: #1a1a2e;
+    color: #f0f0f0;
+  }
+}
+
+/* The sidebar is dark, the rest of the page stays light.
+   No duplication of component styles — just one @container rule. */</code></pre>
+
+<h3>The recommended architecture</h3>
+
+<pre><code>/* 1. Define semantic colour tokens on :root */
+:root {
+  color-scheme: light dark;
+
+  --color-bg-primary: light-dark(white, #0f0f1a);
+  --color-bg-surface: light-dark(#f8f8fa, #1a1a2e);
+  --color-text-primary: light-dark(#1a1a2e, #f0f0f0);
+  --color-text-secondary: light-dark(#666, #aaa);
+  --color-border: light-dark(#e0e0e0, #333);
+  --color-accent: oklch(65% 0.2 250);  /* same in both modes */
+  --color-accent-subtle: light-dark(
+    oklch(from var(--color-accent) 95% 0.03 h),
+    oklch(from var(--color-accent) 20% 0.05 h)
+  );
+}
+
+/* 2. Override with .light / .dark class for user toggle */
+:root.light { color-scheme: light; /* override tokens here if needed */ }
+:root.dark  { color-scheme: dark;  /* override tokens here if needed */ }
+
+/* 3. Components ONLY reference tokens — never raw colours */
+.card {
+  background: var(--color-bg-surface);
+  color: var(--color-text-primary);
+  border: 1px solid var(--color-border);
+}
+
+.button {
+  background: var(--color-accent);
+  color: white;
+}
+
+/* Result: change the mode → everything updates.
+   Components have zero awareness of themes. */</code></pre>
+
+<div class="key-insight">
+  <p><strong>The principle:</strong> Separate the three concerns: (1) token definition (what colours exist), (2) theme mode (which variant is active), (3) component usage (referencing tokens). Components should never contain theme logic — they just use tokens. The root handles switching.</p>
+</div>
+
+<h2>Browser support</h2>
+
+<ul>
+  <li><code>oklch()</code>: Chrome 111+, Safari 15.4+, Firefox 113+</li>
+  <li><code>color(display-p3 ...)</code>: Chrome 111+, Safari 15+, Firefox 113+</li>
+  <li>Relative colour syntax (<code>from</code>): Chrome 119+, Safari 16.4+, Firefox 128+</li>
+  <li><code>light-dark()</code>: Chrome 123+, Safari 17.5+, Firefox 120+</li>
+</ul>
+
+<h2>Retrieval check</h2>
+
+<div class="quiz" id="quiz1">
+  <h3>What does the L in oklch represent, and how is it different from HSL's L?</h3>
+  <ul class="quiz-options">
+    <li><button onclick="checkAnswer(this, false)">Luminance — it's the same as HSL's lightness</button></li>
+    <li><button onclick="checkAnswer(this, true)">Perceptual lightness — calibrated to human vision (unlike HSL's mathematical average)</button></li>
+    <li><button onclick="checkAnswer(this, false)">Luminosity — measures screen brightness in nits</button></li>
+    <li><button onclick="checkAnswer(this, false)">Level — a discrete step from 0 to 10</button></li>
+  </ul>
+  <div class="quiz-feedback"></div>
+</div>
+
+<div class="quiz" id="quiz2">
+  <h3>What does oklch(from var(--brand) l c calc(h + 180)) do?</h3>
+  <ul class="quiz-options">
+    <li><button onclick="checkAnswer(this, false)">Inverts the colour (like a negative)</button></li>
+    <li><button onclick="checkAnswer(this, true)">Creates the complementary colour (180° hue shift, same lightness and chroma)</button></li>
+    <li><button onclick="checkAnswer(this, false)">Doubles the brightness</button></li>
+    <li><button onclick="checkAnswer(this, false)">Rotates the colour 180 times</button></li>
+  </ul>
+  <div class="quiz-feedback"></div>
+</div>
+
+<div class="quiz" id="quiz3">
+  <h3>What happens if a wide-gamut oklch colour can't be displayed on an sRGB screen?</h3>
+  <ul class="quiz-options">
+    <li><button onclick="checkAnswer(this, false)">The browser shows an error</button></li>
+    <li><button onclick="checkAnswer(this, false)">The colour is replaced with black</button></li>
+    <li><button onclick="checkAnswer(this, true)">The browser gamut-maps it to the closest displayable colour</button></li>
+    <li><button onclick="checkAnswer(this, false)">The declaration is ignored entirely</button></li>
+  </ul>
+  <div class="quiz-feedback"></div>
+</div>
+
+<div class="quiz" id="quiz4">
+  <h3>What does light-dark(white, #1a1a2e) return?</h3>
+  <ul class="quiz-options">
+    <li><button onclick="checkAnswer(this, false)">Always white — light comes first</button></li>
+    <li><button onclick="checkAnswer(this, false)">A mix of white and dark</button></li>
+    <li><button onclick="checkAnswer(this, true)">white in light mode, #1a1a2e in dark mode (based on active color-scheme)</button></li>
+    <li><button onclick="checkAnswer(this, false)">Depends on the time of day</button></li>
+  </ul>
+  <div class="quiz-feedback"></div>
+</div>
+
+<div class="quiz" id="quiz5">
+  <h3>To desaturate a colour using relative colour syntax in oklch, which channel do you reduce?</h3>
+  <ul class="quiz-options">
+    <li><button onclick="checkAnswer(this, false)">L (lightness)</button></li>
+    <li><button onclick="checkAnswer(this, true)">C (chroma)</button></li>
+    <li><button onclick="checkAnswer(this, false)">H (hue)</button></li>
+    <li><button onclick="checkAnswer(this, false)">Alpha</button></li>
+  </ul>
+  <div class="quiz-feedback"></div>
+</div>
+
+<div class="source-link">
+  <p><strong>Primary sources:</strong></p>
+  <ul>
+    <li><a href="https://developer.mozilla.org/en-US/docs/Web/CSS/color_value/oklch">MDN — oklch()</a></li>
+    <li><a href="https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_colors/Relative_colors">MDN — Relative colours</a></li>
+    <li><a href="https://oklch.com">oklch.com</a> — interactive colour picker for oklch values</li>
+    <li><a href="https://developer.mozilla.org/en-US/docs/Web/CSS/color_value/light-dark">MDN — light-dark()</a></li>
+  </ul>
+</div>
+
+<div class="followup">
+  <p>💬 That's Lesson 18 — Advanced Colour. You now have the modern colour toolkit: oklch for perceptually uniform colours, wide-gamut support for vivid displays, relative colour syntax for deriving palettes from a single token, and light-dark() for theme-aware values without media queries.</p>
+  <p>Combined with <code>color-mix()</code> from Lesson 3, you can build entire design systems where changing one custom property updates every colour in your app — perceptually correct, wide-gamut ready, and dark-mode aware.</p>
+  <p><strong>Remaining topic:</strong> <code>@scope</code> (proximity-based styling). Or we could do a capstone project. You've now covered 18 lessons — a comprehensive modern CSS education.</p>
+</div>
+
+<script>
+// Theme cycle demo
+const modes = ['system', 'light', 'dark'];
+let currentMode = 0;
+
+function cycleTheme() {
+  currentMode = (currentMode + 1) % modes.length;
+  const mode = modes[currentMode];
+  const btn = document.getElementById('themeBtn');
+  const card = document.getElementById('themeDemoCard');
+  btn.textContent = 'Mode: ' + mode;
+
+  if (mode === 'dark') {
+    card.style.background = '#1a1a2e';
+    card.style.color = '#f0f0f0';
+    card.style.borderColor = '#333';
+  } else if (mode === 'light') {
+    card.style.background = 'white';
+    card.style.color = '#1a1a2e';
+    card.style.borderColor = '#e0e0e0';
+  } else {
+    // System — check preference
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    card.style.background = prefersDark ? '#1a1a2e' : 'white';
+    card.style.color = prefersDark ? '#f0f0f0' : '#1a1a2e';
+    card.style.borderColor = prefersDark ? '#333' : '#e0e0e0';
+  }
+}
+
+function checkAnswer(button, isCorrect) {
+  const quiz = button.closest('.quiz');
+  const buttons = quiz.querySelectorAll('button');
+  const feedback = quiz.querySelector('.quiz-feedback');
+
+  if (quiz.dataset.answered) return;
+  quiz.dataset.answered = 'true';
+
+  buttons.forEach(btn => btn.style.pointerEvents = 'none');
+
+  if (isCorrect) {
+    button.classList.add('correct');
+    feedback.textContent = '✓ Correct.';
+    feedback.style.background = '#e8f8f5';
+    feedback.style.color = '#1a7a6c';
+  } else {
+    button.classList.add('incorrect');
+    buttons.forEach(btn => {
+      if (btn.getAttribute('onclick').includes('true')) {
+        btn.classList.add('correct');
+      }
+    });
+    feedback.textContent = '✗ Not quite. The highlighted answer is correct.';
+    feedback.style.background = '#fef0ed';
+    feedback.style.color = '#c0392b';
+  }
+  feedback.style.display = 'block';
+}
+</script>
+
+</body>
+</html>

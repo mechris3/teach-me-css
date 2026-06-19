@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lesson 20: Selectors Deep-Dive — Pseudo-Classes, Structural Selectors & Beyond</title>
+  <style>
+    :root {
+      --text: #1a1a2e;
+      --bg: #fefefe;
+      --accent: #3a86ff;
+      --code-bg: #f4f4f8;
+      --border: #e0e0e0;
+      --serif: 'Georgia', serif;
+      --mono: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+      --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+    * { box-sizing: border-box; margin: 0; }
+    body { font-family: var(--sans); color: var(--text); background: var(--bg); line-height: 1.7; max-width: 60rem; margin: 0 auto; padding: 3rem 1.5rem; }
+    h1 { font-family: var(--serif); font-size: 1.8rem; margin-bottom: 0.25rem; font-weight: normal; }
+    .lesson-number { font-size: 0.85rem; color: #666; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.25rem; }
+    h2 { font-family: var(--serif); font-size: 1.3rem; margin-top: 2.5rem; margin-bottom: 0.75rem; font-weight: normal; }
+    h3 { font-size: 1rem; margin-top: 1.5rem; margin-bottom: 0.5rem; }
+    p, li { margin-bottom: 1rem; }
+    ul, ol { padding-left: 1.5rem; }
+    code { font-family: var(--mono); font-size: 0.88em; background: var(--code-bg); padding: 0.15em 0.4em; border-radius: 3px; }
+    pre { background: var(--code-bg); border: 1px solid var(--border); border-radius: 6px; padding: 1.25rem; overflow-x: auto; margin: 1.25rem 0; line-height: 1.5; }
+    pre code { background: none; padding: 0; font-size: 0.85rem; }
+    .key-insight { border-left: 3px solid var(--accent); padding: 1rem 1.25rem; margin: 1.5rem 0; background: #f0f7ff; border-radius: 0 6px 6px 0; }
+    .key-insight p { margin-bottom: 0.5rem; }
+    .key-insight p:last-child { margin-bottom: 0; }
+    .example-group { border: 1px solid var(--border); border-radius: 8px; margin: 1.5rem 0; overflow: hidden; }
+    .example-group .demo { border: none; border-radius: 0; margin: 0; border-bottom: 1px solid var(--border); }
+    .example-group pre { margin: 0; border: none; border-radius: 0; }
+    .demo { border: 1px solid var(--border); border-radius: 8px; padding: 1.5rem; margin: 1.5rem 0; background: #fafafa; }
+    .demo-label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em; color: #888; margin-bottom: 1rem; }
+
+    /* Demo styles */
+    .sel-list { list-style: none; padding: 0; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
+    .sel-list li { padding: 0.5rem 1rem; font-size: 0.85rem; border-bottom: 1px solid var(--border); }
+    .sel-list li:last-child { border-bottom: none; }
+    .sel-list li:nth-child(odd) { background: #f8f8fa; }
+    .sel-list li:nth-child(even) { background: white; }
+    .sel-list li:first-child { font-weight: 600; color: var(--accent); }
+    .sel-list li:last-child { font-weight: 600; color: #e76f51; }
+    .sel-list li:nth-child(3) { color: #2a9d8f; }
+
+    .gotcha-demo { display: flex; flex-direction: column; gap: 1rem; }
+    .gotcha-container { flex: 1; }
+    .gotcha-parent { border: 1px solid var(--border); border-radius: 6px; padding: 1rem; background: white; }
+    .gotcha-parent h3 { font-size: 0.9rem; margin: 0; padding: 0.4rem 0.75rem; background: #f8f8fa; border-radius: 4px; }
+    .gotcha-parent p { font-size: 0.9rem; margin: 0; padding: 0.4rem 0.75rem; border-radius: 4px; margin-top: 0.35rem; }
+    #gotcha1 p:nth-child(2) { background: #d4f5e9; border-left: 3px solid #2a9d8f; }
+    #gotcha2 p:nth-of-type(2) { background: #d4f5e9; border-left: 3px solid #2a9d8f; }
+    .gotcha-explain { background: #f9f9f9; border-radius: 6px; padding: 0.75rem 1rem; border: 1px solid var(--border); }
+
+    .form-demo input { display: block; margin-bottom: 0.5rem; padding: 0.5rem; border: 1px solid var(--border); border-radius: 4px; font-size: 0.85rem; width: 250px; }
+    .form-demo input:focus { border-color: var(--accent); outline: 2px solid rgba(58, 134, 255, 0.3); outline-offset: 1px; }
+    .form-demo input:valid { border-color: #2a9d8f; }
+    .form-demo input:invalid { border-color: #e76f51; }
+    .form-demo input:placeholder-shown { border-style: dashed; }
+    .form-demo input:disabled { opacity: 0.5; background: #f0f0f0; }
+
+    .target-demo :target { background: #fff3e0; border: 2px solid #e76f51; padding: 0.5rem; border-radius: 4px; }
+
+    .quiz { background: #fffdf0; border: 1px solid #e8e0c0; border-radius: 8px; padding: 1.5rem; margin: 2rem 0; }
+    .quiz h3 { font-size: 1rem; margin-bottom: 1rem; margin-top: 0; font-weight: 600; }
+    .quiz-options { list-style: none; padding: 0; }
+    .quiz-options li { margin-bottom: 0.5rem; }
+    .quiz-options button { display: block; width: 100%; text-align: left; padding: 0.75rem 1rem; border: 1px solid var(--border); border-radius: 6px; background: white; font-family: var(--mono); font-size: 0.85rem; cursor: pointer; transition: border-color 0.15s; }
+    .quiz-options button:hover { border-color: var(--accent); }
+    .quiz-options button.correct { border-color: #2a9d8f; background: #e8f8f5; }
+    .quiz-options button.incorrect { border-color: #e76f51; background: #fef0ed; }
+    .quiz-feedback { margin-top: 1rem; padding: 0.75rem; border-radius: 6px; font-size: 0.9rem; display: none; }
+    .source-link { margin-top: 3rem; padding-top: 1.5rem; border-top: 1px solid var(--border); }
+    .source-link a { color: var(--accent); text-decoration: none; border-bottom: 1px solid transparent; }
+    .source-link a:hover { border-bottom-color: var(--accent); }
+    .followup { margin-top: 2rem; padding: 1rem 1.25rem; background: #f9f9f9; border-radius: 8px; font-size: 0.9rem; color: #555; }
+    @media print { body { max-width: 100%; padding: 1rem; } .example-group { break-inside: avoid; } }
+  </style>
+</head>
+<body>
+
+<nav style="margin-bottom: 2rem;"><a href="index.html" style="font-size: 0.85rem; color: #3a86ff; text-decoration: none;">← Course Contents</a></nav>
+
+<p class="lesson-number">Lesson 20</p>
+<h1>Selectors Deep-Dive — Pseudo-Classes, Structural & Form Selectors</h1>
+
+<p>Lesson 13 covered the functional pseudo-classes (<code>:has()</code>, <code>:is()</code>, <code>:where()</code>, <code>:not()</code>). This lesson covers everything else — the structural, form state, UI state, and link pseudo-classes you'll use daily. Think of this as the complete selector vocabulary.</p>
+
+<h2>Structural pseudo-classes — selecting by position</h2>
+
+<h3>The :nth-child gotcha — it doesn't mean what you think</h3>
+
+<p>This is the single most common selector misunderstanding in CSS. Most people read <code>p:nth-child(2)</code> and think it means "the 2nd &lt;p&gt; inside its parent." <strong>It doesn't.</strong></p>
+
+<p>It actually means: "an element that is <strong>both</strong> a &lt;p&gt; <strong>AND</strong> the 2nd child of its parent." Two independent conditions, both must be true. The type selector does not change what gets counted — it only filters whether the match applies.</p>
+
+<div class="key-insight">
+  <p><strong>The mental model:</strong> Think of <code>p:nth-child(2)</code> as two separate filters applied simultaneously:</p>
+  <p>1. <strong>:nth-child(2)</strong> — "is this element at position 2 among ALL siblings?"</p>
+  <p>2. <strong>p</strong> — "is this element a &lt;p&gt;?"</p>
+  <p>Both must pass. The element type doesn't influence the counting — all siblings are counted regardless of type.</p>
+</div>
+
+<div class="example-group">
+<div class="demo">
+  <p class="demo-label">The gotcha in action — p:nth-child(2) highlights the FIRST paragraph (because it's the 2nd child overall)</p>
+  <div class="gotcha-demo">
+    <div class="gotcha-container">
+      <h4 style="margin: 0 0 0.25rem; font-size: 0.8rem; color: #888;">Parent container with p:nth-child(2) applied:</h4>
+      <div class="gotcha-parent" id="gotcha1">
+        <h3>Heading</h3>
+        <p>First paragraph</p>
+        <p>Second paragraph</p>
+      </div>
+    </div>
+    <div class="gotcha-explain">
+      <p style="margin: 0; font-size: 0.85rem;">Child #1 = <code>&lt;h3&gt;</code> · Child #2 = first <code>&lt;p&gt;</code> · Child #3 = second <code>&lt;p&gt;</code></p>
+      <p style="margin: 0.5rem 0 0; font-size: 0.85rem;"><strong><code>p:nth-child(2)</code></strong> → "Is child #2 a &lt;p&gt;?" <span style="color: #2a9d8f; font-weight: 600;">Yes!</span> → matches the <em>first</em> paragraph.</p>
+      <p style="margin: 0.5rem 0 0; font-size: 0.85rem;"><strong><code>p:nth-child(1)</code></strong> → "Is child #1 a &lt;p&gt;?" <span style="color: #e76f51; font-weight: 600;">No, it's an &lt;h3&gt;.</span> → matches <em>nothing</em>.</p>
+    </div>
+  </div>
+</div>
+<pre><code>&lt;!-- HTML --&gt;
+&lt;div&gt;
+  &lt;h3&gt;Heading&lt;/h3&gt;           &lt;!-- child #1 --&gt;
+  &lt;p&gt;First paragraph&lt;/p&gt;     &lt;!-- child #2 --&gt;
+  &lt;p&gt;Second paragraph&lt;/p&gt;    &lt;!-- child #3 --&gt;
+&lt;/div&gt;
+
+/* What most people THINK this does: "select the 2nd &lt;p&gt;" */
+/* What it ACTUALLY does: "select an element that is a &lt;p&gt; AND is the 2nd child" */
+p:nth-child(2) { background: #d4f5e9; border-left: 3px solid #2a9d8f; }
+
+/* This matches NOTHING — child #1 is an h3, not a p */
+p:nth-child(1) { background: red; }</code></pre>
+</div>
+
+<h3>What you probably want: :nth-of-type</h3>
+
+<p>If your intent is "the 2nd &lt;p&gt; regardless of other siblings," use <code>:nth-of-type</code>. It counts only elements of the same type:</p>
+
+<div class="example-group">
+<div class="demo">
+  <p class="demo-label">p:nth-of-type(2) selects the 2nd &lt;p&gt;, ignoring the &lt;h3&gt; entirely</p>
+  <div class="gotcha-demo">
+    <div class="gotcha-container">
+      <h4 style="margin: 0 0 0.25rem; font-size: 0.8rem; color: #888;">Same HTML, using p:nth-of-type(2) instead:</h4>
+      <div class="gotcha-parent" id="gotcha2">
+        <h3>Heading</h3>
+        <p>First paragraph</p>
+        <p>Second paragraph</p>
+      </div>
+    </div>
+    <div class="gotcha-explain">
+      <p style="margin: 0; font-size: 0.85rem;"><strong><code>p:nth-of-type(2)</code></strong> → counts only &lt;p&gt; siblings: 1st p, <span style="color: #2a9d8f; font-weight: 600;">2nd p ✓</span>. The &lt;h3&gt; is invisible to the count.</p>
+    </div>
+  </div>
+</div>
+<pre><code>&lt;!-- Same HTML --&gt;
+&lt;div&gt;
+  &lt;h3&gt;Heading&lt;/h3&gt;
+  &lt;p&gt;First paragraph&lt;/p&gt;
+  &lt;p&gt;Second paragraph&lt;/p&gt;  &lt;!-- ← this one matches --&gt;
+&lt;/div&gt;
+
+/* Counts only &lt;p&gt; elements among siblings — ignores the &lt;h3&gt; */
+p:nth-of-type(2) { background: #d4f5e9; border-left: 3px solid #2a9d8f; }</code></pre>
+</div>
+
+<div class="key-insight">
+  <p><strong>The naming is the enemy.</strong> <code>:nth-child</code> sounds like it should scope its counting to "children of this type" — but it doesn't. It counts ALL siblings. The type selector is just an additional filter applied <em>after</em> counting. The name lies to you.</p>
+  <p><strong>Rule of thumb:</strong> If you want "the Nth &lt;foo&gt;", reach for <code>:nth-of-type</code>. Use <code>:nth-child</code> when you care about absolute position among all siblings (e.g., "every odd row in a list where all children are the same element type").</p>
+</div>
+
+<h3>Basic structural selectors in action</h3>
+
+<div class="example-group">
+<div class="demo">
+  <p class="demo-label">:first-child (blue), :last-child (coral), :nth-child(3) (teal), odds have grey background</p>
+  <ul class="sel-list">
+    <li>Item 1 (:first-child → blue + bold)</li>
+    <li>Item 2</li>
+    <li>Item 3 (:nth-child(3) → teal)</li>
+    <li>Item 4</li>
+    <li>Item 5 (:last-child → coral + bold)</li>
+  </ul>
+</div>
+<pre><code>&lt;!-- HTML — all children are &lt;li&gt;, so :nth-child works intuitively here --&gt;
+&lt;ul class="list"&gt;
+  &lt;li&gt;Item 1&lt;/li&gt;
+  &lt;li&gt;Item 2&lt;/li&gt;
+  &lt;li&gt;Item 3&lt;/li&gt;
+  &lt;li&gt;Item 4&lt;/li&gt;
+  &lt;li&gt;Item 5&lt;/li&gt;
+&lt;/ul&gt;
+
+/* When all siblings are the same type, :nth-child is safe and intuitive */
+li:first-child { font-weight: 600; color: blue; }
+li:last-child  { font-weight: 600; color: coral; }
+li:nth-child(3) { color: teal; }
+li:nth-child(odd)  { background: #f8f8fa; }
+li:nth-child(even) { background: white; }</code></pre>
+</div>
+
+<h3>:nth-child() — the formula</h3>
+
+<p><code>:nth-child()</code> accepts a formula: <code>An+B</code> where A is the step and B is the offset:</p>
+
+<pre><code>:nth-child(odd)     /* = :nth-child(2n+1) — 1st, 3rd, 5th... */
+:nth-child(even)    /* = :nth-child(2n)   — 2nd, 4th, 6th... */
+:nth-child(3)       /* exactly the 3rd child */
+:nth-child(3n)      /* every 3rd: 3, 6, 9, 12... */
+:nth-child(3n+1)    /* every 3rd starting from 1st: 1, 4, 7, 10... */
+:nth-child(n+4)     /* everything from the 4th onward: 4, 5, 6, 7... */
+:nth-child(-n+3)    /* only the first 3: 1, 2, 3 */
+:nth-last-child(2)  /* 2nd from the end */</code></pre>
+
+<div class="key-insight">
+  <p><strong>Reading the formula:</strong> <code>An+B</code> = "start at position B, then repeat every A." So <code>3n+2</code> = positions 2, 5, 8, 11... Think of A as the interval and B as the starting point.</p>
+</div>
+
+<h3>:nth-child() with selector filtering (of S syntax)</h3>
+
+<p>A newer feature: <code>:nth-child(An+B of S)</code> counts only elements matching selector S:</p>
+
+<pre><code>/* Select every 2nd .highlighted item (ignoring non-highlighted ones) */
+:nth-child(2n of .highlighted) { }
+
+/* First visible item (counting only items without .hidden) */
+:nth-child(1 of :not(.hidden)) { }
+
+/* Every 3rd card in a grid, but only counting .card elements */
+:nth-child(3n of .card) { }</code></pre>
+
+<h3>Full structural selector reference</h3>
+
+<table style="width: 100%; border-collapse: collapse; font-size: 0.82rem; margin: 1.5rem 0;">
+  <thead>
+    <tr style="border-bottom: 2px solid var(--border); text-align: left;">
+      <th style="padding: 0.5rem;">Selector</th>
+      <th style="padding: 0.5rem;">Matches</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr style="border-bottom: 1px solid var(--border);"><td style="padding: 0.4rem 0.5rem;"><code>:first-child</code></td><td style="padding: 0.4rem 0.5rem;">First child of its parent</td></tr>
+    <tr style="border-bottom: 1px solid var(--border);"><td style="padding: 0.4rem 0.5rem;"><code>:last-child</code></td><td style="padding: 0.4rem 0.5rem;">Last child of its parent</td></tr>
+    <tr style="border-bottom: 1px solid var(--border);"><td style="padding: 0.4rem 0.5rem;"><code>:nth-child(An+B)</code></td><td style="padding: 0.4rem 0.5rem;">Child at position An+B</td></tr>
+    <tr style="border-bottom: 1px solid var(--border);"><td style="padding: 0.4rem 0.5rem;"><code>:nth-last-child(An+B)</code></td><td style="padding: 0.4rem 0.5rem;">Same, counting from the end</td></tr>
+    <tr style="border-bottom: 1px solid var(--border);"><td style="padding: 0.4rem 0.5rem;"><code>:only-child</code></td><td style="padding: 0.4rem 0.5rem;">Element is the only child of its parent</td></tr>
+    <tr style="border-bottom: 1px solid var(--border);"><td style="padding: 0.4rem 0.5rem;"><code>:first-of-type</code></td><td style="padding: 0.4rem 0.5rem;">First element of its type among siblings</td></tr>
+    <tr style="border-bottom: 1px solid var(--border);"><td style="padding: 0.4rem 0.5rem;"><code>:last-of-type</code></td><td style="padding: 0.4rem 0.5rem;">Last element of its type among siblings</td></tr>
+    <tr style="border-bottom: 1px solid var(--border);"><td style="padding: 0.4rem 0.5rem;"><code>:nth-of-type(An+B)</code></td><td style="padding: 0.4rem 0.5rem;">nth element of its type</td></tr>
+    <tr style="border-bottom: 1px solid var(--border);"><td style="padding: 0.4rem 0.5rem;"><code>:only-of-type</code></td><td style="padding: 0.4rem 0.5rem;">Only element of its type among siblings</td></tr>
+    <tr><td style="padding: 0.4rem 0.5rem;"><code>:empty</code></td><td style="padding: 0.4rem 0.5rem;">Element has no children (not even text)</td></tr>
+  </tbody>
+</table>
+
+<div class="key-insight">
+  <p><strong>:nth-of-type limitation:</strong> <code>:nth-of-type</code> can only filter by element type (tag name). It can't filter by class or attribute. If you need "the 3rd <code>.active</code> item," you need the <code>of S</code> syntax covered above — <code>:nth-child(3 of .active)</code>. That tells <code>:nth-child</code> to count only elements matching the selector <code>.active</code>, giving you class-based positional selection that <code>:nth-of-type</code> can't do.</p>
+</div>
+
+
+<h2>Form state pseudo-classes</h2>
+
+<p>These select form elements based on their current state — incredibly useful for styling forms without JS:</p>
+
+<div class="example-group">
+<div class="demo">
+  <p class="demo-label">Type in the fields — :valid/:invalid/:focus/:placeholder-shown all react live</p>
+  <div class="form-demo">
+    <input type="email" placeholder="Email (try typing valid/invalid)" value="">
+    <input type="text" required placeholder="Required field (type something)">
+    <input type="text" placeholder="I have dashed border while empty (placeholder-shown)">
+    <input type="text" value="I'm disabled" disabled>
+  </div>
+</div>
+<pre><code>&lt;!-- HTML --&gt;
+&lt;input type="email" placeholder="Email (try typing valid/invalid)"&gt;
+&lt;input type="text" required placeholder="Required field (type something)"&gt;
+&lt;input type="text" placeholder="I have dashed border while empty (placeholder-shown)"&gt;
+&lt;input type="text" value="I'm disabled" disabled&gt;
+
+/* CSS — form state pseudo-classes */
+input:focus { border-color: blue; outline: 2px solid rgba(0,0,255,0.3); }
+input:valid { border-color: green; }
+input:invalid { border-color: red; }
+input:placeholder-shown { border-style: dashed; }  /* field is empty (placeholder visible) */
+input:disabled { opacity: 0.5; background: #f0f0f0; }</code></pre>
+</div>
+
+<h3>Full form state reference</h3>
+
+<table style="width: 100%; border-collapse: collapse; font-size: 0.82rem; margin: 1.5rem 0;">
+  <thead>
+    <tr style="border-bottom: 2px solid var(--border); text-align: left;">
+      <th style="padding: 0.5rem;">Selector</th>
+      <th style="padding: 0.5rem;">Matches</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr style="border-bottom: 1px solid var(--border);"><td style="padding: 0.4rem 0.5rem;"><code>:focus</code></td><td style="padding: 0.4rem 0.5rem;">Element has keyboard/mouse focus</td></tr>
+    <tr style="border-bottom: 1px solid var(--border);"><td style="padding: 0.4rem 0.5rem;"><code>:focus-visible</code></td><td style="padding: 0.4rem 0.5rem;">Focus, but only when the browser deems it should be visible (keyboard, not mouse click)</td></tr>
+    <tr style="border-bottom: 1px solid var(--border);"><td style="padding: 0.4rem 0.5rem;"><code>:focus-within</code></td><td style="padding: 0.4rem 0.5rem;">Element or any descendant has focus (useful for styling a form group)</td></tr>
+    <tr style="border-bottom: 1px solid var(--border);"><td style="padding: 0.4rem 0.5rem;"><code>:valid</code></td><td style="padding: 0.4rem 0.5rem;">Input passes validation constraints</td></tr>
+    <tr style="border-bottom: 1px solid var(--border);"><td style="padding: 0.4rem 0.5rem;"><code>:invalid</code></td><td style="padding: 0.4rem 0.5rem;">Input fails validation</td></tr>
+    <tr style="border-bottom: 1px solid var(--border);"><td style="padding: 0.4rem 0.5rem;"><code>:required</code></td><td style="padding: 0.4rem 0.5rem;">Input has the required attribute</td></tr>
+    <tr style="border-bottom: 1px solid var(--border);"><td style="padding: 0.4rem 0.5rem;"><code>:optional</code></td><td style="padding: 0.4rem 0.5rem;">Input does not have required</td></tr>
+    <tr style="border-bottom: 1px solid var(--border);"><td style="padding: 0.4rem 0.5rem;"><code>:checked</code></td><td style="padding: 0.4rem 0.5rem;">Checkbox/radio is checked</td></tr>
+    <tr style="border-bottom: 1px solid var(--border);"><td style="padding: 0.4rem 0.5rem;"><code>:indeterminate</code></td><td style="padding: 0.4rem 0.5rem;">Checkbox is in indeterminate state (set via JS)</td></tr>
+    <tr style="border-bottom: 1px solid var(--border);"><td style="padding: 0.4rem 0.5rem;"><code>:disabled</code></td><td style="padding: 0.4rem 0.5rem;">Element is disabled</td></tr>
+    <tr style="border-bottom: 1px solid var(--border);"><td style="padding: 0.4rem 0.5rem;"><code>:enabled</code></td><td style="padding: 0.4rem 0.5rem;">Element is not disabled</td></tr>
+    <tr style="border-bottom: 1px solid var(--border);"><td style="padding: 0.4rem 0.5rem;"><code>:placeholder-shown</code></td><td style="padding: 0.4rem 0.5rem;">Input is showing its placeholder (i.e. empty)</td></tr>
+    <tr style="border-bottom: 1px solid var(--border);"><td style="padding: 0.4rem 0.5rem;"><code>:read-only</code></td><td style="padding: 0.4rem 0.5rem;">Input has readonly attribute</td></tr>
+    <tr style="border-bottom: 1px solid var(--border);"><td style="padding: 0.4rem 0.5rem;"><code>:in-range</code></td><td style="padding: 0.4rem 0.5rem;">Number/range input within min/max</td></tr>
+    <tr><td style="padding: 0.4rem 0.5rem;"><code>:out-of-range</code></td><td style="padding: 0.4rem 0.5rem;">Number/range input outside min/max</td></tr>
+  </tbody>
+</table>
+
+<div class="key-insight">
+  <p><strong>:focus vs :focus-visible:</strong> <code>:focus</code> fires on any focus (click or keyboard). <code>:focus-visible</code> only fires when the browser thinks a focus indicator should be shown (typically keyboard navigation). Use <code>:focus-visible</code> for outline styles so mouse users don't see outlines but keyboard users do.</p>
+</div>
+
+<h2>User interaction pseudo-classes</h2>
+
+<pre><code>:hover        /* mouse is over it */
+:active       /* being clicked/pressed right now */
+:visited      /* link the user has visited before */
+:link         /* unvisited link */
+:target       /* element whose ID matches the URL fragment (#section) */
+:fullscreen   /* element is in fullscreen mode */</code></pre>
+
+<h3>:target — styling based on URL hash</h3>
+
+<div class="example-group">
+<div class="demo">
+  <p class="demo-label">Click a link — the targeted section gets highlighted via :target</p>
+  <div class="target-demo">
+    <p><a href="#sec-a" style="color: var(--accent);">Jump to Section A</a> | <a href="#sec-b" style="color: var(--accent);">Jump to Section B</a></p>
+    <div id="sec-a" style="margin-top: 0.5rem; padding: 0.5rem; border-radius: 4px;">
+      <strong>Section A</strong> — I highlight when the URL hash is #sec-a
+    </div>
+    <div id="sec-b" style="margin-top: 0.5rem; padding: 0.5rem; border-radius: 4px;">
+      <strong>Section B</strong> — I highlight when the URL hash is #sec-b
+    </div>
+  </div>
+</div>
+<pre><code>&lt;!-- HTML --&gt;
+&lt;a href="#section-a"&gt;Go to A&lt;/a&gt;
+&lt;a href="#section-b"&gt;Go to B&lt;/a&gt;
+
+&lt;div id="section-a"&gt;Section A content&lt;/div&gt;
+&lt;div id="section-b"&gt;Section B content&lt;/div&gt;
+
+/* CSS — style the element whose ID matches the URL #hash */
+:target {
+  background: #fff3e0;
+  border: 2px solid coral;
+}</code></pre>
+</div>
+
+<div class="key-insight">
+  <p><strong>How :target works:</strong> It's driven by whatever is in the address bar right now — specifically the <code>#fragment</code> part. If the address bar shows <code>https://example.com/page.html#sec-a</code>, then <code>:target</code> matches the element with <code>id="sec-a"</code>. It's literally <code>location.hash</code> driving a CSS selector in real time.</p>
+  <p>There's only ever one fragment in the URL at a time, so there's only ever zero or one <code>:target</code> element on the page. When you click <code>&lt;a href="#sec-b"&gt;</code>, the browser updates the address bar → <code>:target</code> stops matching <code>#sec-a</code> and starts matching <code>#sec-b</code>. No fragment in the URL at all → nothing matches.</p>
+  <p>Think of it like Angular's <code>routerLinkActive</code> — the URL is the source of truth, and the style is a consequence of that URL state.</p>
+</div>
+
+<h2>Attribute selectors — beyond classes and IDs</h2>
+
+<pre><code>/* Has the attribute at all */
+[data-tooltip] { cursor: help; }
+
+/* Attribute equals exact value */
+[type="email"] { }
+[role="button"] { }
+
+/* Attribute starts with */
+[href^="https"] { }          /* links starting with https */
+[class^="icon-"] { }         /* classes starting with icon- */
+
+/* Attribute ends with */
+[src$=".svg"] { }            /* images ending in .svg */
+[href$=".pdf"] { }           /* links to PDFs */
+
+/* Attribute contains */
+[class*="card"] { }          /* class contains "card" anywhere */
+
+/* Attribute word list contains (space-separated) */
+[class~="featured"] { }     /* same as .featured */
+
+/* Case-insensitive matching */
+[type="email" i] { }        /* matches "Email", "EMAIL", etc. */</code></pre>
+
+<div class="key-insight">
+  <p><strong>When to use attribute selectors over classes:</strong> When styling based on HTML semantics (<code>[type="email"]</code>, <code>[aria-expanded="true"]</code>, <code>[data-state="open"]</code>) rather than presentational classes. Also useful for external content you can't add classes to (e.g. CMS-generated HTML, third-party widgets).</p>
+</div>
+
+<h2>Combining selectors — practical recipes</h2>
+
+<pre><code>/* Style external links differently (href starts with http, not your domain) */
+a[href^="http"]:not([href*="yourdomain.com"]) {
+  &amp;::after { content: " ↗"; }
+}
+
+/* Required fields that are empty (show a subtle indicator) */
+input:required:placeholder-shown {
+  border-left: 3px solid coral;
+}
+
+/* First item that ISN'T hidden */
+li:not(.hidden):first-child { }
+/* Or with the newer "of" syntax: */
+li:nth-child(1 of :not(.hidden)) { }
+
+/* Table rows on hover, but not the header */
+tr:not(:first-child):hover {
+  background: #f0f7ff;
+}
+
+/* Style a form group when any field inside has focus */
+.form-group:focus-within {
+  border-color: blue;
+  box-shadow: 0 0 0 3px rgba(0,0,255,0.1);
+}
+
+/* Cards that contain images AND are not the first card */
+.card:has(img):not(:first-child) {
+  margin-top: 2rem;
+}</code></pre>
+
+<h2>Retrieval check</h2>
+
+<div class="quiz" id="quiz1">
+  <h3>Given &lt;div&gt; containing: &lt;h2&gt;, &lt;p&gt;, &lt;p&gt; — what does p:nth-child(1) select?</h3>
+  <ul class="quiz-options">
+    <li><button onclick="checkAnswer(this, false)">The first paragraph</button></li>
+    <li><button onclick="checkAnswer(this, true)">Nothing — child #1 is an h2, not a p</button></li>
+    <li><button onclick="checkAnswer(this, false)">The h2 element</button></li>
+    <li><button onclick="checkAnswer(this, false)">Both paragraphs</button></li>
+  </ul>
+  <div class="quiz-feedback"></div>
+</div>
+
+<div class="quiz" id="quiz1b">
+  <h3>You want "the 2nd &lt;p&gt; among siblings of mixed types." Which is the classic, widely-supported selector for this?</h3>
+  <ul class="quiz-options">
+    <li><button onclick="checkAnswer(this, false)">p:nth-child(2) — counts only p elements</button></li>
+    <li><button onclick="checkAnswer(this, true)">p:nth-of-type(2) — counts only p elements</button></li>
+    <li><button onclick="checkAnswer(this, false)">div > p:nth-child(2) — scopes to div</button></li>
+    <li><button onclick="checkAnswer(this, false)">p:nth-child(2n) — selects even p elements</button></li>
+  </ul>
+  <div class="quiz-feedback"></div>
+</div>
+
+<div class="quiz" id="quiz2">
+  <h3>What's the difference between :focus and :focus-visible?</h3>
+  <ul class="quiz-options">
+    <li><button onclick="checkAnswer(this, false)">:focus-visible is for visible elements, :focus is for hidden ones</button></li>
+    <li><button onclick="checkAnswer(this, true)">:focus fires on any focus; :focus-visible only when browser thinks indicator should show (keyboard nav)</button></li>
+    <li><button onclick="checkAnswer(this, false)">:focus-visible has higher specificity</button></li>
+    <li><button onclick="checkAnswer(this, false)">They're identical — :focus-visible is just newer syntax</button></li>
+  </ul>
+  <div class="quiz-feedback"></div>
+</div>
+
+<div class="quiz" id="quiz3">
+  <h3>What does :placeholder-shown match?</h3>
+  <ul class="quiz-options">
+    <li><button onclick="checkAnswer(this, false)">An input that has a placeholder attribute defined</button></li>
+    <li><button onclick="checkAnswer(this, true)">An input currently showing its placeholder (i.e. the field is empty)</button></li>
+    <li><button onclick="checkAnswer(this, false)">The placeholder text itself</button></li>
+    <li><button onclick="checkAnswer(this, false)">Any input that has ever shown a placeholder</button></li>
+  </ul>
+  <div class="quiz-feedback"></div>
+</div>
+
+<div class="quiz" id="quiz4">
+  <h3>What does [href$=".pdf"] select?</h3>
+  <ul class="quiz-options">
+    <li><button onclick="checkAnswer(this, false)">Links that contain ".pdf" anywhere</button></li>
+    <li><button onclick="checkAnswer(this, false)">Links that start with ".pdf"</button></li>
+    <li><button onclick="checkAnswer(this, true)">Links whose href ends with ".pdf"</button></li>
+    <li><button onclick="checkAnswer(this, false)">Only the first PDF link on the page</button></li>
+  </ul>
+  <div class="quiz-feedback"></div>
+</div>
+
+<div class="quiz" id="quiz5">
+  <h3>:nth-child(1 of .visible) selects:</h3>
+  <ul class="quiz-options">
+    <li><button onclick="checkAnswer(this, false)">The first child, but only if it has .visible</button></li>
+    <li><button onclick="checkAnswer(this, true)">The first element that has .visible (counting only .visible elements)</button></li>
+    <li><button onclick="checkAnswer(this, false)">All visible children</button></li>
+    <li><button onclick="checkAnswer(this, false)">The first child that is visible on screen</button></li>
+  </ul>
+  <div class="quiz-feedback"></div>
+</div>
+
+<div class="source-link">
+  <p><strong>Primary sources:</strong></p>
+  <ul>
+    <li><a href="https://developer.mozilla.org/en-US/docs/Web/CSS/Pseudo-classes">MDN — Pseudo-classes</a></li>
+    <li><a href="https://developer.mozilla.org/en-US/docs/Web/CSS/Attribute_selectors">MDN — Attribute selectors</a></li>
+    <li><a href="https://developer.mozilla.org/en-US/docs/Web/CSS/:nth-child">MDN — :nth-child()</a></li>
+  </ul>
+</div>
+
+<div class="followup">
+  <p>💬 That's Lesson 20 — the selectors deep-dive. Combined with Lesson 13 (functional pseudo-classes), you now have the complete CSS selector vocabulary: structural positioning, form states, user interaction, attribute matching, and all the combinators.</p>
+  <p><strong>Next options:</strong></p>
+  <ul>
+    <li><strong>Theming deep-dive</strong> — multi-brand token architecture for Angular apps</li>
+    <li><strong>Capstone project</strong> — build something real using 10+ features from this course</li>
+    <li><strong>Responsive design patterns</strong> — putting together media/container queries, clamp, grid, and flex into real layouts</li>
+  </ul>
+</div>
+
+<script>
+function checkAnswer(button, isCorrect) {
+  const quiz = button.closest('.quiz');
+  const buttons = quiz.querySelectorAll('button');
+  const feedback = quiz.querySelector('.quiz-feedback');
+
+  if (quiz.dataset.answered) return;
+  quiz.dataset.answered = 'true';
+
+  buttons.forEach(btn => btn.style.pointerEvents = 'none');
+
+  if (isCorrect) {
+    button.classList.add('correct');
+    feedback.textContent = '✓ Correct.';
+    feedback.style.background = '#e8f8f5';
+    feedback.style.color = '#1a7a6c';
+  } else {
+    button.classList.add('incorrect');
+    buttons.forEach(btn => {
+      if (btn.getAttribute('onclick').includes('true')) {
+        btn.classList.add('correct');
+      }
+    });
+    feedback.textContent = '✗ Not quite. The highlighted answer is correct.';
+    feedback.style.background = '#fef0ed';
+    feedback.style.color = '#c0392b';
+  }
+  feedback.style.display = 'block';
+}
+</script>
+
+</body>
+</html>

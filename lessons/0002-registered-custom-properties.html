@@ -23,7 +23,7 @@
       color: var(--text);
       background: var(--bg);
       line-height: 1.7;
-      max-width: 42rem;
+      max-width: 60rem;
       margin: 0 auto;
       padding: 3rem 1.5rem;
     }
@@ -88,6 +88,10 @@
 
     .key-insight p { margin-bottom: 0.5rem; }
     .key-insight p:last-child { margin-bottom: 0; }
+
+    .example-group { border: 1px solid var(--border); border-radius: 8px; margin: 1.5rem 0; overflow: hidden; }
+    .example-group .demo { border: none; border-radius: 0; margin: 0; border-bottom: 1px solid var(--border); }
+    .example-group pre { margin: 0; border: none; border-radius: 0; }
 
     .demo {
       border: 1px solid var(--border);
@@ -312,11 +316,12 @@
 
     @media print {
       body { max-width: 100%; padding: 1rem; }
-      .demo { break-inside: avoid; }
+      .demo, .example-group { break-inside: avoid; }
     }
   </style>
 </head>
 <body>
+<nav style="margin-bottom: 2rem;"><a href="index.html" style="font-size: 0.85rem; color: #3a86ff; text-decoration: none; border-bottom: 1px solid transparent;">← Course Contents</a></nav>
 
 <p class="lesson-number">Lesson 02</p>
 <h1><code>@property</code> — Registered Custom Properties</h1>
@@ -327,6 +332,7 @@
 
 <h2>The problem: try to transition an unregistered property</h2>
 
+<div class="example-group">
 <div class="demo">
   <p class="demo-label">Hover both boxes — same transition CSS, different results</p>
   <div class="comparison-row">
@@ -339,6 +345,31 @@
       <p class="label">Registered as &lt;color&gt;: smooth transition</p>
     </div>
   </div>
+</div>
+
+<pre><code>&lt;!-- HTML --&gt;
+&lt;div class="no-register-box"&gt;&lt;/div&gt;
+&lt;div class="registered-box"&gt;&lt;/div&gt;
+
+/* Unregistered — browser can't interpolate, hard swap */
+.no-register-box {
+  --bg-color: #3a86ff;
+  background: var(--bg-color);
+  transition: --bg-color 0.8s ease-in-out;
+}
+.no-register-box:hover { --bg-color: #e76f51; }
+
+/* Registered — browser knows it's a &lt;color&gt;, smooth transition */
+@property --reg-color {
+  syntax: "&lt;color&gt;";
+  inherits: false;
+  initial-value: #3a86ff;
+}
+.registered-box {
+  background: var(--reg-color);
+  transition: --reg-color 0.8s ease-in-out;
+}
+.registered-box:hover { --reg-color: #e76f51; }</code></pre>
 </div>
 
 <p>Both boxes use the same pattern — set a custom property, transition it on hover. But only the registered one transitions smoothly. The unregistered one snaps.</p>
@@ -407,6 +438,7 @@
 
 <p>Recall from Lesson 1: unregistered custom properties <em>always</em> inherit. Registration gives you the choice to stop that.</p>
 
+<div class="example-group">
 <div class="demo">
   <p class="demo-label">--card-accent registered with inherits: false</p>
   <div class="parent-card">
@@ -423,8 +455,16 @@
   initial-value: #3a86ff;  /* ← they get this instead */
 }
 
-.parent { --card-accent: #e76f51; }  /* orange */
-.child  { border-color: var(--card-accent); }  /* blue! (initial-value) */</code></pre>
+&lt;!-- HTML --&gt;
+&lt;div class="parent-card"&gt;
+  Parent: --card-accent set to orange
+  &lt;div class="child-card"&gt;Child: uses var(--card-accent)&lt;/div&gt;
+&lt;/div&gt;
+
+/* CSS */
+.parent-card { --card-accent: #e76f51; border: 3px solid var(--card-accent); }
+.child-card  { border: 3px solid var(--card-accent); }  /* gets blue (initial-value)! */</code></pre>
+</div>
 
 <div class="key-insight">
   <p><strong>When to use <code>inherits: false</code>:</strong> component-level properties that should reset per-component, not leak from parents. Think of it as creating a property that behaves like <code>padding</code> (doesn't inherit) rather than <code>color</code> (does inherit).</p>
@@ -462,6 +502,7 @@
 
 <h3>Transitioning a hue value</h3>
 
+<div class="example-group">
 <div class="demo">
   <p class="demo-label">Hover to transition --hue from 220 to 340 (smooth interpolation through the colour space)</p>
   <div class="hue-box"></div>
@@ -473,6 +514,8 @@
   initial-value: 220;
 }
 
+/* HTML: &lt;div class="hue-box"&gt;&lt;/div&gt; */
+
 .hue-box {
   background: oklch(0.7 0.15 var(--hue));
   transition: --hue 0.8s ease-in-out;
@@ -481,11 +524,13 @@
 .hue-box:hover {
   --hue: 340;
 }</code></pre>
+</div>
 
 <h3>Animating a gradient stop position</h3>
 
 <p>You can't transition a gradient directly — the browser sees the whole <code>linear-gradient(...)</code> as a single value. But if you pull out the <em>stop position</em> into a registered property, you can animate just that number:</p>
 
+<div class="example-group">
 <div class="demo">
   <p class="demo-label">Hover to animate the gradient stop from 30% → 80%</p>
   <div class="gradient-stop-box"></div>
@@ -497,6 +542,8 @@
   initial-value: 30%;
 }
 
+/* HTML: &lt;div class="gradient-stop-box"&gt;&lt;/div&gt; */
+
 .gradient-stop-box {
   background: linear-gradient(to right, blue var(--stop), transparent var(--stop));
   transition: --stop 0.6s ease-in-out;
@@ -505,6 +552,7 @@
 .gradient-stop-box:hover {
   --stop: 80%;
 }</code></pre>
+</div>
 
 <div class="key-insight">
   <p><strong>The pattern:</strong> extract any numeric part of a "non-animatable" value into a registered custom property. Then transition the property instead of the shorthand. Works for gradient positions, colour channels, clip-path values, individual transform components — anything with a number inside.</p>

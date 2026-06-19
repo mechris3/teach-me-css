@@ -1,0 +1,303 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Capstone: Horizon — Product Landing Page</title>
+    <style>
+      /* ============================================================
+       CAPSTONE PROJECT: "Horizon" — a product landing page
+       
+       This page exercises 14+ features from the course:
+       1.  @layer (structure)
+       2.  Custom properties — three-tier tokens
+       3.  oklch + relative colour syntax (derived palette)
+       4.  Dark/light theming via data-theme attribute
+       5.  Nesting (native CSS)
+       6.  Logical properties
+       7.  Grid (named areas, responsive rearrangement)
+       8.  Flexbox (nav, button groups)
+       9.  Container queries (feature cards)
+       10. clamp() for fluid type and spacing
+       11. Scroll-driven animations (progress bar, section reveals)
+       12. Transitions (hover states, toggle)
+       13. @scope (testimonial region)
+       14. Anchor positioning (tooltip)
+       
+       STATUS: Skeleton — HTML complete, CSS minimal.
+       Challenges will build the CSS section by section.
+       ============================================================ */
+
+      /* === LAYER ORDER === */
+      @layer reset, tokens, layout, components, utilities;
+
+      /* === RESET (provided) === */
+      @layer reset {
+        *,
+        *::before,
+        *::after {
+          box-sizing: border-box;
+          margin: 0;
+        }
+        body {
+          min-height: 100dvh;
+        }
+        img,
+        picture,
+        svg {
+          display: block;
+          max-width: 100%;
+        }
+        input,
+        button,
+        textarea,
+        select {
+          font: inherit;
+        }
+        a {
+          color: inherit;
+          text-decoration: none;
+        }
+        ul,
+        ol {
+          list-style: none;
+          padding: 0;
+        }
+      }
+
+      /* === TOKENS (Challenge 1: you build this) === */
+      @layer tokens {
+        :root {
+          /* TODO: Primitives, semantics, component tokens */
+          /* Placeholder so the page isn't invisible */
+          --color-surface: #fefefe;
+          --color-text: #1a1a2e;
+          --color-primary: #3a86ff;
+          --font-body:
+            -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+          --font-heading: 'Georgia', serif;
+          --font-mono: 'SF Mono', 'Fira Code', monospace;
+
+          --gray-50: oklch(99.41% 0.001 0);
+          --gray-100: oklch(96.43% 0.007 256);
+          --gray-800: oklch(18.27% 0.036 263);
+          --gray-900: oklch(10.16% 0.029 264);
+
+          --brand-hue: 250;
+          --brand-chroma: 0.15;
+          --brand-base: oklch(0.55 var(--brand-chroma) var(--brand-hue));
+
+          --space-2: 0.5rem;
+          --space-4: 1rem;
+          --space-6: 1.5rem;
+          --radius-sm: 4px;
+          --radius-md: 8px;
+        }
+      }
+
+      /* === LAYOUT (Challenge 2+) === */
+      @layer layout {
+        body {
+          font-family: var(--font-body);
+          color: var(--color-text);
+          background: var(--color-surface);
+          line-height: 1.7;
+        }
+      }
+
+      /* === COMPONENTS (Challenge 3+) === */
+      @layer components {
+        /* Built up through challenges */
+      }
+
+      /* === UTILITIES === */
+      @layer utilities {
+        .visually-hidden {
+          position: absolute;
+          width: 1px;
+          height: 1px;
+          padding: 0;
+          margin: -1px;
+          overflow: hidden;
+          clip: rect(0, 0, 0, 0);
+          white-space: nowrap;
+          border: 0;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- PROGRESS BAR (scroll-driven) -->
+    <div class="progress-bar" aria-hidden="true"></div>
+
+    <!-- HEADER / NAV -->
+    <header class="site-header">
+      <nav class="nav">
+        <a href="#" class="nav-logo">Horizon</a>
+        <ul class="nav-links">
+          <li><a href="#features">Features</a></li>
+          <li><a href="#pricing">Pricing</a></li>
+          <li><a href="#testimonials">Testimonials</a></li>
+        </ul>
+        <button
+          class="theme-toggle"
+          aria-label="Toggle theme"
+          onclick="toggleTheme()"
+        >
+          <span class="toggle-icon"></span>
+        </button>
+      </nav>
+    </header>
+
+    <!-- HERO -->
+    <section class="hero">
+      <div class="hero-content">
+        <h1>Build faster.<br />Ship with confidence.</h1>
+        <p class="hero-subtitle">
+          The modern platform for teams who refuse to compromise on quality.
+        </p>
+        <div class="hero-actions">
+          <a href="#" class="btn btn-primary">Get Started</a>
+          <a href="#" class="btn btn-secondary">Learn More</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- FEATURES (container query cards) -->
+    <section class="features" id="features">
+      <h2 class="section-title">Features</h2>
+      <div class="features-grid">
+        <div class="feature-card-wrapper">
+          <article class="feature-card">
+            <div class="feature-icon">⚡</div>
+            <h3>Lightning Fast</h3>
+            <p>
+              Sub-second builds with intelligent caching. Your CI pipeline will
+              thank you.
+            </p>
+          </article>
+        </div>
+        <div class="feature-card-wrapper">
+          <article class="feature-card">
+            <div class="feature-icon">🔒</div>
+            <h3>Secure by Default</h3>
+            <p>
+              Automatic dependency scanning, secret rotation, and zero-trust
+              networking built in.
+            </p>
+          </article>
+        </div>
+        <div class="feature-card-wrapper">
+          <article class="feature-card">
+            <div class="feature-icon">📊</div>
+            <h3>Observable</h3>
+            <p>
+              Traces, metrics, and logs unified in one view. Know what's
+              happening before users do.
+            </p>
+          </article>
+        </div>
+        <div class="feature-card-wrapper">
+          <article class="feature-card">
+            <div class="feature-icon">🔄</div>
+            <h3>GitOps Native</h3>
+            <p>
+              Every change is a pull request. Rollback to any commit.
+              Infrastructure as conversation.
+            </p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- PRICING (grid layout) -->
+    <section class="pricing" id="pricing">
+      <h2 class="section-title">Pricing</h2>
+      <div class="pricing-grid">
+        <div class="pricing-card">
+          <h3>Starter</h3>
+          <p class="price"><span class="price-amount">$0</span>/month</p>
+          <ul class="pricing-features">
+            <li>3 projects</li>
+            <li>1 GB storage</li>
+            <li>Community support</li>
+          </ul>
+          <a href="#" class="btn btn-secondary">Start Free</a>
+        </div>
+        <div class="pricing-card pricing-featured">
+          <h3>Pro</h3>
+          <p class="price"><span class="price-amount">$29</span>/month</p>
+          <ul class="pricing-features">
+            <li>Unlimited projects</li>
+            <li>50 GB storage</li>
+            <li>Priority support</li>
+            <li>Custom domains</li>
+          </ul>
+          <a href="#" class="btn btn-primary">Go Pro</a>
+        </div>
+        <div class="pricing-card">
+          <h3>Enterprise</h3>
+          <p class="price"><span class="price-amount">Custom</span></p>
+          <ul class="pricing-features">
+            <li>Everything in Pro</li>
+            <li>SSO / SAML</li>
+            <li>Dedicated support</li>
+            <li>SLA guarantee</li>
+          </ul>
+          <a href="#" class="btn btn-secondary">Contact Sales</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- TESTIMONIALS (scoped styles) -->
+    <section class="testimonials" id="testimonials" data-theme="dark">
+      <h2 class="section-title">What people say</h2>
+      <div class="testimonial-grid">
+        <blockquote class="testimonial">
+          <p>
+            "Horizon cut our deploy time from 12 minutes to 45 seconds. That's
+            not an exaggeration."
+          </p>
+          <footer>— Sarah Chen, CTO at Fintrack</footer>
+        </blockquote>
+        <blockquote class="testimonial">
+          <p>
+            "The observability features alone justified the switch. We caught a
+            memory leak within hours."
+          </p>
+          <footer>— Marcus Rivera, SRE Lead</footer>
+        </blockquote>
+        <blockquote class="testimonial">
+          <p>
+            "Our team of 40 engineers adopted it in a week. The learning curve
+            just isn't there."
+          </p>
+          <footer>— Priya Sharma, VP Engineering</footer>
+        </blockquote>
+      </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="site-footer">
+      <p>
+        Built with pure CSS. No frameworks. No JavaScript (except the theme
+        toggle).
+      </p>
+      <p><a href="index.html">Back to Course Contents</a></p>
+    </footer>
+
+    <!-- TOOLTIP (anchor positioning) -->
+    <span class="tooltip" id="tooltip-pro" popover
+      >Most popular plan — chosen by 73% of teams</span
+    >
+
+    <script>
+      function toggleTheme() {
+        const root = document.documentElement;
+        const current = root.getAttribute('data-theme');
+        const next = current === 'dark' ? 'light' : 'dark';
+        root.setAttribute('data-theme', next);
+      }
+    </script>
+  </body>
+</html>

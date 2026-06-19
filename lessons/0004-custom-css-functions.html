@@ -23,7 +23,7 @@
       color: var(--text);
       background: var(--bg);
       line-height: 1.7;
-      max-width: 42rem;
+      max-width: 60rem;
       margin: 0 auto;
       padding: 3rem 1.5rem;
     }
@@ -94,6 +94,10 @@
 
     .key-insight p { margin-bottom: 0.5rem; }
     .key-insight p:last-child { margin-bottom: 0; }
+
+    .example-group { border: 1px solid var(--border); border-radius: 8px; margin: 1.5rem 0; overflow: hidden; }
+    .example-group .demo { border: none; border-radius: 0; margin: 0; border-bottom: 1px solid var(--border); }
+    .example-group pre { margin: 0; border: none; border-radius: 0; }
 
     .warning {
       border-left: 3px solid #e76f51;
@@ -265,11 +269,12 @@
 
     @media print {
       body { max-width: 100%; padding: 1rem; }
-      .demo { break-inside: avoid; }
+      .demo, .example-group { break-inside: avoid; }
     }
   </style>
 </head>
 <body>
+<nav style="margin-bottom: 2rem;"><a href="index.html" style="font-size: 0.85rem; color: #3a86ff; text-decoration: none; border-bottom: 1px solid transparent;">← Course Contents</a></nav>
 
 <p class="lesson-number">Lesson 04</p>
 <h1><code>@function</code> — Custom CSS Functions</h1>
@@ -344,6 +349,7 @@ padding: --fluid(0.75rem, 2rem, 3vw);</code></pre>
 
 <p><em>These demos require Chrome/Edge 139+. In other browsers you'll see fallback styling.</em></p>
 
+<div class="example-group">
 <div class="demo">
   <p class="demo-label">--double(12px) applied to padding</p>
   <div class="double-demo">
@@ -352,11 +358,42 @@ padding: --fluid(0.75rem, 2rem, 3vw);</code></pre>
   </div>
 </div>
 
+<pre><code>@function --double(--value) {
+  result: calc(var(--value) * 2);
+}
+
+&lt;!-- HTML --&gt;
+&lt;div class="double-demo"&gt;
+  &lt;div class="box box-base"&gt;12px pad&lt;/div&gt;
+  &lt;div class="box box-doubled"&gt;24px pad&lt;/div&gt;
+&lt;/div&gt;
+
+/* CSS */
+.double-demo { --base: 12px; display: flex; gap: 1rem; }
+.box-base    { padding: var(--base); }
+.box-doubled { padding: --double(var(--base)); }</code></pre>
+</div>
+
+<div class="example-group">
 <div class="demo">
   <p class="demo-label">--fluid(1rem, 2rem) on font-size — resize the window</p>
   <div class="fluid-text">
     This text uses a custom --fluid() function that wraps clamp().
   </div>
+</div>
+
+<pre><code>@function --fluid(--min &lt;length&gt;, --max &lt;length&gt;, --vw &lt;length&gt;: 2vw) returns &lt;length&gt; {
+  result: clamp(var(--min), calc(var(--vw) + var(--min)), var(--max));
+}
+
+&lt;!-- HTML --&gt;
+&lt;div class="fluid-text"&gt;This text uses a custom --fluid() function.&lt;/div&gt;
+
+/* CSS */
+.fluid-text {
+  font-size: --fluid(1rem, 2rem);
+  padding: --fluid(0.75rem, 2rem, 3vw);
+}</code></pre>
 </div>
 
 <h2>Local variables inside functions</h2>
@@ -420,9 +457,52 @@ padding: --fluid(0.75rem, 2rem, 3vw);</code></pre>
 
 <p>There's also a new <code>if()</code> function for inline conditionals:</p>
 
-<pre><code>@function --responsive-padding(--sm &lt;length&gt;, --lg &lt;length&gt;) {
+<h3>The if() function — inline conditional logic</h3>
+
+<p><code>if()</code> lets you choose between values based on a condition, directly inside a property value — no @media block needed. It's CSS's first true inline conditional:</p>
+
+<pre><code>/* Syntax */
+if( &lt;condition&gt; : &lt;value-if-true&gt; ; else: &lt;value-if-false&gt; )
+
+/* The condition can be: */
+if( media(width &lt; 768px) : ... ; else: ... )     /* media query */
+if( supports(display: grid) : ... ; else: ... )  /* feature query */
+if( style(--theme: dark) : ... ; else: ... )     /* style query (custom property) */</code></pre>
+
+<p>Used inside a @function:</p>
+
+<pre><code>@function --responsive-padding(--sm &lt;length&gt;, --lg &lt;length&gt;) returns &lt;length&gt; {
   result: if(media(width &lt; 768px): var(--sm); else: var(--lg));
+}
+
+.container {
+  padding: --responsive-padding(1rem, 3rem);
 }</code></pre>
+
+<p>Used directly in a property value (outside @function):</p>
+
+<pre><code>/* Inline conditional without @function */
+.card {
+  padding: if(media(width &lt; 768px): 1rem; else: 2rem);
+  background: if(style(--theme: dark): #1a1a2e; else: white);
+  display: if(supports(display: grid): grid; else: flex);
+}
+
+/* Chaining multiple conditions */
+.text {
+  font-size: if(
+    media(width &lt; 400px): 0.875rem;
+    else: if(
+      media(width &lt; 768px): 1rem;
+      else: 1.125rem
+    )
+  );
+}</code></pre>
+
+<div class="key-insight">
+  <p><strong>if() vs @media blocks:</strong> They produce the same result, but <code>if()</code> keeps the logic inline with the value — no separate block needed. This is especially powerful inside <code>@function</code> where you want one-liner conditional returns, or when you want to set a single property conditionally without the overhead of a media query block.</p>
+  <p><strong>Browser support:</strong> <code>if()</code> is very new — Chrome 137+ (behind a flag), not yet stable in any browser as of mid-2025. The @media-inside-function approach works today.</p>
+</div>
 
 <h2>Passing comma-separated values</h2>
 

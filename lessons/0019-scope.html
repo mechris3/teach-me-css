@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lesson 19: @scope — Proximity-Based Styling</title>
+  <style>
+    :root {
+      --text: #1a1a2e;
+      --bg: #fefefe;
+      --accent: #3a86ff;
+      --code-bg: #f4f4f8;
+      --border: #e0e0e0;
+      --serif: 'Georgia', serif;
+      --mono: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+      --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+    * { box-sizing: border-box; margin: 0; }
+    body { font-family: var(--sans); color: var(--text); background: var(--bg); line-height: 1.7; max-width: 60rem; margin: 0 auto; padding: 3rem 1.5rem; }
+    h1 { font-family: var(--serif); font-size: 1.8rem; margin-bottom: 0.25rem; font-weight: normal; }
+    .lesson-number { font-size: 0.85rem; color: #666; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.25rem; }
+    h2 { font-family: var(--serif); font-size: 1.3rem; margin-top: 2.5rem; margin-bottom: 0.75rem; font-weight: normal; }
+    h3 { font-size: 1rem; margin-top: 1.5rem; margin-bottom: 0.5rem; }
+    p, li { margin-bottom: 1rem; }
+    ul, ol { padding-left: 1.5rem; }
+    code { font-family: var(--mono); font-size: 0.88em; background: var(--code-bg); padding: 0.15em 0.4em; border-radius: 3px; }
+    pre { background: var(--code-bg); border: 1px solid var(--border); border-radius: 6px; padding: 1.25rem; overflow-x: auto; margin: 1.25rem 0; line-height: 1.5; }
+    pre code { background: none; padding: 0; font-size: 0.85rem; }
+    .key-insight { border-left: 3px solid var(--accent); padding: 1rem 1.25rem; margin: 1.5rem 0; background: #f0f7ff; border-radius: 0 6px 6px 0; }
+    .key-insight p { margin-bottom: 0.5rem; }
+    .key-insight p:last-child { margin-bottom: 0; }
+    .example-group { border: 1px solid var(--border); border-radius: 8px; margin: 1.5rem 0; overflow: hidden; }
+    .example-group .demo { border: none; border-radius: 0; margin: 0; border-bottom: 1px solid var(--border); }
+    .example-group pre { margin: 0; border: none; border-radius: 0; }
+    .demo { border: 1px solid var(--border); border-radius: 8px; padding: 1.5rem; margin: 1.5rem 0; background: #fafafa; }
+    .demo-label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em; color: #888; margin-bottom: 1rem; }
+
+    /* Demo: basic scope */
+    @scope (.scope-card) {
+      p { color: var(--accent); font-weight: 500; }
+      .title { font-size: 1.1rem; color: #e76f51; }
+    }
+
+    /* Demo: scope with limit */
+    @scope (.scope-outer) to (.scope-inner) {
+      p { background: #f0f7ff; padding: 0.5rem; border-radius: 4px; font-size: 0.85rem; }
+    }
+
+    /* Demo: proximity */
+    @scope (.theme-blue) {
+      .badge { background: var(--accent); color: white; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.75rem; display: inline-block; }
+    }
+    @scope (.theme-coral) {
+      .badge { background: #e76f51; color: white; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.75rem; display: inline-block; }
+    }
+
+    .quiz { background: #fffdf0; border: 1px solid #e8e0c0; border-radius: 8px; padding: 1.5rem; margin: 2rem 0; }
+    .quiz h3 { font-size: 1rem; margin-bottom: 1rem; margin-top: 0; font-weight: 600; }
+    .quiz-options { list-style: none; padding: 0; }
+    .quiz-options li { margin-bottom: 0.5rem; }
+    .quiz-options button { display: block; width: 100%; text-align: left; padding: 0.75rem 1rem; border: 1px solid var(--border); border-radius: 6px; background: white; font-family: var(--mono); font-size: 0.85rem; cursor: pointer; transition: border-color 0.15s; }
+    .quiz-options button:hover { border-color: var(--accent); }
+    .quiz-options button.correct { border-color: #2a9d8f; background: #e8f8f5; }
+    .quiz-options button.incorrect { border-color: #e76f51; background: #fef0ed; }
+    .quiz-feedback { margin-top: 1rem; padding: 0.75rem; border-radius: 6px; font-size: 0.9rem; display: none; }
+    .source-link { margin-top: 3rem; padding-top: 1.5rem; border-top: 1px solid var(--border); }
+    .source-link a { color: var(--accent); text-decoration: none; border-bottom: 1px solid transparent; }
+    .source-link a:hover { border-bottom-color: var(--accent); }
+    .followup { margin-top: 2rem; padding: 1rem 1.25rem; background: #f9f9f9; border-radius: 8px; font-size: 0.9rem; color: #555; }
+    @media print { body { max-width: 100%; padding: 1rem; } .example-group { break-inside: avoid; } }
+  </style>
+</head>
+<body>
+
+<nav style="margin-bottom: 2rem;"><a href="index.html" style="font-size: 0.85rem; color: #3a86ff; text-decoration: none;">← Course Contents</a></nav>
+
+<p class="lesson-number">Lesson 19</p>
+<h1><code>@scope</code> — Proximity-Based Styling</h1>
+
+<p>You've learned how to control which styles win via layers (Lesson 11) and specificity (Lesson 14). <code>@scope</code> adds a new dimension: <strong>proximity</strong>. Styles from a closer scope root beat styles from a farther one — regardless of source order. It also lets you define where styles <em>stop</em> applying, creating true component boundaries in CSS.</p>
+
+<h2>The mental model</h2>
+
+<p><code>@scope</code> does two things:</p>
+<ol>
+  <li><strong>Limits where styles apply</strong> — styles inside <code>@scope (.card)</code> only match elements inside <code>.card</code>. Like a built-in descendant selector, but with a defined boundary.</li>
+  <li><strong>Proximity wins</strong> — when two scopes both match an element, the closer ancestor scope root wins. No specificity battle needed.</li>
+</ol>
+
+<div class="key-insight">
+  <p><strong>How it fits in the cascade:</strong> Scope proximity is checked AFTER layers and specificity, but BEFORE source order. So if two declarations have the same origin, layer, and specificity — the one from the closer scope root wins.</p>
+  <pre><code>Cascade resolution: origin → inline → layers → specificity → SCOPE PROXIMITY → source order</code></pre>
+</div>
+
+<h2>Basic @scope — scoping styles to a subtree</h2>
+
+<div class="example-group">
+<div class="demo">
+  <p class="demo-label">The blue text and orange title only apply inside .scope-card — the paragraph outside is unaffected</p>
+  <p style="font-size: 0.85rem;">I'm outside the scope — normal styling.</p>
+  <div class="scope-card" style="border: 1px solid var(--border); border-radius: 6px; padding: 1rem; margin-top: 0.5rem;">
+    <div class="title">Card Title (scoped orange)</div>
+    <p>I'm inside .scope-card — scoped blue styling applies to me.</p>
+  </div>
+</div>
+<pre><code>&lt;!-- HTML --&gt;
+&lt;p&gt;I'm outside the scope — normal styling.&lt;/p&gt;
+&lt;div class="card"&gt;
+  &lt;h3 class="title"&gt;Card Title&lt;/h3&gt;
+  &lt;p&gt;I'm inside — scoped styling applies.&lt;/p&gt;
+&lt;/div&gt;
+
+/* CSS */
+@scope (.card) {
+  p { color: blue; font-weight: 500; }
+  .title { color: coral; }
+}
+
+/* These rules ONLY apply to p and .title elements
+   that are descendants of .card. Elements outside .card
+   are completely unaffected — no specificity needed to exclude them. */</code></pre>
+</div>
+
+<h2>Scope limits — where styles STOP applying</h2>
+
+<p>The killer feature: you can define a lower boundary. Styles apply from the scope root DOWN TO (but not including) the limit:</p>
+
+<div class="example-group">
+<div class="demo">
+  <p class="demo-label">Blue background applies between .outer and .inner — the paragraph inside .inner is unaffected</p>
+  <div class="scope-outer" style="border: 1px solid var(--border); border-radius: 6px; padding: 1rem;">
+    <p>I'm between outer and inner — scoped style applies (blue background).</p>
+    <div class="scope-inner" style="border: 1px dashed #e76f51; border-radius: 4px; padding: 0.75rem; margin-top: 0.5rem;">
+      <p>I'm inside .inner — the scope STOPS here. No blue background.</p>
+    </div>
+  </div>
+</div>
+<pre><code>&lt;!-- HTML --&gt;
+&lt;div class="outer"&gt;
+  &lt;p&gt;I get styled (between root and limit).&lt;/p&gt;
+  &lt;div class="inner"&gt;
+    &lt;p&gt;I do NOT get styled (past the limit).&lt;/p&gt;
+  &lt;/div&gt;
+&lt;/div&gt;
+
+/* CSS — scope FROM .outer, STOP AT .inner */
+@scope (.outer) to (.inner) {
+  p { background: lightblue; padding: 0.5rem; border-radius: 4px; }
+}
+
+/* "to" defines the lower boundary.
+   Elements AT or INSIDE .inner are excluded from the scope.
+   This creates a "donut" — styles apply in between. */</code></pre>
+</div>
+
+<div class="key-insight">
+  <p><strong>Why scope limits matter:</strong> They solve the "nested component" problem. If you have a <code>.card</code> inside a <code>.card</code>, styles for the outer card's children shouldn't bleed into the inner card. With <code>@scope (.card) to (.card)</code>, they stop at the boundary of any nested card.</p>
+</div>
+
+<h2>Proximity — closer scope root wins</h2>
+
+<p>When an element is inside multiple overlapping scopes, the one with the closer ancestor scope root wins:</p>
+
+<div class="example-group">
+<div class="demo">
+  <p class="demo-label">The badge is inside both .theme-blue and .theme-coral — the closer one (.theme-coral) wins</p>
+  <div class="theme-blue" style="border: 2px solid var(--accent); border-radius: 6px; padding: 1rem;">
+    <p style="font-size: 0.8rem; margin-bottom: 0.5rem;">theme-blue scope</p>
+    <span class="badge">Blue badge (closest scope is blue)</span>
+    <div class="theme-coral" style="border: 2px solid #e76f51; border-radius: 6px; padding: 0.75rem; margin-top: 0.75rem;">
+      <p style="font-size: 0.8rem; margin-bottom: 0.5rem;">theme-coral scope (nested inside blue)</p>
+      <span class="badge">Coral badge (closest scope is coral — wins!)</span>
+    </div>
+  </div>
+</div>
+<pre><code>&lt;!-- HTML --&gt;
+&lt;div class="theme-blue"&gt;
+  &lt;span class="badge"&gt;Blue (closest scope is blue)&lt;/span&gt;
+  &lt;div class="theme-coral"&gt;
+    &lt;span class="badge"&gt;Coral (closest scope is coral — wins!)&lt;/span&gt;
+  &lt;/div&gt;
+&lt;/div&gt;
+
+/* CSS — two scopes with the same specificity */
+@scope (.theme-blue) {
+  .badge { background: blue; color: white; }
+}
+
+@scope (.theme-coral) {
+  .badge { background: coral; color: white; }
+}
+
+/* Both rules match the inner badge (it's inside both scopes).
+   Same specificity. Same layer.
+   Proximity wins: .theme-coral is the CLOSER ancestor → coral wins.
+   Without @scope, source order would decide (coral last → coral wins by coincidence).
+   With @scope, proximity ALWAYS wins — order doesn't matter. */</code></pre>
+</div>
+
+<div class="key-insight">
+  <p><strong>The mental model for proximity:</strong> "Which scope root is the shortest DOM walk from this element?" That one wins. It's like CSS specificity, but measured in DOM distance rather than selector weight.</p>
+</div>
+
+<h2>@scope vs other scoping approaches</h2>
+
+<table style="width: 100%; border-collapse: collapse; font-size: 0.82rem; margin: 1.5rem 0;">
+  <thead>
+    <tr style="border-bottom: 2px solid var(--border); text-align: left;">
+      <th style="padding: 0.5rem;">Approach</th>
+      <th style="padding: 0.5rem;">How it works</th>
+      <th style="padding: 0.5rem;">Limitations</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr style="border-bottom: 1px solid var(--border);">
+      <td style="padding: 0.4rem 0.5rem;">BEM naming</td>
+      <td style="padding: 0.4rem 0.5rem;">Convention-based — unique class names prevent clashes</td>
+      <td style="padding: 0.4rem 0.5rem;">Manual, verbose, no lower boundary</td>
+    </tr>
+    <tr style="border-bottom: 1px solid var(--border);">
+      <td style="padding: 0.4rem 0.5rem;">Angular ViewEncapsulation</td>
+      <td style="padding: 0.4rem 0.5rem;">Compiler adds unique attributes to scope component styles</td>
+      <td style="padding: 0.4rem 0.5rem;">Framework-specific, can't define lower boundaries, no proximity</td>
+    </tr>
+    <tr style="border-bottom: 1px solid var(--border);">
+      <td style="padding: 0.4rem 0.5rem;">Shadow DOM</td>
+      <td style="padding: 0.4rem 0.5rem;">Hard encapsulation boundary — styles can't leak in or out</td>
+      <td style="padding: 0.4rem 0.5rem;">Too strict for many use cases, hard to theme from outside</td>
+    </tr>
+    <tr>
+      <td style="padding: 0.4rem 0.5rem;"><code>@scope</code></td>
+      <td style="padding: 0.4rem 0.5rem;">Native CSS scoping with upper AND lower boundaries + proximity</td>
+      <td style="padding: 0.4rem 0.5rem;">Still relatively new (Chrome 118+, no Firefox yet)</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2>The :scope selector</h2>
+
+<p>Inside <code>@scope</code>, the <code>:scope</code> pseudo-class refers to the scope root element itself:</p>
+
+<pre><code>@scope (.card) {
+  :scope {
+    /* Styles the .card element itself (the root) */
+    border: 1px solid gray;
+    border-radius: 8px;
+  }
+
+  :scope > .title {
+    /* Direct children of the scope root */
+    font-weight: 600;
+  }
+
+  p {
+    /* Any p descendant within the scope */
+    color: #555;
+  }
+}</code></pre>
+
+<h2>Practical patterns</h2>
+
+<h3>Component isolation — nested cards don't leak</h3>
+
+<div class="example-group">
+<div class="demo">
+  <p class="demo-label">Outer card has scoped styles that stop at nested cards</p>
+  <div style="border: 2px solid var(--accent); border-radius: 8px; padding: 1rem;">
+    <p style="font-size: 0.85rem; color: var(--accent); font-weight: 500;">Outer card content (styled by outer scope)</p>
+    <div style="border: 2px solid #2a9d8f; border-radius: 6px; padding: 0.75rem; margin-top: 0.5rem;">
+      <p style="font-size: 0.85rem; color: #2a9d8f; font-weight: 500;">Inner card content (NOT styled by outer scope — boundary stops it)</p>
+    </div>
+  </div>
+</div>
+<pre><code>&lt;!-- HTML --&gt;
+&lt;div class="card"&gt;
+  &lt;p&gt;Outer card content&lt;/p&gt;
+  &lt;div class="card"&gt;
+    &lt;p&gt;Inner card — outer styles DON'T reach here&lt;/p&gt;
+  &lt;/div&gt;
+&lt;/div&gt;
+
+/* CSS — scope stops at nested .card boundaries */
+@scope (.card) to (.card) {
+  p { color: blue; font-weight: 500; }
+}
+
+/* The inner .card gets its own scope instance.
+   Outer card's p styles don't leak into inner card. */</code></pre>
+</div>
+
+<h3>Theme regions without custom properties</h3>
+
+<pre><code>&lt;!-- HTML --&gt;
+&lt;section class="light-region"&gt;
+  &lt;p&gt;Light themed content&lt;/p&gt;
+&lt;/section&gt;
+&lt;section class="dark-region"&gt;
+  &lt;p&gt;Dark themed content&lt;/p&gt;
+&lt;/section&gt;
+
+/* CSS */
+@scope (.light-region) {
+  :scope { background: white; }
+  p { color: #1a1a2e; }
+}
+
+@scope (.dark-region) {
+  :scope { background: #1a1a2e; }
+  p { color: #f0f0f0; }
+}</code></pre>
+
+<h2>Browser support</h2>
+
+<p><code>@scope</code>: Chrome 118+, Edge 118+, Safari 17.4+. Firefox: not yet supported (as of mid-2025). Progressive enhancement — without support, styles simply apply globally (the scope limits are ignored).</p>
+
+<h2>Retrieval check</h2>
+
+<div class="quiz" id="quiz1">
+  <h3>What does the "to" clause in @scope (.card) to (.slot) define?</h3>
+  <ul class="quiz-options">
+    <li><button onclick="checkAnswer(this, false)">The element the scope transitions to</button></li>
+    <li><button onclick="checkAnswer(this, true)">The lower boundary — styles stop applying at (and inside) .slot</button></li>
+    <li><button onclick="checkAnswer(this, false)">An animation endpoint for the scope</button></li>
+    <li><button onclick="checkAnswer(this, false)">A selector that inherits from the scope</button></li>
+  </ul>
+  <div class="quiz-feedback"></div>
+</div>
+
+<div class="quiz" id="quiz2">
+  <h3>An element is inside both @scope(.blue) and @scope(.red) — same specificity, same layer. Which wins?</h3>
+  <ul class="quiz-options">
+    <li><button onclick="checkAnswer(this, false)">Last in source order</button></li>
+    <li><button onclick="checkAnswer(this, true)">The one whose scope root is the closer ancestor (proximity)</button></li>
+    <li><button onclick="checkAnswer(this, false)">The one with more characters in the selector</button></li>
+    <li><button onclick="checkAnswer(this, false)">Neither — they cancel each other out</button></li>
+  </ul>
+  <div class="quiz-feedback"></div>
+</div>
+
+<div class="quiz" id="quiz3">
+  <h3>Where does scope proximity sit in the cascade resolution order?</h3>
+  <ul class="quiz-options">
+    <li><button onclick="checkAnswer(this, false)">Before layers — it's the first thing checked</button></li>
+    <li><button onclick="checkAnswer(this, false)">Same level as specificity</button></li>
+    <li><button onclick="checkAnswer(this, true)">After specificity, before source order</button></li>
+    <li><button onclick="checkAnswer(this, false)">After source order — it's the final tiebreaker</button></li>
+  </ul>
+  <div class="quiz-feedback"></div>
+</div>
+
+<div class="quiz" id="quiz4">
+  <h3>What does :scope refer to inside @scope (.card)?</h3>
+  <ul class="quiz-options">
+    <li><button onclick="checkAnswer(this, false)">The :root element</button></li>
+    <li><button onclick="checkAnswer(this, true)">The .card element itself (the scope root)</button></li>
+    <li><button onclick="checkAnswer(this, false)">The nearest positioned ancestor</button></li>
+    <li><button onclick="checkAnswer(this, false)">The element being styled</button></li>
+  </ul>
+  <div class="quiz-feedback"></div>
+</div>
+
+<div class="quiz" id="quiz5">
+  <h3>How does @scope (.card) to (.card) prevent style leakage into nested cards?</h3>
+  <ul class="quiz-options">
+    <li><button onclick="checkAnswer(this, false)">It removes the nested .card from the DOM</button></li>
+    <li><button onclick="checkAnswer(this, true)">Styles stop at the nested .card boundary — it starts its own scope</button></li>
+    <li><button onclick="checkAnswer(this, false)">It increases specificity so nested cards can't override</button></li>
+    <li><button onclick="checkAnswer(this, false)">It applies Shadow DOM isolation automatically</button></li>
+  </ul>
+  <div class="quiz-feedback"></div>
+</div>
+
+<div class="source-link">
+  <p><strong>Primary sources:</strong></p>
+  <ul>
+    <li><a href="https://developer.mozilla.org/en-US/docs/Web/CSS/@scope">MDN — @scope</a></li>
+    <li><a href="https://developer.chrome.com/docs/css-ui/at-scope">Chrome Developers — @scope</a></li>
+  </ul>
+</div>
+
+<div class="followup">
+  <p>💬 That's Lesson 19 — @scope. You now have the complete cascade toolkit: origin → inline → layers → specificity → scope proximity → source order. @scope adds native component-boundary scoping to CSS without frameworks or Shadow DOM.</p>
+  <p><strong>You've now covered every topic from your original mission.</strong> Custom properties, @property, CSS functions, @function, attr(), transitions, animations, Flexbox, Grid, container queries, cascade layers, nesting, modern selectors, the full cascade, logical properties, view transitions, anchor positioning, advanced colour, and @scope.</p>
+  <p><strong>Possible next steps:</strong></p>
+  <ul>
+    <li><strong>Theming deep-dive</strong> — multi-brand, token hierarchy, Angular component theming</li>
+    <li><strong>A capstone project</strong> — build something real that uses 10+ features from this course</li>
+    <li><strong>Selectors deep-dive</strong> — all pseudo-classes, structural selectors (:nth-child), attribute selectors</li>
+  </ul>
+</div>
+
+<script>
+function checkAnswer(button, isCorrect) {
+  const quiz = button.closest('.quiz');
+  const buttons = quiz.querySelectorAll('button');
+  const feedback = quiz.querySelector('.quiz-feedback');
+
+  if (quiz.dataset.answered) return;
+  quiz.dataset.answered = 'true';
+
+  buttons.forEach(btn => btn.style.pointerEvents = 'none');
+
+  if (isCorrect) {
+    button.classList.add('correct');
+    feedback.textContent = '✓ Correct.';
+    feedback.style.background = '#e8f8f5';
+    feedback.style.color = '#1a7a6c';
+  } else {
+    button.classList.add('incorrect');
+    buttons.forEach(btn => {
+      if (btn.getAttribute('onclick').includes('true')) {
+        btn.classList.add('correct');
+      }
+    });
+    feedback.textContent = '✗ Not quite. The highlighted answer is correct.';
+    feedback.style.background = '#fef0ed';
+    feedback.style.color = '#c0392b';
+  }
+  feedback.style.display = 'block';
+}
+</script>
+
+</body>
+</html>

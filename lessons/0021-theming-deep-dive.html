@@ -1,0 +1,969 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lesson 21: Theming Deep-Dive — Token Architecture & Multi-Brand Systems</title>
+  <style>
+    :root {
+      --text: #1a1a2e;
+      --bg: #fefefe;
+      --accent: #3a86ff;
+      --code-bg: #f4f4f8;
+      --border: #e0e0e0;
+      --serif: 'Georgia', serif;
+      --mono: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+      --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+    * { box-sizing: border-box; margin: 0; }
+    body { font-family: var(--sans); color: var(--text); background: var(--bg); line-height: 1.7; max-width: 60rem; margin: 0 auto; padding: 3rem 1.5rem; }
+    h1 { font-family: var(--serif); font-size: 1.8rem; margin-bottom: 0.25rem; font-weight: normal; }
+    .lesson-number { font-size: 0.85rem; color: #666; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.25rem; }
+    h2 { font-family: var(--serif); font-size: 1.3rem; margin-top: 2.5rem; margin-bottom: 0.75rem; font-weight: normal; }
+    h3 { font-size: 1rem; margin-top: 1.5rem; margin-bottom: 0.5rem; }
+    p, li { margin-bottom: 1rem; }
+    ul, ol { padding-left: 1.5rem; }
+    code { font-family: var(--mono); font-size: 0.88em; background: var(--code-bg); padding: 0.15em 0.4em; border-radius: 3px; }
+    pre { background: var(--code-bg); border: 1px solid var(--border); border-radius: 6px; padding: 1.25rem; overflow-x: auto; margin: 1.25rem 0; line-height: 1.5; }
+    pre code { background: none; padding: 0; font-size: 0.85rem; }
+    .key-insight { border-left: 3px solid var(--accent); padding: 1rem 1.25rem; margin: 1.5rem 0; background: #f0f7ff; border-radius: 0 6px 6px 0; }
+    .key-insight p { margin-bottom: 0.5rem; }
+    .key-insight p:last-child { margin-bottom: 0; }
+    .example-group { border: 1px solid var(--border); border-radius: 8px; margin: 1.5rem 0; overflow: hidden; }
+    .example-group .demo { border: none; border-radius: 0; margin: 0; border-bottom: 1px solid var(--border); }
+    .example-group pre { margin: 0; border: none; border-radius: 0; }
+    .demo { border: 1px solid var(--border); border-radius: 8px; padding: 1.5rem; margin: 1.5rem 0; background: #fafafa; }
+    .demo-label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em; color: #888; margin-bottom: 1rem; }
+    /* Token demo styles */
+    .token-tier { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin: 1rem 0; }
+    .token-card { border: 1px solid var(--border); border-radius: 6px; padding: 1rem; background: white; }
+    .token-card h4 { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; color: #888; margin: 0 0 0.5rem; }
+    .token-card code { display: block; font-size: 0.75rem; margin-bottom: 0.25rem; }
+
+    /* Live theme demo */
+    .theme-demo { border: 2px solid var(--border); border-radius: 8px; overflow: hidden; }
+    .theme-demo-toolbar { display: flex; gap: 0.5rem; padding: 0.75rem 1rem; background: #f0f0f0; border-bottom: 1px solid var(--border); }
+    .theme-demo-toolbar button { padding: 0.35rem 0.75rem; border: 1px solid var(--border); border-radius: 4px; background: white; font-size: 0.8rem; cursor: pointer; font-family: var(--sans); }
+    .theme-demo-toolbar button.active { background: var(--accent); color: white; border-color: var(--accent); }
+    .theme-demo-content { padding: 1.5rem; transition: background 0.3s, color 0.3s; }
+    /* Brand demo */
+    .brand-demo { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    .brand-panel { border-radius: 8px; padding: 1.25rem; }
+    .brand-panel h4 { margin: 0 0 0.5rem; font-size: 0.9rem; }
+    .brand-panel p { margin: 0 0 0.75rem; font-size: 0.85rem; }
+    .brand-panel .btn { display: inline-block; padding: 0.5rem 1rem; border-radius: 4px; font-size: 0.8rem; font-weight: 600; text-decoration: none; }
+
+    .brand-a { --brand-primary: #3a86ff; --brand-surface: #f0f7ff; --brand-text: #1a1a2e; --brand-btn-bg: #3a86ff; --brand-btn-text: white; }
+    .brand-a { background: var(--brand-surface); color: var(--brand-text); }
+    .brand-a .btn { background: var(--brand-btn-bg); color: var(--brand-btn-text); }
+
+    .brand-b { --brand-primary: #e76f51; --brand-surface: #fef5f2; --brand-text: #2d1b14; --brand-btn-bg: #e76f51; --brand-btn-text: white; }
+    .brand-b { background: var(--brand-surface); color: var(--brand-text); }
+    .brand-b .btn { background: var(--brand-btn-bg); color: var(--brand-btn-text); }
+    /* Scoped theme demo */
+    .scoped-demo { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    .scoped-card { border-radius: 8px; padding: 1.25rem; border: 1px solid var(--border); }
+    .scoped-card h4 { margin: 0 0 0.5rem; font-size: 0.9rem; }
+    .scoped-card p { margin: 0; font-size: 0.85rem; }
+
+    .quiz { background: #fffdf0; border: 1px solid #e8e0c0; border-radius: 8px; padding: 1.5rem; margin: 2rem 0; }
+    .quiz h3 { font-size: 1rem; margin-bottom: 1rem; margin-top: 0; font-weight: 600; }
+    .quiz-options { list-style: none; padding: 0; }
+    .quiz-options li { margin-bottom: 0.5rem; }
+    .quiz-options button { display: block; width: 100%; text-align: left; padding: 0.75rem 1rem; border: 1px solid var(--border); border-radius: 6px; background: white; font-family: var(--mono); font-size: 0.85rem; cursor: pointer; transition: border-color 0.15s; }
+    .quiz-options button:hover { border-color: var(--accent); }
+    .quiz-options button.correct { border-color: #2a9d8f; background: #e8f8f5; }
+    .quiz-options button.incorrect { border-color: #e76f51; background: #fef0ed; }
+    .quiz-feedback { margin-top: 1rem; padding: 0.75rem; border-radius: 6px; font-size: 0.9rem; display: none; }
+    .source-link { margin-top: 3rem; padding-top: 1.5rem; border-top: 1px solid var(--border); }
+    .source-link a { color: var(--accent); text-decoration: none; border-bottom: 1px solid transparent; }
+    .source-link a:hover { border-bottom-color: var(--accent); }
+    .followup { margin-top: 2rem; padding: 1rem 1.25rem; background: #f9f9f9; border-radius: 8px; font-size: 0.9rem; color: #555; }
+    @media print { body { max-width: 100%; padding: 1rem; } .example-group { break-inside: avoid; } }
+    @media (max-width: 640px) { .token-tier, .brand-demo, .scoped-demo { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+
+<nav style="margin-bottom: 2rem;"><a href="index.html" style="font-size: 0.85rem; color: #3a86ff; text-decoration: none;">&larr; Course Contents</a></nav>
+
+<p class="lesson-number">Lesson 21</p>
+<h1>Theming Deep-Dive &mdash; Token Architecture &amp; Multi-Brand Systems</h1>
+
+<p><a href="0018-advanced-colour.html">Lesson 18</a> introduced <code>light-dark()</code>, <code>color-scheme</code>, and the basic toggle mechanism. This lesson goes deeper: how to architect a token system that scales to multiple brands, dark/light modes, and scoped theme regions &mdash; all in pure CSS, with patterns that map directly to Angular.</p>
+
+<h2>The three-tier token model</h2>
+
+<p>Mature design systems converge on three layers of tokens. Each layer adds meaning on top of the one below:</p>
+
+<div class="example-group">
+<div class="demo">
+  <p class="demo-label">Three tiers: primitive &rarr; semantic &rarr; component</p>
+  <div class="token-tier">
+    <div class="token-card">
+      <h4>Primitive</h4>
+      <code>--blue-500: #3a86ff</code>
+      <code>--gray-100: #f4f4f8</code>
+      <code>--space-4: 1rem</code>
+      <p style="font-size: 0.78rem; color: #666; margin: 0.5rem 0 0;">Raw values. No opinion on usage. Never referenced directly in components.</p>
+    </div>
+    <div class="token-card">
+      <h4>Semantic</h4>
+      <code>--color-primary: var(--blue-500)</code>
+      <code>--color-surface: var(--gray-100)</code>
+      <code>--space-inline: var(--space-4)</code>
+      <p style="font-size: 0.78rem; color: #666; margin: 0.5rem 0 0;">Purpose-based. Says <em>what it's for</em>, not what it looks like. This is what components consume.</p>
+    </div>
+    <div class="token-card">
+      <h4>Component</h4>
+      <code>--btn-bg: var(--color-primary)</code>
+      <code>--btn-radius: 4px</code>
+      <code>--card-padding: var(--space-inline)</code>
+      <p style="font-size: 0.78rem; color: #666; margin: 0.5rem 0 0;">Per-component overrides. Optional &mdash; only needed when a component diverges from semantic defaults.</p>
+    </div>
+  </div>
+</div>
+<pre><code>/* === TIER 1: Primitives — raw palette, never used directly in components === */
+:root {
+  --blue-500: #3a86ff;
+  --blue-700: #1a5fd4;
+  --coral-500: #e76f51;
+  --gray-50: #fefefe;
+  --gray-100: #f4f4f8;
+  --gray-800: #1a1a2e;
+  --gray-900: #0d0d1a;
+  --space-2: 0.5rem;
+  --space-4: 1rem;
+  --space-6: 1.5rem;
+  --radius-sm: 4px;
+  --radius-md: 8px;
+}
+
+/* === TIER 2: Semantic — what the token is FOR === */
+:root {
+  --color-primary: var(--blue-500);
+  --color-primary-hover: var(--blue-700);
+  --color-surface: var(--gray-50);
+  --color-surface-raised: var(--gray-100);
+  --color-text: var(--gray-800);
+  --color-text-muted: #666;
+  --color-border: #e0e0e0;
+  --space-inline: var(--space-4);
+  --space-block: var(--space-6);
+  --radius-default: var(--radius-md);
+}
+
+/* === TIER 3: Component — per-component overrides (optional) === */
+.btn {
+  --btn-bg: var(--color-primary);
+  --btn-text: white;
+  --btn-radius: var(--radius-sm);
+  background: var(--btn-bg);
+  color: var(--btn-text);
+  border-radius: var(--btn-radius);
+  padding: var(--space-2) var(--space-4);
+}</code></pre>
+</div>
+
+<div class="key-insight">
+  <p><strong>Why three tiers?</strong> Each layer is a <em>contract boundary</em>:</p>
+  <p>&bull; Change a <strong>primitive</strong> and every semantic token referencing it updates (palette refresh).</p>
+  <p>&bull; Swap the <strong>semantic</strong> layer and every component updates without touching component code (theming/dark mode).</p>
+  <p>&bull; Override a <strong>component</strong> token to customise one component without affecting the global system.</p>
+  <p>Components only reference semantic or component tokens. They never reach down to primitives. This indirection is what makes theming possible.</p>
+</div>
+
+<h2>Dark mode via semantic token swapping</h2>
+
+<p>The key insight from <a href="0018-advanced-colour.html">Lesson 18</a>: <code>color-scheme</code> drives <code>light-dark()</code>. But for a full token system, you swap token layers rather than using <code>light-dark()</code> on every property. Which layer you swap depends on what you're theming:</p>
+
+<ul>
+  <li><strong>Dark mode</strong> (same brand, different lightness) &rarr; swap the <strong>semantic</strong> layer. Primitives stay the same (your palette still has both light and dark values). What changes is which primitive each semantic token points to: <code>--color-surface</code> maps to <code>--gray-50</code> in light, <code>--gray-900</code> in dark.</li>
+  <li><strong>Multi-brand</strong> (different brand identity) &rarr; each brand provides its own <strong>primitives file</strong> with brand-appropriate names (Brand A defines <code>--blue-500</code>, Brand B defines <code>--coral-500</code>), and each brand also maps those to the <strong>same</strong> semantic tokens (<code>--color-primary</code>). Alternatively, use neutral primitive names like <code>--brand-500</code> that don't claim a specific colour. Either way, component code only references semantic tokens and never changes per brand.</li>
+</ul>
+
+<h3>Why dark mode swaps semantics, not primitives</h3>
+
+<p>You might wonder: why not just redefine the primitives for dark mode? Here's what that would look like:</p>
+
+<pre><code>/* WRONG approach: swapping primitives for dark mode */
+[data-theme="dark"] {
+  --gray-50: #1a1a2e;   /* "gray-50" is now... dark?! */
+  --gray-900: #fefefe;  /* "gray-900" is now... white?! */
+}</code></pre>
+
+<p>This breaks immediately. Primitive names describe <em>what the value IS</em> &mdash; <code>--gray-50</code> means "a very light grey." If you redefine it to be dark, the name becomes a lie. Anyone reading the code (including future you) sees <code>--gray-50</code> and assumes "light," but it's actually dark. You've turned your primitives into semantic tokens with misleading names.</p>
+
+<p>The deeper issue: in dark mode, you still <em>need</em> both light and dark values available simultaneously. Dark mode text is light (<code>--gray-50</code>), dark mode surfaces are dark (<code>--gray-900</code>). If you redefine <code>--gray-50</code> to be dark, you've lost access to the light value you need for text.</p>
+
+<p>The correct approach: keep primitives truthful (they always describe their actual value), and let the semantic layer decide which primitive to use in each context:</p>
+
+<pre><code>/* Primitives — ALWAYS truthful, never redefined per theme */
+:root {
+  --gray-50: #fefefe;    /* always light */
+  --gray-900: #0d0d1a;   /* always dark */
+}
+
+/* Semantic layer — re-maps which primitives are used */
+[data-theme="light"] {
+  --color-surface: var(--gray-50);    /* light surface */
+  --color-text: var(--gray-900);      /* dark text on light */
+}
+[data-theme="dark"] {
+  --color-surface: var(--gray-900);   /* dark surface */
+  --color-text: var(--gray-50);       /* light text on dark */
+}</code></pre>
+
+<p>Now names are always honest: <code>--gray-50</code> is always light, <code>--color-surface</code> always means "the background." The semantic layer is the translation layer between "what colours exist" and "what colours are used where."</p>
+
+<div class="key-insight">
+  <p><strong>For multi-brand, it's different:</strong> When Brand B replaces Brand A, the semantic intent is identical &mdash; "primary" still means "primary." Each brand provides its own primitives file (with honest names: Brand A has <code>--blue-500</code>, Brand B has <code>--coral-500</code>) and maps them to the same semantic tokens (<code>--color-primary</code>). Alternatively, use neutral names like <code>--brand-500</code> that don't claim a specific colour, so they can be swapped without the name becoming a lie.</p>
+  <p><strong>Rule of thumb:</strong> Swap whatever layer lets all names remain truthful. If swapping a layer would make names lie about their values or their purpose, you're swapping the wrong layer.</p>
+</div>
+
+<p>Here are both dark mode approaches:</p>
+
+<h3>Approach 1: light-dark() inline (simple sites)</h3>
+
+<p><code>light-dark()</code> is a native CSS colour function. You give it two values — the first is used in light mode, the second in dark mode:</p>
+
+<pre><code>color: light-dark(#1a1a2e, #e8e8e8);
+/*                 ↑ light    ↑ dark  */</code></pre>
+
+<p>It decides which value to return based on the <code>color-scheme</code> property in effect on that element. The resolution chain:</p>
+
+<ol>
+  <li><strong>Explicit <code>color-scheme</code> on the element</strong> — <code>color-scheme: dark</code> forces dark</li>
+  <li><strong>Inherited from parent</strong> — if nothing is set on this element, it inherits</li>
+  <li><strong>OS preference</strong> — if nothing in the tree overrides it, the user's system setting (e.g. macOS Appearance) decides</li>
+</ol>
+
+<p>To opt in to automatic light/dark based on the user's OS, declare this once:</p>
+
+<pre><code>:root {
+  color-scheme: light dark;  /* "I support both — follow the OS" */
+}</code></pre>
+
+<p>To let a toggle button override the OS preference, add/remove a class that forces <code>color-scheme</code>:</p>
+
+<pre><code>/* CSS */
+:root { color-scheme: light dark; }       /* default: follow OS */
+:root.dark  { color-scheme: dark; }        /* user forced dark */
+:root.light { color-scheme: light; }       /* user forced light */
+
+// JS — remove both, then add the one you want (or neither for "system")
+const root = document.documentElement;
+root.classList.remove('light', 'dark');
+root.classList.add('dark');  // omit this line entirely to follow OS</code></pre>
+
+<p>The class names (<code>.dark</code>, <code>.light</code>) are arbitrary — you could call them anything. What matters is that the CSS rule they trigger sets <code>color-scheme</code> to the spec-defined keywords <code>dark</code> or <code>light</code>. Those are the values <code>light-dark()</code> reads from.</p>
+
+<div class="key-insight">
+  <p><strong>The single source of truth:</strong> <code>color-scheme</code> is the property that <code>light-dark()</code> reads from. Everything else — classes, JS toggles, media queries — is just a way to <em>set</em> that property. If you understand this, the whole mechanism is clear.</p>
+</div>
+
+<p>Here's a full token example using <code>light-dark()</code>:</p>
+
+<pre><code>:root {
+  color-scheme: light dark;
+
+  /* Each semantic token declares both values inline */
+  --color-surface: light-dark(#fefefe, #1a1a2e);
+  --color-text: light-dark(#1a1a2e, #e8e8e8);
+  --color-primary: light-dark(#3a86ff, #6eaaff);
+  --color-border: light-dark(#e0e0e0, #333);
+}
+
+/* Toggle: override color-scheme on :root */
+:root.dark { color-scheme: dark; }
+:root.light { color-scheme: light; }</code></pre>
+
+<h3>Approach 2: class-based semantic swap (multi-brand / complex apps)</h3>
+
+<pre><code>/* Primitives stay the same regardless of theme */
+:root {
+  --blue-500: #3a86ff;
+  --blue-300: #6eaaff;
+  --gray-50: #fefefe;
+  --gray-800: #1a1a2e;
+  --gray-900: #0d0d1a;
+}
+
+/* Light semantics (default) */
+:root, [data-theme="light"] {
+  --color-surface: var(--gray-50);
+  --color-text: var(--gray-800);
+  --color-primary: var(--blue-500);
+}
+
+/* Dark semantics — same names, different primitives */
+[data-theme="dark"] {
+  --color-surface: var(--gray-900);
+  --color-text: #e8e8e8;
+  --color-primary: var(--blue-300);
+}</code></pre>
+
+<div class="key-insight">
+  <p><strong>When to use which:</strong></p>
+  <p>&bull; <strong>light-dark()</strong> is strictly binary — it only supports two modes (light and dark). There's no way to add a third value for high-contrast, sepia, or brand variants. It's elegant for simple light/dark toggling with few tokens. One declaration per token, no duplication.</p>
+  <p>&bull; <strong>Class/attribute swap</strong> scales to any number of themes because each theme is just another block of custom property overrides. Need a third, fourth, fifth theme? Add another <code>[data-theme="..."]</code> block. This is what you use for multi-brand, high-contrast modes, or anything beyond the light/dark binary.</p>
+  <p>In practice, large apps use approach 2. <code>light-dark()</code> is best when dark mode is your <em>only</em> theming concern.</p>
+</div>
+
+<h3>Live demo: light/dark toggle</h3>
+
+<div class="example-group">
+<div class="demo">
+  <p class="demo-label">Click the buttons &mdash; the semantic tokens swap, all children respond</p>
+  <div class="theme-demo" id="themeDemo">
+    <div class="theme-demo-toolbar">
+      <button class="active" onclick="setTheme('light')">Light</button>
+      <button onclick="setTheme('dark')">Dark</button>
+      <button onclick="setTheme('system')">System</button>
+    </div>
+    <div class="theme-demo-content" id="themeDemoContent" style="background: var(--demo-surface); color: var(--demo-text);">
+      <h4 style="margin: 0 0 0.5rem; font-size: 0.95rem; color: var(--demo-text);">Card Title</h4>
+      <p style="margin: 0 0 0.75rem; font-size: 0.85rem; color: var(--demo-text-muted);">This content responds to the theme toggle. No per-element styles change &mdash; only the semantic token values.</p>
+      <span style="display: inline-block; padding: 0.4rem 0.8rem; border-radius: 4px; font-size: 0.8rem; font-weight: 600; background: var(--demo-primary); color: white;">Button</span>
+    </div>
+  </div>
+</div>
+<pre><code>&lt;!-- HTML --&gt;
+&lt;div class="theme-container" data-theme="light"&gt;
+  &lt;button onclick="setTheme('light')"&gt;Light&lt;/button&gt;
+  &lt;button onclick="setTheme('dark')"&gt;Dark&lt;/button&gt;
+  &lt;div class="content"&gt;
+    &lt;h4&gt;Card Title&lt;/h4&gt;
+    &lt;p&gt;Content responds to the token swap.&lt;/p&gt;
+    &lt;button class="btn"&gt;Action&lt;/button&gt;
+  &lt;/div&gt;
+&lt;/div&gt;
+
+/* CSS — semantic tokens for each theme */
+.theme-container, [data-theme="light"] {
+  --color-surface: #fefefe;
+  --color-text: #1a1a2e;
+  --color-text-muted: #666;
+  --color-primary: #3a86ff;
+}
+[data-theme="dark"] {
+  --color-surface: #1a1a2e;
+  --color-text: #e8e8e8;
+  --color-text-muted: #aaa;
+  --color-primary: #6eaaff;
+}
+
+/* Components consume semantic tokens — never change per theme */
+.content { background: var(--color-surface); color: var(--color-text); }
+.content p { color: var(--color-text-muted); }
+.btn { background: var(--color-primary); }
+
+// JS — one line to swap the theme
+function setTheme(theme) {
+  document.querySelector('.theme-container').dataset.theme = theme;
+}</code></pre>
+</div>
+
+<h2>Multi-brand theming</h2>
+
+<p>The most powerful application of the three-tier model: multiple brands sharing one codebase. The primitives change per brand, the semantic layer re-maps, and components are untouched.</p>
+
+<div class="example-group">
+<div class="demo">
+  <p class="demo-label">Same component code, different brand tokens &mdash; only the token layer differs</p>
+  <div class="brand-demo">
+    <div class="brand-panel brand-a">
+      <h4>Brand A &mdash; FinTech</h4>
+      <p>Clean blue palette. Professional, trustworthy. The button, surface, and text are all driven by --brand-* tokens.</p>
+      <span class="btn">Open Account</span>
+    </div>
+    <div class="brand-panel brand-b">
+      <h4>Brand B &mdash; Food Delivery</h4>
+      <p>Warm coral palette. Energetic, appetising. Identical HTML, identical component CSS &mdash; only the tokens changed.</p>
+      <span class="btn">Order Now</span>
+    </div>
+  </div>
+</div>
+<pre><code>&lt;!-- HTML — identical structure for both brands --&gt;
+&lt;div class="brand-panel brand-a"&gt;
+  &lt;h4&gt;Brand A &mdash; FinTech&lt;/h4&gt;
+  &lt;p&gt;Content&lt;/p&gt;
+  &lt;span class="btn"&gt;Open Account&lt;/span&gt;
+&lt;/div&gt;
+
+&lt;div class="brand-panel brand-b"&gt;
+  &lt;h4&gt;Brand B &mdash; Food Delivery&lt;/h4&gt;
+  &lt;p&gt;Content&lt;/p&gt;
+  &lt;span class="btn"&gt;Order Now&lt;/span&gt;
+&lt;/div&gt;
+
+/* Each brand class sets its own token values */
+.brand-a {
+  --brand-primary: #3a86ff;
+  --brand-surface: #f0f7ff;
+  --brand-text: #1a1a2e;
+}
+.brand-b {
+  --brand-primary: #e76f51;
+  --brand-surface: #fef5f2;
+  --brand-text: #2d1b14;
+}
+
+/* Component styles consume tokens — identical for both brands */
+.brand-panel {
+  background: var(--brand-surface);
+  color: var(--brand-text);
+}
+.btn {
+  background: var(--brand-primary);
+  color: white;
+}
+
+/* In production, you'd use a data attribute instead of classes:
+   [data-brand="fintech"] { --brand-primary: #3a86ff; ... }
+   [data-brand="food"]    { --brand-primary: #e76f51; ... }
+   Then set data-brand on a high-level container (or :root). */</code></pre>
+</div>
+
+<div class="key-insight">
+  <p><strong>The architectural insight:</strong> In a multi-brand system, you're not writing different CSS per brand. You're writing <em>one</em> set of component CSS that consumes semantic tokens. The brand is just a different set of token values injected at a high point in the DOM. This is the same principle as Angular's dependency injection &mdash; components declare what they need, the provider (theme) supplies it.</p>
+</div>
+
+<h2>Scoped theming with data attributes and inheritance</h2>
+
+<p>Not everything on a page needs to be the same theme. Marketing panels, embedded widgets, or "dark hero" sections might override the page theme locally. This works via custom property inheritance — no <code>@scope</code> needed — because setting <code>data-theme</code> on a container causes the token overrides to cascade into all descendants:</p>
+
+<div class="example-group">
+<div class="demo">
+  <p class="demo-label">Two cards on the same page, each with a scoped theme override</p>
+  <div class="scoped-demo">
+    <div class="scoped-card" style="background: #fefefe; color: #1a1a2e;">
+      <h4 style="color: #1a1a2e;">Light region</h4>
+      <p style="color: #666;">Default page theme. Tokens inherit from :root.</p>
+    </div>
+    <div class="scoped-card" style="background: #1a1a2e; color: #e8e8e8;">
+      <h4 style="color: #e8e8e8;">Dark region</h4>
+      <p style="color: #aaa;">Scoped override &mdash; just set data-theme="dark" on this container.</p>
+    </div>
+  </div>
+</div>
+<pre><code>&lt;!-- HTML — two regions on the same page with different themes --&gt;
+&lt;div class="layout" data-theme="light"&gt;
+  &lt;div class="card"&gt;
+    &lt;h4&gt;Light region&lt;/h4&gt;
+    &lt;p&gt;Default page theme. Tokens inherit from the parent.&lt;/p&gt;
+  &lt;/div&gt;
+
+  &lt;div class="card" data-theme="dark"&gt;
+    &lt;h4&gt;Dark region&lt;/h4&gt;
+    &lt;p&gt;Scoped override &mdash; just set data-theme="dark" on this container.&lt;/p&gt;
+  &lt;/div&gt;
+&lt;/div&gt;
+
+/* The same semantic blocks from before — they apply wherever
+   data-theme appears in the DOM, at any nesting level */
+[data-theme="light"] {
+  --color-surface: #fefefe;
+  --color-text: #1a1a2e;
+  --color-primary: #3a86ff;
+}
+[data-theme="dark"] {
+  --color-surface: #1a1a2e;
+  --color-text: #e8e8e8;
+  --color-primary: #6eaaff;
+}
+
+/* Components don't know or care which theme they're in */
+.card { background: var(--color-surface); color: var(--color-text); }</code></pre>
+</div>
+
+<div class="key-insight">
+  <p><strong>Why this works:</strong> Custom properties inherit down the DOM tree. When you set <code>data-theme="dark"</code> on a container, the semantic token overrides cascade into every descendant. Components inside that container receive the dark values without knowing they're in a dark region. It's the CSS version of a scoped provider in Angular's DI system.</p>
+</div>
+
+<h3>When @scope adds value to theming</h3>
+
+<p>The <code>data-theme</code> + inheritance pattern handles token values well. But what if you also want <em>different structural styles</em> (not just different colours) within a theme region? That's where <code>@scope</code> from <a href="0019-scope.html">Lesson 19</a> adds value &mdash; it lets you write rules that only apply inside a theme boundary, without leaking outward or inward past a limit:</p>
+
+<div class="example-group">
+<div class="demo">
+  <p class="demo-label">@scope with a lower boundary — dark link styles stop at the nested light widget</p>
+  <div data-theme="dark" style="background: #1a1a2e; color: #e8e8e8; padding: 1.25rem; border-radius: 8px;">
+    <h4 style="margin: 0 0 0.5rem; font-size: 0.95rem; color: #e8e8e8; text-shadow: 0 2px 8px rgba(0,0,0,0.5);">Dark hero</h4>
+    <a href="#" style="color: #6eaaff; text-decoration: underline; text-underline-offset: 3px;" onclick="return false;">Learn more</a> <span style="font-size: 0.75rem; color: #aaa;">&larr; underlined via @scope</span>
+    <div data-theme="light" style="background: #fefefe; color: #1a1a2e; padding: 1rem; border-radius: 6px; margin-top: 0.75rem;">
+      <p style="margin: 0 0 0.35rem; font-size: 0.8rem; font-weight: 600; color: #888;">Nested light widget:</p>
+      <a href="#" style="color: #3a86ff; text-decoration: none;" onclick="return false;">Widget link</a> <span style="font-size: 0.75rem; color: #aaa;">&larr; NOT underlined (lower boundary stopped it)</span>
+    </div>
+  </div>
+</div>
+<pre><code>&lt;!-- HTML --&gt;
+&lt;main data-theme="light"&gt;
+  &lt;section data-theme="dark" class="hero"&gt;
+    &lt;h1&gt;Dark hero&lt;/h1&gt;
+    &lt;a href="#" class="link"&gt;Learn more&lt;/a&gt;
+    &lt;div class="nested-widget" data-theme="light"&gt;
+      &lt;!-- This nested light region should NOT get dark link styles --&gt;
+      &lt;a href="#" class="link"&gt;Widget link&lt;/a&gt;
+    &lt;/div&gt;
+  &lt;/section&gt;
+&lt;/main&gt;
+
+/* Tokens via inheritance (same as before) */
+[data-theme="dark"] {
+  --color-surface: #1a1a2e;
+  --color-text: #e8e8e8;
+  --color-primary: #6eaaff;
+}
+
+/* Structural/behavioural styles SCOPED to dark regions only,
+   with a lower boundary so they don't leak into nested light regions */
+@scope ([data-theme="dark"]) to ([data-theme="light"]) {
+  .link {
+    /* Underline style only for links inside dark regions */
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    /* This rule does NOT apply to .link inside the nested light widget */
+  }
+
+  h1 {
+    /* Larger text shadow only makes sense on dark backgrounds */
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+  }
+}</code></pre>
+</div>
+
+<div class="key-insight">
+  <p><strong>Inheritance vs @scope &mdash; different jobs:</strong></p>
+  <p>&bull; <strong>Custom property inheritance</strong> handles <em>token values</em> (colours, spacing). It flows naturally down the tree and is overridden at any point by setting new values.</p>
+  <p>&bull; <strong>@scope</strong> handles <em>structural styles</em> (layout changes, decorations, behaviours) that should only apply within a theme boundary and stop at a lower boundary. The <code>to</code> clause prevents leaking into nested counter-themes.</p>
+  <p>For most theming, inheritance alone is enough. Add <code>@scope</code> when you have theme-dependent styles that go beyond token values &mdash; e.g. dark regions need different link underlines, shadow treatments, or layout adjustments that shouldn't bleed into re-themed children.</p>
+</div>
+
+<h2>Angular integration patterns</h2>
+
+<p>In Angular, the token architecture maps cleanly to several patterns:</p>
+
+<h3>Pattern 1: Theme service + host binding</h3>
+
+<pre><code>// theme.service.ts
+@Injectable({ providedIn: 'root' })
+export class ThemeService {
+  private theme = signal&lt;'light' | 'dark' | 'system'&gt;('system');
+
+  readonly resolved = computed(() =&gt; {
+    const t = this.theme();
+    if (t !== 'system') return t;
+    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  });
+
+  set(theme: 'light' | 'dark' | 'system') { this.theme.set(theme); }
+}
+
+// app.component.ts
+@Component({
+  selector: 'app-root',
+  host: { '[attr.data-theme]': 'theme.resolved()' },
+  template: `&lt;router-outlet /&gt;`
+})
+export class AppComponent {
+  theme = inject(ThemeService);
+}</code></pre>
+
+<h3>Pattern 2: Multi-brand via environment or route data</h3>
+
+<pre><code>// Brand tokens live in a CSS file per brand, loaded conditionally
+// styles/brand-fintech.css
+:root {
+  --brand-primary: #3a86ff;
+  --brand-surface: #f0f7ff;
+}
+
+// styles/brand-food.css
+:root {
+  --brand-primary: #e76f51;
+  --brand-surface: #fef5f2;
+}
+
+// angular.json — each build configuration includes a different brand file
+"configurations": {
+  "fintech": { "styles": ["src/styles/tokens.css", "src/styles/brand-fintech.css"] },
+  "food":    { "styles": ["src/styles/tokens.css", "src/styles/brand-food.css"] }
+}</code></pre>
+
+<h3>Pattern 3: Scoped theme directive</h3>
+
+<pre><code>// theme-scope.directive.ts — apply a theme to any container
+@Directive({
+  selector: '[appThemeScope]',
+  host: { '[attr.data-theme]': 'appThemeScope()' }
+})
+export class ThemeScopeDirective {
+  appThemeScope = input.required&lt;'light' | 'dark'&gt;();
+}
+
+&lt;!-- Usage: dark hero on an otherwise light page --&gt;
+&lt;section appThemeScope="dark" class="hero"&gt;
+  &lt;app-cta-button /&gt;  &lt;!-- inherits dark tokens automatically --&gt;
+&lt;/section&gt;</code></pre>
+
+<div class="key-insight">
+  <p><strong>The principle:</strong> Angular components should never import theme values directly. They consume CSS custom properties, and the theme is provided by a data attribute set at the app shell or section level. This keeps component CSS portable across themes and brands.</p>
+  <p>Think of it as: <strong>tokens are to CSS what DI providers are to Angular</strong> &mdash; the consuming code declares dependencies, the context supplies values.</p>
+</div>
+
+<h2>System preference + user override + persistence</h2>
+
+<p>The complete toggle pattern combines three concerns:</p>
+
+<pre><code>/* 1. Respect system preference by default */
+:root {
+  color-scheme: light dark;
+  --color-surface: light-dark(#fefefe, #1a1a2e);
+  --color-text: light-dark(#1a1a2e, #e8e8e8);
+}
+
+/* 2. User override via class on :root */
+:root.light { color-scheme: light; }
+:root.dark  { color-scheme: dark; }
+
+/* 3. Persist in localStorage, restore on load */</code></pre>
+
+<pre><code>// theme-toggle.ts — the JS side
+const STORAGE_KEY = 'theme-preference';
+
+function getTheme(): 'light' | 'dark' | 'system' {
+  return (localStorage.getItem(STORAGE_KEY) as any) ?? 'system';
+}
+
+function applyTheme(theme: 'light' | 'dark' | 'system') {
+  const root = document.documentElement;
+  root.classList.remove('light', 'dark');
+  if (theme !== 'system') root.classList.add(theme);
+  localStorage.setItem(STORAGE_KEY, theme);
+}
+
+// Apply on page load (put in &lt;head&gt; to avoid flash)
+applyTheme(getTheme());</code></pre>
+
+<div class="key-insight">
+  <p><strong>Flash of wrong theme:</strong> The biggest UX pitfall. If you apply the theme in a deferred script, the page renders with the wrong theme first, then flips. Fix: put the theme restoration script in <code>&lt;head&gt;</code> as a blocking script (tiny, fast) &mdash; it runs before first paint. In Angular SSR, render the <code>data-theme</code> attribute server-side based on a cookie.</p>
+</div>
+
+<h2>Token naming conventions</h2>
+
+<p>A naming system that scales:</p>
+
+<pre><code>/* Pattern: --{category}-{property}-{variant}-{state} */
+
+/* Colours */
+--color-primary                /* default primary */
+--color-primary-hover          /* primary on hover */
+--color-surface                /* page/card background */
+--color-surface-raised         /* elevated surface (cards, modals) */
+--color-text                   /* default body text */
+--color-text-muted             /* secondary/disabled text */
+--color-border                 /* default borders */
+--color-danger                 /* errors, destructive actions */
+--color-success                /* confirmations */
+
+/* Spacing */
+--space-1 through --space-8    /* primitives (scale) */
+--space-inline                 /* horizontal padding */
+--space-block                  /* vertical padding */
+--space-gap                    /* flex/grid gaps */
+
+/* Typography */
+--font-body                    /* body font stack */
+--font-heading                 /* heading font stack */
+--font-mono                    /* code font stack */
+--font-size-sm / -md / -lg     /* scale steps */
+--line-height-tight / -normal  /* leading */
+
+/* Radii, shadows, motion */
+--radius-sm / -md / -lg / -full
+--shadow-sm / -md / -lg
+--duration-fast / -normal / -slow
+--easing-default</code></pre>
+
+<div class="key-insight">
+  <p><strong>Naming principle:</strong> Semantic tokens should describe <em>purpose</em>, not appearance. <code>--color-primary</code> not <code>--color-blue</code>. <code>--color-danger</code> not <code>--color-red</code>. When you switch brands, "blue" might become coral, but "primary" always means primary.</p>
+</div>
+
+<h2>OKLCH + relative colour syntax in token architecture</h2>
+
+<p>In <a href="0018-advanced-colour.html">Lesson 18</a> you learned oklch and relative colour syntax. Here's where it becomes powerful at scale: you define a single base hue per brand, and the entire palette — hover states, muted variants, surfaces, dark mode — is <em>computed</em> from that one token.</p>
+
+<h3>The idea: one token, entire palette derived</h3>
+
+<pre><code>/* Brand defines ONE base colour in oklch */
+:root {
+  --brand-hue: 250;         /* just the hue angle */
+  --brand-chroma: 0.15;     /* saturation intensity */
+
+  /* The single source-of-truth token */
+  --brand-base: oklch(0.55 var(--brand-chroma) var(--brand-hue));
+}
+
+/* Derive the ENTIRE semantic palette via relative colour syntax */
+:root {
+  /* Primary shades — adjust lightness */
+  --color-primary:       var(--brand-base);
+  --color-primary-hover: oklch(from var(--brand-base) calc(l - 0.08) c h);
+  --color-primary-light: oklch(from var(--brand-base) 0.92 0.04 h);
+
+  /* Surfaces — same hue, very high lightness, low chroma */
+  --color-surface:       oklch(from var(--brand-base) 0.985 0.005 h);
+  --color-surface-raised:oklch(from var(--brand-base) 0.96 0.01 h);
+
+  /* Text — same hue family, very low lightness */
+  --color-text:          oklch(from var(--brand-base) 0.15 0.02 h);
+  --color-text-muted:    oklch(from var(--brand-base) 0.45 0.02 h);
+
+  /* Borders — low chroma, mid lightness */
+  --color-border:        oklch(from var(--brand-base) 0.85 0.01 h);
+
+  /* Danger — shift hue to red region, keep brand's chroma */
+  --color-danger:        oklch(from var(--brand-base) l c 25);
+  --color-success:       oklch(from var(--brand-base) l c 145);
+}</code></pre>
+
+<div class="key-insight">
+  <p><strong>Why this is powerful:</strong> To create Brand B, you change <em>two numbers</em> (hue and chroma). Every derived token recomputes. No manual colour picking for each variant. The relationships between colours are preserved across brands because they're defined as mathematical operations, not hard-coded values.</p>
+</div>
+
+<h3>How you swap the brand base</h3>
+
+<p>The <code>--brand-hue</code> and <code>--brand-chroma</code> values are just custom properties on <code>:root</code>. You override them the same way you override any token &mdash; via a data attribute, a class, or a separate brand file:</p>
+
+<pre><code>/* Default brand (set on :root) */
+:root {
+  --brand-hue: 250;
+  --brand-chroma: 0.15;
+  --brand-base: oklch(0.55 var(--brand-chroma) var(--brand-hue));
+}
+
+/* Brand B: override hue and chroma on a data attribute */
+[data-brand="food"] {
+  --brand-hue: 25;
+  --brand-chroma: 0.18;
+  --brand-base: oklch(0.6 var(--brand-chroma) var(--brand-hue));
+}
+
+/* All the semantic tokens (--color-primary, --color-surface, etc.)
+   use oklch(from var(--brand-base) ...) — they recompute automatically
+   when --brand-base changes. No other CSS needs to change. */</code></pre>
+
+<p>The mechanism is the same as every other theme swap in this lesson:</p>
+
+<pre><code>&lt;!-- Set it on &lt;html&gt; for the whole page --&gt;
+&lt;html data-brand="food"&gt;
+
+&lt;!-- Or set it on a section for a scoped brand region --&gt;
+&lt;section data-brand="food"&gt;...&lt;/section&gt;
+
+// JS — swap brand at runtime
+document.documentElement.dataset.brand = 'food';
+
+// Angular — host binding on AppComponent
+@Component({
+  host: { '[attr.data-brand]': 'brandService.current()' }
+})</code></pre>
+
+<p>One attribute change at the root, and the entire palette recomputes via the oklch derivation chain.</p>
+
+<h3>Dark mode via lightness inversion</h3>
+
+<p>Since oklch separates lightness from hue and chroma, dark mode becomes a lightness transformation:</p>
+
+<pre><code>/* Light mode (default) — high lightness surfaces, low lightness text */
+:root, [data-theme="light"] {
+  --color-surface:    oklch(from var(--brand-base) 0.985 0.005 h);
+  --color-text:       oklch(from var(--brand-base) 0.15 0.02 h);
+  --color-primary:    oklch(from var(--brand-base) 0.55 c h);
+}
+
+/* Dark mode — flip the lightness relationship */
+[data-theme="dark"] {
+  --color-surface:    oklch(from var(--brand-base) 0.12 0.01 h);
+  --color-text:       oklch(from var(--brand-base) 0.9 0.02 h);
+  --color-primary:    oklch(from var(--brand-base) 0.72 c h);  /* lighter primary for contrast */
+}</code></pre>
+
+<div class="key-insight">
+  <p><strong>The mental model:</strong> In light mode, surfaces are near L=1.0 and text is near L=0.15. In dark mode, surfaces are near L=0.12 and text is near L=0.9. You're flipping the lightness axis while keeping hue and chroma stable. The brand identity (hue) is preserved across both modes — only the luminance relationship inverts.</p>
+</div>
+
+<h3>Multi-brand with computed palettes</h3>
+
+<pre><code>/* Brand A: cool blue fintech */
+[data-brand="fintech"] {
+  --brand-hue: 250;
+  --brand-chroma: 0.15;
+  --brand-base: oklch(0.55 var(--brand-chroma) var(--brand-hue));
+}
+
+/* Brand B: warm coral food delivery */
+[data-brand="food"] {
+  --brand-hue: 25;
+  --brand-chroma: 0.18;
+  --brand-base: oklch(0.6 var(--brand-chroma) var(--brand-hue));
+}
+
+/* The semantic layer is IDENTICAL for both brands — it just reads --brand-base */
+/* All the oklch(from var(--brand-base) ...) tokens recompute automatically */</code></pre>
+
+<p>This is the ultimate payoff of oklch in a token system: brands become <em>parameters</em>, not separate stylesheets. The palette logic is written once and produces perceptually consistent results regardless of the input hue.</p>
+
+<h2>Putting it all together: the file structure</h2>
+
+<pre><code>styles/
+├── tokens/
+│   ├── primitives.css       /* raw palette, spacing scale, radii */
+│   ├── semantic-light.css   /* semantic tokens for light theme */
+│   ├── semantic-dark.css    /* semantic tokens for dark theme */
+│   └── components.css       /* per-component token overrides (optional) */
+├── brands/
+│   ├── brand-default.css    /* primitive overrides for default brand */
+│   ├── brand-fintech.css    /* primitive overrides for fintech brand */
+│   └── brand-food.css       /* primitive overrides for food brand */
+└── global.css               /* resets, base typography, utilities */</code></pre>
+
+<p>In Angular, import them in <code>angular.json</code> styles array. For multi-brand, use build configurations to swap the brand file. For single-brand with light/dark, include both semantic files and switch via <code>data-theme</code> or <code>color-scheme</code>.</p>
+
+<h2>Retrieval check</h2>
+
+<div class="quiz" id="quiz1">
+  <h3>In the three-tier model, which layer do components reference directly?</h3>
+  <ul class="quiz-options">
+    <li><button onclick="checkAnswer(this, false)">Primitive tokens (raw palette values)</button></li>
+    <li><button onclick="checkAnswer(this, true)">Semantic tokens (purpose-based names)</button></li>
+    <li><button onclick="checkAnswer(this, false)">The brand file directly</button></li>
+    <li><button onclick="checkAnswer(this, false)">Hard-coded hex values</button></li>
+  </ul>
+  <div class="quiz-feedback"></div>
+</div>
+
+<div class="quiz" id="quiz2">
+  <h3>How does scoped theming (e.g. a dark hero on a light page) work with custom properties?</h3>
+  <ul class="quiz-options">
+    <li><button onclick="checkAnswer(this, false)">Each component checks a theme service and applies inline styles</button></li>
+    <li><button onclick="checkAnswer(this, true)">Set data-theme on the container; token overrides inherit into all descendants</button></li>
+    <li><button onclick="checkAnswer(this, false)">Use Shadow DOM to encapsulate the dark styles</button></li>
+    <li><button onclick="checkAnswer(this, false)">Duplicate all component CSS with dark variants</button></li>
+  </ul>
+  <div class="quiz-feedback"></div>
+</div>
+
+<div class="quiz" id="quiz3">
+  <h3>Why should semantic tokens use purpose names (--color-primary) rather than appearance names (--color-blue)?</h3>
+  <ul class="quiz-options">
+    <li><button onclick="checkAnswer(this, false)">Browser performance is better with abstract names</button></li>
+    <li><button onclick="checkAnswer(this, false)">The CSS spec requires semantic naming</button></li>
+    <li><button onclick="checkAnswer(this, true)">When brands/themes swap, "blue" might become coral, but "primary" always means primary</button></li>
+    <li><button onclick="checkAnswer(this, false)">It reduces the number of custom properties needed</button></li>
+  </ul>
+  <div class="quiz-feedback"></div>
+</div>
+
+<div class="quiz" id="quiz4">
+  <h3>What causes "flash of wrong theme" and how do you prevent it?</h3>
+  <ul class="quiz-options">
+    <li><button onclick="checkAnswer(this, false)">CSS transitions on token values; fix with transition: none</button></li>
+    <li><button onclick="checkAnswer(this, true)">Theme JS runs after first paint; fix by restoring theme in a blocking head script</button></li>
+    <li><button onclick="checkAnswer(this, false)">The browser caches the wrong stylesheet; fix with cache-busting</button></li>
+    <li><button onclick="checkAnswer(this, false)">Custom properties don't update fast enough; fix with !important</button></li>
+  </ul>
+  <div class="quiz-feedback"></div>
+</div>
+
+<div class="quiz" id="quiz5">
+  <h3>When is light-dark() preferable over class-based token swapping?</h3>
+  <ul class="quiz-options">
+    <li><button onclick="checkAnswer(this, false)">Always — it's newer and replaces the class approach</button></li>
+    <li><button onclick="checkAnswer(this, false)">Only in Safari, where class swapping doesn't work</button></li>
+    <li><button onclick="checkAnswer(this, true)">Simple sites where dark mode is the only theming concern (few tokens, no brands)</button></li>
+    <li><button onclick="checkAnswer(this, false)">Multi-brand apps with three or more themes</button></li>
+  </ul>
+  <div class="quiz-feedback"></div>
+</div>
+
+<div class="source-link">
+  <p><strong>Primary sources:</strong></p>
+  <ul>
+    <li><a href="https://developer.mozilla.org/docs/Web/CSS/color_value/light-dark">MDN &mdash; light-dark() function</a></li>
+    <li><a href="https://developer.mozilla.org/en-US/docs/Web/CSS/color-scheme">MDN &mdash; color-scheme property</a></li>
+    <li><a href="https://web.dev/articles/light-dark">web.dev &mdash; CSS color-scheme-dependent colors with light-dark()</a></li>
+    <li><a href="https://web.dev/articles/building/a-color-scheme">web.dev &mdash; Building a color scheme</a></li>
+    <li><a href="https://www.stefanjudis.com/today-i-learned/light-dark-isnt-the-same-as-prefers-color-scheme/">Stefan Judis &mdash; light-dark() isn't always the same as prefers-color-scheme</a></li>
+  </ul>
+</div>
+
+<div class="followup">
+  <p>That's Lesson 21 &mdash; the theming deep-dive. You now have the full architecture: three-tier tokens, light/dark toggling (both approaches), multi-brand systems, scoped theme regions, Angular integration, and the flash-of-wrong-theme fix.</p>
+  <p>Questions? Ask about anything that's unclear &mdash; token naming for your specific project, how to handle third-party component libraries, or how this interacts with Angular Material's theming system.</p>
+  <p><strong>Next options:</strong></p>
+  <ul>
+    <li><strong>Capstone project</strong> &mdash; build a multi-brand, dark-mode-aware component library using 10+ features from this course</li>
+    <li><strong>Responsive design patterns</strong> &mdash; combining container queries, clamp(), grid, and flex into real layouts</li>
+    <li><strong>Scroll-driven animations</strong> &mdash; the newest CSS animation API</li>
+  </ul>
+</div>
+
+<script>
+function checkAnswer(button, isCorrect) {
+  const quiz = button.closest('.quiz');
+  const buttons = quiz.querySelectorAll('button');
+  const feedback = quiz.querySelector('.quiz-feedback');
+  if (quiz.dataset.answered) return;
+  quiz.dataset.answered = 'true';
+  buttons.forEach(btn => btn.style.pointerEvents = 'none');
+  if (isCorrect) {
+    button.classList.add('correct');
+    feedback.textContent = '\u2713 Correct.';
+    feedback.style.background = '#e8f8f5';
+    feedback.style.color = '#1a7a6c';
+  } else {
+    button.classList.add('incorrect');
+    buttons.forEach(btn => {
+      if (btn.getAttribute('onclick').includes('true')) btn.classList.add('correct');
+    });
+    feedback.textContent = '\u2717 Not quite. The highlighted answer is correct.';
+    feedback.style.background = '#fef0ed';
+    feedback.style.color = '#c0392b';
+  }
+  feedback.style.display = 'block';
+}
+
+// Live theme demo logic
+function setTheme(theme) {
+  const content = document.getElementById('themeDemoContent');
+  const buttons = content.closest('.theme-demo').querySelectorAll('.theme-demo-toolbar button');
+  buttons.forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+
+  let isDark;
+  if (theme === 'system') {
+    isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  } else {
+    isDark = theme === 'dark';
+  }
+
+  content.style.setProperty('--demo-surface', isDark ? '#1a1a2e' : '#fefefe');
+  content.style.setProperty('--demo-text', isDark ? '#e8e8e8' : '#1a1a2e');
+  content.style.setProperty('--demo-text-muted', isDark ? '#aaa' : '#666');
+  content.style.setProperty('--demo-primary', isDark ? '#6eaaff' : '#3a86ff');
+}
+
+// Initialise demo
+(function() {
+  const content = document.getElementById('themeDemoContent');
+  content.style.setProperty('--demo-surface', '#fefefe');
+  content.style.setProperty('--demo-text', '#1a1a2e');
+  content.style.setProperty('--demo-text-muted', '#666');
+  content.style.setProperty('--demo-primary', '#3a86ff');
+})();
+</script>
+
+</body>
+</html>

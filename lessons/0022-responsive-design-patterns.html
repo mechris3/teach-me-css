@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lesson 22: Responsive Design Patterns — Composing Layout Systems</title>
+  <style>
+    :root {
+      --text: #1a1a2e;
+      --bg: #fefefe;
+      --accent: #3a86ff;
+      --code-bg: #f4f4f8;
+      --border: #e0e0e0;
+      --serif: 'Georgia', serif;
+      --mono: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+      --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+    * { box-sizing: border-box; margin: 0; }
+    body { font-family: var(--sans); color: var(--text); background: var(--bg); line-height: 1.7; max-width: 60rem; margin: 0 auto; padding: 3rem 1.5rem; }
+    h1 { font-family: var(--serif); font-size: 1.8rem; margin-bottom: 0.25rem; font-weight: normal; }
+    .lesson-number { font-size: 0.85rem; color: #666; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.25rem; }
+    h2 { font-family: var(--serif); font-size: 1.3rem; margin-top: 2.5rem; margin-bottom: 0.75rem; font-weight: normal; }
+    h3 { font-size: 1rem; margin-top: 1.5rem; margin-bottom: 0.5rem; }
+    p, li { margin-bottom: 1rem; }
+    ul, ol { padding-left: 1.5rem; }
+    code { font-family: var(--mono); font-size: 0.88em; background: var(--code-bg); padding: 0.15em 0.4em; border-radius: 3px; }
+    pre { background: var(--code-bg); border: 1px solid var(--border); border-radius: 6px; padding: 1.25rem; overflow-x: auto; margin: 1.25rem 0; line-height: 1.5; }
+    pre code { background: none; padding: 0; font-size: 0.85rem; }
+    .key-insight { border-left: 3px solid var(--accent); padding: 1rem 1.25rem; margin: 1.5rem 0; background: #f0f7ff; border-radius: 0 6px 6px 0; }
+    .key-insight p { margin-bottom: 0.5rem; }
+    .key-insight p:last-child { margin-bottom: 0; }
+    .example-group { border: 1px solid var(--border); border-radius: 8px; margin: 1.5rem 0; overflow: hidden; }
+    .example-group .demo { border: none; border-radius: 0; margin: 0; border-bottom: 1px solid var(--border); }
+    .example-group pre { margin: 0; border: none; border-radius: 0; }
+    .demo { border: 1px solid var(--border); border-radius: 8px; padding: 1.5rem; margin: 1.5rem 0; background: #fafafa; }
+    .demo-label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em; color: #888; margin-bottom: 1rem; }
+
+    /* Pattern demos */
+    .resize-wrapper { resize: horizontal; overflow: hidden; border: 2px dashed var(--border); border-radius: 8px; padding: 1rem; min-width: 200px; max-width: 100%; }
+    .resize-hint { font-size: 0.7rem; color: #999; text-align: right; margin-top: 0.5rem; }
+
+    /* Fluid type demo */
+    .fluid-type-demo h3 { font-size: clamp(1rem, 0.5rem + 2vw, 2rem); margin: 0 0 0.5rem; font-family: var(--serif); }
+    .fluid-type-demo p { font-size: clamp(0.85rem, 0.75rem + 0.5vw, 1.1rem); margin: 0; }
+
+    /* Auto-fill grid */
+    .auto-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 0.75rem; }
+    .auto-grid .card { background: white; border: 1px solid var(--border); border-radius: 6px; padding: 1rem; text-align: center; font-size: 0.8rem; }
+
+    /* Sidebar layout */
+    .sidebar-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 3fr); gap: 1rem; }
+    @container (max-width: 500px) { .sidebar-layout { grid-template-columns: 1fr; } }
+    .sidebar-layout .sidebar { background: #f0f7ff; border-radius: 6px; padding: 1rem; font-size: 0.8rem; }
+    .sidebar-layout .main { background: white; border: 1px solid var(--border); border-radius: 6px; padding: 1rem; font-size: 0.8rem; }
+
+    /* Holy grail */
+    .holy-grail { display: grid; grid-template: "header header header" auto "nav main aside" 1fr "footer footer footer" auto / minmax(0, 12rem) 1fr minmax(0, 12rem); gap: 0.5rem; min-height: 200px; }
+    .holy-grail > * { background: #f8f8fa; border: 1px solid var(--border); border-radius: 4px; padding: 0.5rem 0.75rem; font-size: 0.75rem; }
+    .holy-grail .hg-header { grid-area: header; background: #e8f0ff; }
+    .holy-grail .hg-nav { grid-area: nav; }
+    .holy-grail .hg-main { grid-area: main; background: white; }
+    .holy-grail .hg-aside { grid-area: aside; }
+    .holy-grail .hg-footer { grid-area: footer; background: #e8f0ff; }
+
+    /* Container query card */
+    .cq-wrapper { container-type: inline-size; }
+    .cq-card { display: grid; grid-template-columns: 1fr; gap: 0.75rem; background: white; border: 1px solid var(--border); border-radius: 8px; padding: 1rem; }
+    .cq-card .cq-img { background: linear-gradient(135deg, #3a86ff, #6eaaff); border-radius: 6px; height: 80px; }
+    .cq-card .cq-body { font-size: 0.8rem; }
+    .cq-card .cq-body h4 { margin: 0 0 0.25rem; font-size: 0.9rem; }
+    .cq-card .cq-body p { margin: 0; color: #666; }
+    @container (min-width: 350px) {
+      .cq-card { grid-template-columns: 120px 1fr; }
+      .cq-card .cq-img { height: auto; min-height: 80px; }
+    }
+
+    /* Pancake stack */
+    .pancake { display: grid; grid-template-rows: auto 1fr auto; min-height: 180px; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+    .pancake > * { padding: 0.75rem 1rem; font-size: 0.8rem; }
+    .pancake .p-header { background: #e8f0ff; border-bottom: 1px solid var(--border); }
+    .pancake .p-main { background: white; }
+    .pancake .p-footer { background: #f8f8fa; border-top: 1px solid var(--border); }
+
+    .quiz { background: #fffdf0; border: 1px solid #e8e0c0; border-radius: 8px; padding: 1.5rem; margin: 2rem 0; }
+    .quiz h3 { font-size: 1rem; margin-bottom: 1rem; margin-top: 0; font-weight: 600; }
+    .quiz-options { list-style: none; padding: 0; }
+    .quiz-options li { margin-bottom: 0.5rem; }
+    .quiz-options button { display: block; width: 100%; text-align: left; padding: 0.75rem 1rem; border: 1px solid var(--border); border-radius: 6px; background: white; font-family: var(--mono); font-size: 0.85rem; cursor: pointer; transition: border-color 0.15s; }
+    .quiz-options button:hover { border-color: var(--accent); }
+    .quiz-options button.correct { border-color: #2a9d8f; background: #e8f8f5; }
+    .quiz-options button.incorrect { border-color: #e76f51; background: #fef0ed; }
+    .quiz-feedback { margin-top: 1rem; padding: 0.75rem; border-radius: 6px; font-size: 0.9rem; display: none; }
+    .source-link { margin-top: 3rem; padding-top: 1.5rem; border-top: 1px solid var(--border); }
+    .source-link a { color: var(--accent); text-decoration: none; border-bottom: 1px solid transparent; }
+    .source-link a:hover { border-bottom-color: var(--accent); }
+    .followup { margin-top: 2rem; padding: 1rem 1.25rem; background: #f9f9f9; border-radius: 8px; font-size: 0.9rem; color: #555; }
+    @media print { body { max-width: 100%; padding: 1rem; } .example-group { break-inside: avoid; } }
+  </style>
+</head>
+<body>
+
+<nav style="margin-bottom: 2rem;"><a href="index.html" style="font-size: 0.85rem; color: #3a86ff; text-decoration: none;">&larr; Course Contents</a></nav>
+
+<p class="lesson-number">Lesson 22</p>
+<h1>Responsive Design Patterns &mdash; Composing Layout Systems</h1>
+
+<p>You've learned the individual tools: <a href="0008-flexbox.html">flexbox</a>, <a href="0009-grid.html">grid</a>, <a href="0010-container-queries.html">container queries</a>, <a href="0003-css-value-functions.html">clamp()</a>, and <a href="0015-logical-properties.html">logical properties</a>. This lesson is about <em>composition</em> &mdash; combining them into real-world responsive patterns that adapt without breakpoints, or with minimal breakpoints.</p>
+
+<h2>The mental model: intrinsic vs extrinsic design</h2>
+
+<div class="key-insight">
+  <p><strong>Extrinsic design</strong> = you tell the layout what size to be (<code>width: 800px</code>, <code>@media (min-width: 768px)</code>). Brittle &mdash; tied to specific viewport widths.</p>
+  <p><strong>Intrinsic design</strong> = the layout figures out its own size based on content and available space (<code>minmax()</code>, <code>auto-fill</code>, <code>clamp()</code>, container queries). Fluid &mdash; adapts to any context without knowing the viewport.</p>
+  <p>Modern responsive design is about writing as much as possible intrinsically, and only reaching for media queries when you genuinely need to respond to the <em>viewport</em> (e.g. navigation patterns, print styles).</p>
+</div>
+
+<h2>Pattern 1: Fluid typography with clamp()</h2>
+
+<p>Instead of breakpoint-based font-size changes, let type scale smoothly between a minimum and maximum:</p>
+
+<div class="example-group">
+<div class="demo">
+  <p class="demo-label">Resize the browser &mdash; the heading and paragraph scale smoothly between min and max</p>
+  <div class="fluid-type-demo">
+    <h3>This heading uses clamp()</h3>
+    <p>Body text also scales fluidly. No breakpoints needed &mdash; it smoothly interpolates between the min and max font sizes based on viewport width.</p>
+  </div>
+</div>
+<pre><code>&lt;!-- HTML --&gt;
+&lt;h3&gt;This heading uses clamp()&lt;/h3&gt;
+&lt;p&gt;Body text also scales fluidly.&lt;/p&gt;
+
+/* Fluid type — no breakpoints */
+h3 {
+  /* min: 1rem, preferred: 0.5rem + 2vw, max: 2rem */
+  font-size: clamp(1rem, 0.5rem + 2vw, 2rem);
+}
+p {
+  font-size: clamp(0.85rem, 0.75rem + 0.5vw, 1.1rem);
+}
+
+/* The formula: clamp(MIN, PREFERRED, MAX)
+   PREFERRED uses a mix of rem (base) + vw (viewport-responsive)
+   - rem ensures it doesn't collapse below readable on zoom
+   - vw makes it grow with the viewport
+   - clamp() caps both ends */</code></pre>
+</div>
+
+<div class="key-insight">
+  <p><strong>The clamp() formula pattern:</strong> <code>clamp(min, base + growth, max)</code> where:</p>
+  <p>&bull; <code>min</code> = smallest acceptable size (usually in rem)</p>
+  <p>&bull; <code>base + growth</code> = a rem value + a vw value that scales with viewport</p>
+  <p>&bull; <code>max</code> = largest acceptable size (usually in rem)</p>
+  <p>This works for font-size, padding, gap &mdash; anything that should scale fluidly.</p>
+</div>
+
+<h2>Pattern 2: Auto-filling grid (no breakpoints)</h2>
+
+<p>The most useful intrinsic pattern: a grid that automatically adjusts column count based on available space. No media queries, no JS, works inside any container.</p>
+
+<div class="example-group">
+<div class="demo">
+  <p class="demo-label">Drag the right edge to resize &mdash; columns appear and disappear automatically</p>
+  <div class="resize-wrapper">
+    <div class="auto-grid">
+      <div class="card">Item 1</div>
+      <div class="card">Item 2</div>
+      <div class="card">Item 3</div>
+      <div class="card">Item 4</div>
+      <div class="card">Item 5</div>
+      <div class="card">Item 6</div>
+    </div>
+    <p class="resize-hint">&harr; drag to resize</p>
+  </div>
+</div>
+<pre><code>&lt;!-- HTML --&gt;
+&lt;div class="auto-grid"&gt;
+  &lt;div class="card"&gt;Item 1&lt;/div&gt;
+  &lt;div class="card"&gt;Item 2&lt;/div&gt;
+  &lt;div class="card"&gt;Item 3&lt;/div&gt;
+  &lt;div class="card"&gt;Item 4&lt;/div&gt;
+  &lt;div class="card"&gt;Item 5&lt;/div&gt;
+  &lt;div class="card"&gt;Item 6&lt;/div&gt;
+&lt;/div&gt;
+
+/* The magic one-liner */
+.auto-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 0.75rem;
+}
+
+/* How it works:
+   - auto-fill: create as many columns as will fit
+   - minmax(140px, 1fr): each column is at least 140px, stretches to fill
+   - Result: 1 column on small, 2 on medium, 3+ on wide — no breakpoints */</code></pre>
+</div>
+
+<div class="key-insight">
+  <p><strong>auto-fill vs auto-fit:</strong> Both create columns to fill space. The difference shows when there are fewer items than columns:</p>
+  <p>&bull; <code>auto-fill</code> keeps empty tracks (space is preserved for potential items)</p>
+  <p>&bull; <code>auto-fit</code> collapses empty tracks (items stretch to fill all available space)</p>
+  <p>For most card grids, <code>auto-fill</code> is what you want. Use <code>auto-fit</code> when you have few items and want them to stretch.</p>
+</div>
+
+<h2>Pattern 3: Container-query-responsive card</h2>
+
+<p>Cards that adapt to their <em>container's</em> width, not the viewport. The same card works in a narrow sidebar and a wide main area without any changes:</p>
+
+<div class="example-group">
+<div class="demo">
+  <p class="demo-label">Drag to resize &mdash; the card switches from stacked to horizontal based on container width</p>
+  <div class="resize-wrapper">
+    <div class="cq-wrapper">
+      <div class="cq-card">
+        <div class="cq-img"></div>
+        <div class="cq-body">
+          <h4>Adaptive Card</h4>
+          <p>I stack vertically when narrow, go horizontal when my container is 350px+. No media queries &mdash; container queries.</p>
+        </div>
+      </div>
+    </div>
+    <p class="resize-hint">&harr; drag to resize</p>
+  </div>
+</div>
+<pre><code>&lt;!-- HTML --&gt;
+&lt;div class="card-wrapper"&gt;  &lt;!-- this is the container --&gt;
+  &lt;div class="card"&gt;
+    &lt;div class="card-img"&gt;&lt;/div&gt;
+    &lt;div class="card-body"&gt;
+      &lt;h4&gt;Adaptive Card&lt;/h4&gt;
+      &lt;p&gt;Responds to container width.&lt;/p&gt;
+    &lt;/div&gt;
+  &lt;/div&gt;
+&lt;/div&gt;
+
+/* Establish the containment context */
+.card-wrapper {
+  container-type: inline-size;
+}
+
+/* Default: stacked (narrow) */
+.card {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.75rem;
+}
+
+/* When the CONTAINER (not viewport) is wide enough: horizontal */
+@container (min-width: 350px) {
+  .card {
+    grid-template-columns: 120px 1fr;
+  }
+}</code></pre>
+</div>
+
+<div class="key-insight">
+  <p><strong>When to use container queries vs media queries:</strong></p>
+  <p>&bull; <strong>Container queries</strong> for components that might be placed in different-width contexts (cards, widgets, sidebars). The component adapts to <em>where it lives</em>.</p>
+  <p>&bull; <strong>Media queries</strong> for page-level layout decisions that genuinely depend on the viewport (nav collapse, overall page structure).</p>
+  <p>Rule of thumb: if it's a reusable component, prefer container queries. If it's the page shell, use media queries.</p>
+</div>
+
+<h2>Pattern 4: The pancake stack (header/main/footer)</h2>
+
+<p>A full-height page where the header and footer take what they need, and the main area fills the rest:</p>
+
+<div class="example-group">
+<div class="demo">
+  <p class="demo-label">Header and footer take their natural height; main expands to fill remaining space</p>
+  <div class="pancake">
+    <div class="p-header"><strong>Header</strong> &mdash; auto height (takes what it needs)</div>
+    <div class="p-main"><strong>Main</strong> &mdash; 1fr (fills all remaining space)</div>
+    <div class="p-footer"><strong>Footer</strong> &mdash; auto height (takes what it needs)</div>
+  </div>
+</div>
+<pre><code>&lt;!-- HTML --&gt;
+&lt;div class="page"&gt;
+  &lt;header&gt;Header&lt;/header&gt;
+  &lt;main&gt;Main content&lt;/main&gt;
+  &lt;footer&gt;Footer&lt;/footer&gt;
+&lt;/div&gt;
+
+/* The pancake stack */
+.page {
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  min-height: 100vh;  /* or 100dvh for mobile */
+}
+
+/* That's it. Header and footer take their natural height.
+   Main gets everything else. No flexbox hacks needed. */</code></pre>
+</div>
+
+<h2>Pattern 5: The holy grail (named grid areas)</h2>
+
+<p>The classic layout: header, footer, main content, and two sidebars. Named grid areas make it readable and trivial to rearrange at breakpoints:</p>
+
+<div class="example-group">
+<div class="demo">
+  <p class="demo-label">Named grid areas &mdash; the template reads like a visual map of the layout</p>
+  <div class="holy-grail">
+    <div class="hg-header">Header</div>
+    <div class="hg-nav">Nav</div>
+    <div class="hg-main">Main content area</div>
+    <div class="hg-aside">Aside</div>
+    <div class="hg-footer">Footer</div>
+  </div>
+</div>
+<pre><code>&lt;!-- HTML --&gt;
+&lt;div class="layout"&gt;
+  &lt;header class="header"&gt;Header&lt;/header&gt;
+  &lt;nav class="nav"&gt;Nav&lt;/nav&gt;
+  &lt;main class="main"&gt;Main&lt;/main&gt;
+  &lt;aside class="aside"&gt;Aside&lt;/aside&gt;
+  &lt;footer class="footer"&gt;Footer&lt;/footer&gt;
+&lt;/div&gt;
+
+/* The layout reads like a visual map */
+.layout {
+  display: grid;
+  grid-template:
+    "header header header" auto
+    "nav    main   aside"  1fr
+    "footer footer footer" auto
+    / minmax(0, 12rem) 1fr minmax(0, 12rem);
+  gap: 0.5rem;
+  min-height: 100vh;
+}
+
+.header { grid-area: header; }
+.nav    { grid-area: nav; }
+.main   { grid-area: main; }
+.aside  { grid-area: aside; }
+.footer { grid-area: footer; }
+
+/* Collapse to single column on small viewports */
+@media (max-width: 768px) {
+  .layout {
+    grid-template:
+      "header" auto
+      "nav"    auto
+      "main"   1fr
+      "aside"  auto
+      "footer" auto
+      / 1fr;
+  }
+}</code></pre>
+</div>
+
+<div class="key-insight">
+  <p><strong>Why named areas over line numbers:</strong> <code>grid-template</code> with named areas is a visual ASCII map of your layout. You can read the structure without counting lines. And when you rearrange for mobile, you rewrite the map &mdash; the HTML doesn't change.</p>
+</div>
+
+<h2>Pattern 6: Sidebar that collapses (intrinsic)</h2>
+
+<p>A sidebar + main layout that collapses to a single column when the container is too narrow &mdash; without media queries. Uses the flexbox wrapping trick:</p>
+
+<div class="example-group">
+<div class="demo">
+  <p class="demo-label">Drag to resize &mdash; sidebar drops below main when space is tight</p>
+  <div class="resize-wrapper">
+    <div style="display: flex; flex-wrap: wrap; gap: 1rem;">
+      <div style="flex: 1 1 200px; background: #f0f7ff; border-radius: 6px; padding: 1rem; font-size: 0.8rem;">
+        <strong>Sidebar</strong><br>flex: 1 1 200px &mdash; needs at least 200px, otherwise wraps.
+      </div>
+      <div style="flex: 3 1 400px; background: white; border: 1px solid #e0e0e0; border-radius: 6px; padding: 1rem; font-size: 0.8rem;">
+        <strong>Main content</strong><br>flex: 3 1 400px &mdash; takes 3&times; the space of the sidebar when both fit. If the sidebar can't get 200px, it wraps below.
+      </div>
+    </div>
+    <p class="resize-hint">&harr; drag to resize</p>
+  </div>
+</div>
+<pre><code>&lt;!-- HTML --&gt;
+&lt;div class="with-sidebar"&gt;
+  &lt;aside class="sidebar"&gt;Sidebar&lt;/aside&gt;
+  &lt;main class="content"&gt;Main content&lt;/main&gt;
+&lt;/div&gt;
+
+/* Intrinsic sidebar — no breakpoints */
+.with-sidebar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+.sidebar {
+  flex: 1 1 200px;  /* grow, shrink, but need at least 200px */
+}
+.content {
+  flex: 3 1 400px;  /* 3x the growth factor, need at least 400px */
+}
+
+/* How it works:
+   - When container > 600px: both fit side-by-side (200 + 400 basis)
+   - When container < 600px: content can't get 400px → wraps to next line
+   - Both go full-width when wrapped (flex-grow fills the row)
+   - No media query needed — the flex-basis thresholds do the work */</code></pre>
+</div>
+
+<div class="key-insight">
+  <p><strong>Flexbox wrap vs container query:</strong> The flex-wrap trick is zero-overhead (no container-type declaration needed) but gives you less control &mdash; it's binary (side-by-side or stacked). Container queries let you make more nuanced adjustments (change padding, hide elements, rearrange grid areas). Use flex-wrap for simple sidebar-collapses; container queries for richer adaptation.</p>
+</div>
+
+<h2>Pattern 7: Fluid spacing with clamp()</h2>
+
+<p>The same <code>clamp()</code> pattern works for padding, margins, and gaps &mdash; giving you fluid spacing that scales with the viewport without abrupt breakpoint jumps:</p>
+
+<div class="example-group">
+<div class="demo">
+  <p class="demo-label">The gap and padding scale smoothly between min and max values</p>
+  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: clamp(0.5rem, 1rem + 1vw, 2rem); padding: clamp(0.75rem, 0.5rem + 2vw, 2.5rem); background: white; border: 1px solid var(--border); border-radius: 6px;">
+    <div style="background: #f0f7ff; border-radius: 4px; padding: 1rem; font-size: 0.8rem; text-align: center;">Card A</div>
+    <div style="background: #f0f7ff; border-radius: 4px; padding: 1rem; font-size: 0.8rem; text-align: center;">Card B</div>
+  </div>
+</div>
+<pre><code>&lt;!-- HTML --&gt;
+&lt;div class="fluid-section"&gt;
+  &lt;div class="card"&gt;Card A&lt;/div&gt;
+  &lt;div class="card"&gt;Card B&lt;/div&gt;
+&lt;/div&gt;
+
+/* Fluid spacing — gap and padding scale with viewport */
+.fluid-section {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: clamp(0.5rem, 1rem + 1vw, 2rem);
+  padding: clamp(0.75rem, 0.5rem + 2vw, 2.5rem);
+}
+
+/* Works for margins, block spacing, anything dimensional */
+.section + .section {
+  margin-block-start: clamp(2rem, 1rem + 3vw, 5rem);
+}</code></pre>
+</div>
+
+<h2>Choosing the right tool: a decision framework</h2>
+
+<pre><code>/* WHAT ARE YOU MAKING RESPONSIVE?
+
+   The VIEWPORT (page-level layout):
+   → media queries + grid-template rearrangement
+
+   A COMPONENT (reusable, placed in varying contexts):
+   → container queries
+
+   SPACING / TYPOGRAPHY (fluid scaling):
+   → clamp() with rem + vw
+
+   A COLLECTION (unknown number of items in a grid):
+   → repeat(auto-fill, minmax(MIN, 1fr))
+
+   A SIDEBAR + MAIN (simple collapse):
+   → flex-wrap with flex-basis thresholds
+
+   EVERYTHING:
+   → logical properties (inline/block) instead of left/right
+*/</code></pre>
+
+<div class="key-insight">
+  <p><strong>The modern responsive hierarchy:</strong></p>
+  <p>1. <strong>Intrinsic sizing first</strong> &mdash; let content and minmax/clamp handle it</p>
+  <p>2. <strong>Container queries second</strong> &mdash; for components that need context-awareness</p>
+  <p>3. <strong>Media queries last</strong> &mdash; only for true viewport-level decisions (nav patterns, print)</p>
+  <p>If you find yourself writing more than 2&ndash;3 media queries for a page, ask whether container queries or intrinsic sizing could replace them.</p>
+</div>
+
+<h2>Retrieval check</h2>
+
+<div class="quiz" id="quiz1">
+  <h3>What does repeat(auto-fill, minmax(200px, 1fr)) do?</h3>
+  <ul class="quiz-options">
+    <li><button onclick="checkAnswer(this, false)">Creates exactly 3 columns of 200px each</button></li>
+    <li><button onclick="checkAnswer(this, true)">Creates as many 200px+ columns as fit, each stretching to fill space equally</button></li>
+    <li><button onclick="checkAnswer(this, false)">Creates one column that's between 200px and the full width</button></li>
+    <li><button onclick="checkAnswer(this, false)">Creates columns only when a media query matches</button></li>
+  </ul>
+  <div class="quiz-feedback"></div>
+</div>
+
+<div class="quiz" id="quiz2">
+  <h3>When should you use container queries instead of media queries?</h3>
+  <ul class="quiz-options">
+    <li><button onclick="checkAnswer(this, false)">Always — media queries are deprecated</button></li>
+    <li><button onclick="checkAnswer(this, true)">For reusable components that might live in different-width contexts</button></li>
+    <li><button onclick="checkAnswer(this, false)">Only when flexbox isn't available</button></li>
+    <li><button onclick="checkAnswer(this, false)">Only for mobile-first designs</button></li>
+  </ul>
+  <div class="quiz-feedback"></div>
+</div>
+
+<div class="quiz" id="quiz3">
+  <h3>In clamp(1rem, 0.5rem + 2vw, 2rem), what does the middle value do?</h3>
+  <ul class="quiz-options">
+    <li><button onclick="checkAnswer(this, false)">Sets the default before any viewport calculation</button></li>
+    <li><button onclick="checkAnswer(this, true)">Defines the preferred size that scales with viewport, clamped between the min and max</button></li>
+    <li><button onclick="checkAnswer(this, false)">Overrides the min when the viewport is exactly 768px</button></li>
+    <li><button onclick="checkAnswer(this, false)">Provides a fallback for browsers that don't support clamp</button></li>
+  </ul>
+  <div class="quiz-feedback"></div>
+</div>
+
+<div class="quiz" id="quiz4">
+  <h3>What's the difference between auto-fill and auto-fit?</h3>
+  <ul class="quiz-options">
+    <li><button onclick="checkAnswer(this, false)">auto-fit is for flexbox, auto-fill is for grid</button></li>
+    <li><button onclick="checkAnswer(this, false)">auto-fill creates flexible tracks, auto-fit creates fixed ones</button></li>
+    <li><button onclick="checkAnswer(this, true)">auto-fill keeps empty tracks; auto-fit collapses them so items stretch to fill</button></li>
+    <li><button onclick="checkAnswer(this, false)">They're identical — auto-fit is just newer syntax</button></li>
+  </ul>
+  <div class="quiz-feedback"></div>
+</div>
+
+<div class="quiz" id="quiz5">
+  <h3>The flex-wrap sidebar pattern uses flex-basis to control the collapse point. Why does it work without a breakpoint?</h3>
+  <ul class="quiz-options">
+    <li><button onclick="checkAnswer(this, false)">Flexbox ignores breakpoints by default</button></li>
+    <li><button onclick="checkAnswer(this, true)">When items can't satisfy their flex-basis in one row, they wrap — the basis IS the implicit breakpoint</button></li>
+    <li><button onclick="checkAnswer(this, false)">It uses container queries internally</button></li>
+    <li><button onclick="checkAnswer(this, false)">The browser calculates the breakpoint from the gap value</button></li>
+  </ul>
+  <div class="quiz-feedback"></div>
+</div>
+
+<div class="source-link">
+  <p><strong>Primary sources:</strong></p>
+  <ul>
+    <li><a href="https://web.dev/articles/one-line-layouts">web.dev &mdash; Ten modern layouts in one line of CSS</a></li>
+    <li><a href="https://every-layout.dev/">Every Layout &mdash; Intrinsic responsive design patterns</a></li>
+    <li><a href="https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_container_queries">MDN &mdash; Container queries</a></li>
+    <li><a href="https://developer.mozilla.org/en-US/docs/Web/CSS/clamp">MDN &mdash; clamp()</a></li>
+    <li><a href="https://www.smashingmagazine.com/2022/01/modern-fluid-typography-css-clamp/">Smashing Magazine &mdash; Modern fluid typography with clamp()</a></li>
+  </ul>
+</div>
+
+<div class="followup">
+  <p>That's Lesson 22 &mdash; responsive design patterns. You now have a toolkit of composable patterns that minimise breakpoints: fluid clamp() for type and spacing, auto-fill grids for collections, container queries for component adaptation, flex-wrap for simple collapses, and named grid areas for page-level structure.</p>
+  <p>Questions? Ask about any pattern &mdash; or how to combine them in a specific layout you're building.</p>
+  <p><strong>Next:</strong></p>
+  <ul>
+    <li><strong>Scroll-driven animations</strong> &mdash; the newest CSS animation API (timelines, scroll progress, view progress)</li>
+    <li><strong>Capstone project</strong> &mdash; build something real using 10+ features from this course</li>
+  </ul>
+</div>
+
+<script>
+function checkAnswer(button, isCorrect) {
+  const quiz = button.closest('.quiz');
+  const buttons = quiz.querySelectorAll('button');
+  const feedback = quiz.querySelector('.quiz-feedback');
+  if (quiz.dataset.answered) return;
+  quiz.dataset.answered = 'true';
+  buttons.forEach(btn => btn.style.pointerEvents = 'none');
+  if (isCorrect) {
+    button.classList.add('correct');
+    feedback.textContent = '\u2713 Correct.';
+    feedback.style.background = '#e8f8f5';
+    feedback.style.color = '#1a7a6c';
+  } else {
+    button.classList.add('incorrect');
+    buttons.forEach(btn => {
+      if (btn.getAttribute('onclick').includes('true')) btn.classList.add('correct');
+    });
+    feedback.textContent = '\u2717 Not quite. The highlighted answer is correct.';
+    feedback.style.background = '#fef0ed';
+    feedback.style.color = '#c0392b';
+  }
+  feedback.style.display = 'block';
+}
+</script>
+
+</body>
+</html>

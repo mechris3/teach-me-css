@@ -16,7 +16,7 @@
       --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     }
     * { box-sizing: border-box; margin: 0; }
-    body { font-family: var(--sans); color: var(--text); background: var(--bg); line-height: 1.7; max-width: 42rem; margin: 0 auto; padding: 3rem 1.5rem; }
+    body { font-family: var(--sans); color: var(--text); background: var(--bg); line-height: 1.7; max-width: 60rem; margin: 0 auto; padding: 3rem 1.5rem; }
     h1 { font-family: var(--serif); font-size: 1.8rem; margin-bottom: 0.25rem; font-weight: normal; }
     .lesson-number { font-size: 0.85rem; color: #666; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.25rem; }
     h2 { font-family: var(--serif); font-size: 1.3rem; margin-top: 2.5rem; margin-bottom: 0.75rem; font-weight: normal; }
@@ -174,6 +174,7 @@
   </style>
 </head>
 <body>
+<nav style="margin-bottom: 2rem;"><a href="index.html" style="font-size: 0.85rem; color: #3a86ff; text-decoration: none; border-bottom: 1px solid transparent;">← Course Contents</a></nav>
 
 <p class="lesson-number">Lesson 10</p>
 <h1>Container Queries — Responsive to Parent, Not Viewport</h1>
@@ -342,7 +343,7 @@
 </div>
 <pre><code>.container {
   container-type: normal;  /* style queries don't need inline-size */
-  --theme: light;
+  --theme: light;  /* this IS a custom property declaration — same as Lesson 1 */
 }
 
 .container.dark { --theme: dark; }
@@ -358,8 +359,27 @@
 
 <div class="key-insight">
   <p><strong>Style queries + custom properties = component variants without classes on the component itself.</strong> Set a custom property on an ancestor, and descendants respond. This is how design systems can propagate themes without threading classes through every component.</p>
-  <p><em>Browser support:</em> Style queries for custom properties are supported in Chrome 111+. Querying standard properties (like <code>style(color: red)</code>) is not yet supported.</p>
+  <p><em>Browser support:</em> Style queries for custom properties are supported in Chrome 111+, Safari 18+. Querying standard properties (like <code>style(display: flex)</code>) is specced but not implemented in any browser yet.</p>
 </div>
+
+<h3>What about querying standard properties?</h3>
+
+<p>You might wonder: "Can I query <code>@container style(display: flex)</code>?" Not yet — no browser supports it. Only custom properties work today.</p>
+
+<p><strong>Workaround: mirror a standard property into a custom property:</strong></p>
+
+<pre><code>.container {
+  display: flex;
+  --display: flex;  /* manual mirror */
+}
+
+@container style(--display: flex) {
+  .child { /* responds to the custom property flag */ }
+}</code></pre>
+
+<p>The limitation: <code>--display</code> doesn't automatically stay in sync with <code>display</code>. If another rule changes <code>display</code>, <code>--display</code> goes stale unless you update both. It's a <em>manual semantic signal</em>, not a live reflection of computed style.</p>
+
+<p>This pattern works well for things you control deliberately (<code>--layout: sidebar</code>, <code>--density: compact</code>) but isn't a substitute for true standard property queries. For "if this container happens to be flex, style children differently" — you'd need the not-yet-implemented feature, or use a class/attribute you already control.</p>
 
 <h2>Media queries vs Container queries — when to use which</h2>
 

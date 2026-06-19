@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lesson 23: Scroll-Driven Animations — Replacing JavaScript with CSS Timelines</title>
+  <style>
+    :root {
+      --text: #1a1a2e;
+      --bg: #fefefe;
+      --accent: #3a86ff;
+      --code-bg: #f4f4f8;
+      --border: #e0e0e0;
+      --serif: 'Georgia', serif;
+      --mono: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+      --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+    * { box-sizing: border-box; margin: 0; }
+    body { font-family: var(--sans); color: var(--text); background: var(--bg); line-height: 1.7; max-width: 60rem; margin: 0 auto; padding: 3rem 1.5rem; }
+    h1 { font-family: var(--serif); font-size: 1.8rem; margin-bottom: 0.25rem; font-weight: normal; }
+    .lesson-number { font-size: 0.85rem; color: #666; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.25rem; }
+    h2 { font-family: var(--serif); font-size: 1.3rem; margin-top: 2.5rem; margin-bottom: 0.75rem; font-weight: normal; }
+    h3 { font-size: 1rem; margin-top: 1.5rem; margin-bottom: 0.5rem; }
+    p, li { margin-bottom: 1rem; }
+    ul, ol { padding-left: 1.5rem; }
+    code { font-family: var(--mono); font-size: 0.88em; background: var(--code-bg); padding: 0.15em 0.4em; border-radius: 3px; }
+    pre { background: var(--code-bg); border: 1px solid var(--border); border-radius: 6px; padding: 1.25rem; overflow-x: auto; margin: 1.25rem 0; line-height: 1.5; }
+    pre code { background: none; padding: 0; font-size: 0.85rem; }
+    .key-insight { border-left: 3px solid var(--accent); padding: 1rem 1.25rem; margin: 1.5rem 0; background: #f0f7ff; border-radius: 0 6px 6px 0; }
+    .key-insight p { margin-bottom: 0.5rem; }
+    .key-insight p:last-child { margin-bottom: 0; }
+    .example-group { border: 1px solid var(--border); border-radius: 8px; margin: 1.5rem 0; overflow: hidden; }
+    .example-group .demo { border: none; border-radius: 0; margin: 0; border-bottom: 1px solid var(--border); }
+    .example-group pre { margin: 0; border: none; border-radius: 0; }
+    .demo { border: 1px solid var(--border); border-radius: 8px; padding: 1.5rem; margin: 1.5rem 0; background: #fafafa; }
+    .demo-label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em; color: #888; margin-bottom: 1rem; }
+
+    /* Reading progress bar */
+    .progress-bar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 4px;
+      background: var(--accent);
+      transform-origin: left;
+      transform: scaleX(0);
+      animation: grow-progress linear;
+      animation-timeline: scroll();
+      z-index: 1000;
+    }
+    @keyframes grow-progress { to { transform: scaleX(1); } }
+
+    /* Scroll container demo */
+    .scroll-box {
+      height: 200px;
+      overflow-y: scroll;
+      border: 2px solid var(--border);
+      border-radius: 8px;
+      padding: 1rem;
+      position: relative;
+    }
+    .scroll-box .scroll-content { height: 600px; padding: 0.5rem; font-size: 0.8rem; color: #666; }
+    .scroll-box .scroll-indicator {
+      position: sticky;
+      top: 0;
+      height: 4px;
+      background: var(--accent);
+      transform-origin: left;
+      transform: scaleX(0);
+      animation: grow-progress linear;
+      animation-timeline: scroll(nearest);
+      border-radius: 2px;
+    }
+
+    /* View timeline demos */
+    .view-demo-container {
+      height: 300px;
+      overflow-y: scroll;
+      border: 2px solid var(--border);
+      border-radius: 8px;
+      position: relative;
+    }
+    .view-demo-container .spacer { height: 150px; }
+    .view-demo-container .reveal-item {
+      padding: 1rem;
+      margin: 0.75rem 1rem;
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 0.85rem;
+      animation: fade-slide-in linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 100%;
+    }
+    @keyframes fade-slide-in {
+      from { opacity: 0; transform: translateX(-60px) scale(0.8); background: #fff3e0; border-color: #e76f51; }
+      to { opacity: 1; transform: translateX(0) scale(1); background: white; border-color: var(--border); }
+    }
+
+    /* Parallax demo */
+    .parallax-box {
+      height: 250px;
+      overflow-y: scroll;
+      border: 2px solid var(--border);
+      border-radius: 8px;
+      position: relative;
+      scroll-timeline-name: --parallax-scroll;
+    }
+    .parallax-box .parallax-bg {
+      position: sticky;
+      top: 0;
+      height: 140px;
+      background: linear-gradient(135deg, #3a86ff 0%, #6eaaff 100%);
+      border-radius: 6px;
+      margin: 0 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+    .parallax-box .parallax-bg .parallax-text {
+      color: white;
+      font-size: 1.4rem;
+      font-weight: 700;
+      animation: parallax-shift linear both;
+      animation-timeline: --parallax-scroll;
+    }
+    @keyframes parallax-shift { from { transform: translateY(40px) scale(1.1); opacity: 1; } to { transform: translateY(-60px) scale(0.85); opacity: 0.4; } }
+    .parallax-box .parallax-content { padding: 1rem; height: 500px; font-size: 0.8rem; color: #666; }
+
+    .quiz { background: #fffdf0; border: 1px solid #e8e0c0; border-radius: 8px; padding: 1.5rem; margin: 2rem 0; }
+    .quiz h3 { font-size: 1rem; margin-bottom: 1rem; margin-top: 0; font-weight: 600; }
+    .quiz-options { list-style: none; padding: 0; }
+    .quiz-options li { margin-bottom: 0.5rem; }
+    .quiz-options button { display: block; width: 100%; text-align: left; padding: 0.75rem 1rem; border: 1px solid var(--border); border-radius: 6px; background: white; font-family: var(--mono); font-size: 0.85rem; cursor: pointer; transition: border-color 0.15s; }
+    .quiz-options button:hover { border-color: var(--accent); }
+    .quiz-options button.correct { border-color: #2a9d8f; background: #e8f8f5; }
+    .quiz-options button.incorrect { border-color: #e76f51; background: #fef0ed; }
+    .quiz-feedback { margin-top: 1rem; padding: 0.75rem; border-radius: 6px; font-size: 0.9rem; display: none; }
+    .source-link { margin-top: 3rem; padding-top: 1.5rem; border-top: 1px solid var(--border); }
+    .source-link a { color: var(--accent); text-decoration: none; border-bottom: 1px solid transparent; }
+    .source-link a:hover { border-bottom-color: var(--accent); }
+    .followup { margin-top: 2rem; padding: 1rem 1.25rem; background: #f9f9f9; border-radius: 8px; font-size: 0.9rem; color: #555; }
+    @media print { body { max-width: 100%; padding: 1rem; } .example-group { break-inside: avoid; } .progress-bar { display: none; } }
+  </style>
+</head>
+<body>
+
+<div class="progress-bar"></div>
+
+<nav style="margin-bottom: 2rem;"><a href="index.html" style="font-size: 0.85rem; color: #3a86ff; text-decoration: none;">&larr; Course Contents</a></nav>
+
+<p class="lesson-number">Lesson 23</p>
+<h1>Scroll-Driven Animations &mdash; Replacing JavaScript with CSS Timelines</h1>
+
+<p>Notice the blue progress bar at the top of this page? It's tracking your scroll position &mdash; and it's <strong>pure CSS</strong>. No JavaScript, no IntersectionObserver, no requestAnimationFrame. That's scroll-driven animations in action.</p>
+
+<p>This API replaces an entire category of JavaScript libraries (ScrollMagic, GSAP ScrollTrigger, AOS) with native CSS. It builds on the <code>@keyframes</code> you already know from <a href="0007-animations.html">Lesson 7</a> &mdash; the only change is <em>what drives the animation forward</em>: scroll position instead of time.</p>
+
+<h2>The mental model: two types of scroll timeline</h2>
+
+<div class="key-insight">
+  <p><strong>Normal CSS animation:</strong> progress goes from 0% to 100% as <em>time</em> passes (e.g. over 2 seconds).</p>
+  <p><strong>Scroll-driven animation:</strong> progress goes from 0% to 100% as the user <em>scrolls</em>. No duration needed &mdash; the scroll position IS the progress.</p>
+  <p>There are two timeline types:</p>
+  <p>&bull; <strong><code>scroll()</code></strong> &mdash; tied to a scroll container's overall scroll progress (0% = top, 100% = bottom). Use for: progress bars, parallax, background effects.</p>
+  <p>&bull; <strong><code>view()</code></strong> &mdash; tied to an element's visibility within the scrollport (0% = element enters, 100% = element exits). Use for: reveal animations, fade-ins, staggered content.</p>
+</div>
+
+<h2>scroll() &mdash; scroll progress timeline</h2>
+
+<p>The simplest use: animate something based on how far a container has been scrolled.</p>
+
+<h3>Example: reading progress bar (this page!)</h3>
+
+<div class="example-group">
+<div class="demo">
+  <p class="demo-label">The blue bar at the top of this page is driven by this CSS &mdash; scroll to see it grow</p>
+  <p style="font-size: 0.85rem; color: #666; margin: 0;">Look at the top of the page &mdash; the blue bar grows as you scroll down. It's the same code shown below.</p>
+</div>
+<pre><code>&lt;!-- HTML --&gt;
+&lt;div class="progress-bar"&gt;&lt;/div&gt;
+
+/* CSS — that's it. No JS. */
+.progress-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  background: blue;
+  transform-origin: left;
+  transform: scaleX(0);
+
+  /* The magic: bind a keyframes animation to scroll progress */
+  animation: grow-progress linear;
+  animation-timeline: scroll();
+}
+
+@keyframes grow-progress {
+  to { transform: scaleX(1); }
+}
+
+/* How it reads:
+   - animation: grow-progress linear → standard animation, linear easing
+   - animation-timeline: scroll() → but driven by scroll, not time
+   - scroll() with no args → uses nearest ancestor scroll container (here: the page)
+   - The keyframes go from scaleX(0) to scaleX(1) as scroll goes from 0% to 100% */</code></pre>
+</div>
+
+<div class="key-insight">
+  <p><strong>What <code>animation-timeline: scroll()</code> does:</strong> It replaces the time-based timeline with a scroll-based one. The animation no longer needs a <code>duration</code> &mdash; scroll position IS the progress.</p>
+  <p><strong>Why <code>linear</code> easing:</strong> The easing function controls how scroll progress maps to keyframe progress. <code>linear</code> gives a 1:1 relationship (50% scrolled = 50% through animation). You <em>can</em> use <code>ease</code>, <code>ease-in-out</code>, or <code>cubic-bezier(...)</code> &mdash; but for scroll-driven effects, non-linear easing makes the animation feel disconnected from the user's scrolling (like lag or drift). Use <code>linear</code> unless you deliberately want that decoupled feel.</p>
+  <p><strong><code>animation-timeline</code> values:</strong> <code>auto</code> (default time-based), <code>scroll()</code> (scroll progress), <code>view()</code> (element visibility), <code>none</code> (disabled), or <code>--custom-name</code> (a named timeline). This single property is what switches an animation from "time drives it" to "scroll drives it."</p>
+</div>
+
+<h3>Example: progress bar in a scroll container (not the page)</h3>
+
+<div class="example-group">
+<div class="demo">
+  <p class="demo-label">Scroll inside this box &mdash; the blue bar tracks progress within this container only</p>
+  <div class="scroll-box">
+    <div class="scroll-indicator"></div>
+    <div class="scroll-content">
+      <p>Scroll me! The blue bar above tracks how far you've scrolled within this container specifically &mdash; not the page.</p>
+      <p style="margin-top: 100px;">Keep scrolling...</p>
+      <p style="margin-top: 100px;">Almost there...</p>
+      <p style="margin-top: 100px;">Done! The bar should be full.</p>
+    </div>
+  </div>
+</div>
+<pre><code>&lt;!-- HTML --&gt;
+&lt;div class="scroll-container"&gt;
+  &lt;div class="indicator"&gt;&lt;/div&gt;
+  &lt;div class="content"&gt;...long content...&lt;/div&gt;
+&lt;/div&gt;
+
+/* The container scrolls */
+.scroll-container {
+  height: 200px;
+  overflow-y: scroll;
+}
+
+/* The indicator bar tracks THIS container's scroll progress */
+.indicator {
+  position: sticky;
+  top: 0;
+  height: 4px;
+  background: blue;
+  transform-origin: left;
+  transform: scaleX(0);
+  animation: grow-progress linear;
+  animation-timeline: scroll(nearest);  /* nearest scrolling ancestor = .scroll-container */
+}
+
+/* scroll() arguments:
+   scroll()         → nearest ancestor scroll container
+   scroll(self)     → this element IS the scroll container
+   scroll(root)     → the document root scroller
+   scroll(nearest)  → nearest ancestor (same as default) */</code></pre>
+</div>
+
+<div class="key-insight">
+  <p><strong>scroll() arguments are keywords, not element references.</strong> You can't pass in a specific element like a JS function. The keywords describe <em>which scroll container relative to the animated element</em>:</p>
+  <p>&bull; <code>scroll()</code> / <code>scroll(nearest)</code> &mdash; walks up the DOM from the animated element until it finds an ancestor with <code>overflow: scroll/auto</code></p>
+  <p>&bull; <code>scroll(self)</code> &mdash; the animated element itself is the scroller</p>
+  <p>&bull; <code>scroll(root)</code> &mdash; the document root (page scroll, always)</p>
+  <p>If you need to target a specific scroll container that isn't an ancestor, use a <strong>named timeline</strong> instead (covered in the API reference below).</p>
+</div>
+
+<h2>view() &mdash; view progress timeline</h2>
+
+<p>The second timeline type: animate an element based on its visibility within the scrollport. The animation progresses as the element enters, crosses, and exits the visible area.</p>
+
+<div class="example-group">
+<div class="demo">
+  <p class="demo-label">Scroll inside this box &mdash; items fade in as they enter the visible area</p>
+  <div class="view-demo-container">
+    <div class="spacer"></div>
+    <div class="reveal-item">I fade in as I enter the viewport</div>
+    <div class="reveal-item">Me too &mdash; each item animates independently</div>
+    <div class="reveal-item">The animation is tied to MY visibility, not the scroll position</div>
+    <div class="reveal-item">No IntersectionObserver needed</div>
+    <div class="reveal-item">Last one!</div>
+    <div class="spacer"></div>
+  </div>
+</div>
+<pre><code>&lt;!-- HTML --&gt;
+&lt;div class="scroll-container"&gt;
+  &lt;div class="reveal-item"&gt;I fade in on scroll&lt;/div&gt;
+  &lt;div class="reveal-item"&gt;Me too&lt;/div&gt;
+  &lt;div class="reveal-item"&gt;And me&lt;/div&gt;
+&lt;/div&gt;
+
+/* The reveal animation */
+@keyframes fade-slide-in {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Apply to each item */
+.reveal-item {
+  animation: fade-slide-in linear both;
+  animation-timeline: view();
+  animation-range: entry 0% entry 100%;
+}
+
+/* How it reads:
+   - animation-timeline: view() → tied to this element's visibility
+   - animation-range: entry 0% entry 100%
+     → animate from "element just entering" to "element fully entered"
+   - "both" fill mode keeps the end state after the animation completes */</code></pre>
+</div>
+
+<h3>Understanding animation-range</h3>
+
+<p><code>animation-range</code> controls <em>which part of the view timeline</em> the animation maps to. The view timeline has named ranges:</p>
+
+<pre><code>/* Named ranges for view() timeline:
+
+   cover    → full journey: first pixel enters to last pixel exits
+   contain  → element is fully visible (both edges inside scrollport)
+   entry    → element is entering (leading edge enters → trailing edge enters)
+   exit     → element is exiting (leading edge exits → trailing edge exits)
+
+   Usage: animation-range: &lt;start-range&gt; &lt;start-%&gt; &lt;end-range&gt; &lt;end-%&gt;
+*/
+
+/* Animate only during entry (fade in as it appears) */
+animation-range: entry 0% entry 100%;
+
+/* Animate during the full journey (parallax-style, always moving) */
+animation-range: cover 0% cover 100%;
+
+/* Animate only during exit (fade out as it leaves) */
+animation-range: exit 0% exit 100%;
+
+/* Start at 25% through entry, end at 75% through entry (compressed) */
+animation-range: entry 25% entry 75%;</code></pre>
+
+<div class="key-insight">
+  <p><strong>The mental model for view() ranges:</strong> Think of the element's journey through the scrollport as a timeline with named chapters:</p>
+  <p>1. <strong>entry</strong> &mdash; element slides in from the edge (partially visible, growing)</p>
+  <p>2. <strong>contain</strong> &mdash; element is fully inside the scrollport</p>
+  <p>3. <strong>exit</strong> &mdash; element slides out the other edge (partially visible, shrinking)</p>
+  <p><strong>cover</strong> spans the entire journey (entry + contain + exit). You pick which chapter(s) your animation plays during.</p>
+</div>
+
+<h2>Parallax effects</h2>
+
+<p>Parallax (background moves slower than foreground) was one of the most common reasons to reach for scroll libraries. Now it's a few lines of CSS:</p>
+
+<div class="example-group">
+<div class="demo">
+  <p class="demo-label">Scroll inside &mdash; the text in the blue area shifts at a different rate (parallax)</p>
+  <div class="parallax-box">
+    <div class="parallax-bg">
+      <span class="parallax-text">PARALLAX</span>
+    </div>
+    <div class="parallax-content">
+      <p>Scroll down &mdash; the text in the blue header moves at a different rate than this content. It shifts upward, shrinks, and fades.</p>
+      <p style="margin-top: 80px;">The effect is exaggerated here so you can clearly see it.</p>
+      <p style="margin-top: 80px;">This is 100% CSS &mdash; no JavaScript.</p>
+    </div>
+  </div>
+</div>
+<pre><code>&lt;!-- HTML --&gt;
+&lt;div class="parallax-container"&gt;
+  &lt;div class="parallax-bg"&gt;
+    &lt;h2&gt;Hero Text&lt;/h2&gt;
+  &lt;/div&gt;
+  &lt;div class="content"&gt;...&lt;/div&gt;
+&lt;/div&gt;
+
+/* Container scrolls */
+.parallax-container { height: 250px; overflow-y: scroll; }
+
+/* Background is sticky so it stays visible */
+.parallax-bg { position: sticky; top: 0; }
+
+/* The text inside shifts at a slower rate via scroll-driven animation */
+.parallax-bg h2 {
+  animation: parallax-shift linear;
+  animation-timeline: scroll(nearest);
+}
+
+@keyframes parallax-shift {
+  from { transform: translateY(0); }
+  to   { transform: translateY(-30px); }
+  /* Moves 30px upward over the full scroll range —
+     slower than the content, creating the parallax effect */
+}</code></pre>
+</div>
+
+<h2>What this replaces</h2>
+
+<p>Before scroll-driven animations, you needed JavaScript for all of these:</p>
+
+<pre><code>/* BEFORE (JavaScript) */
+// Reading progress bar
+window.addEventListener('scroll', () => {
+  const progress = window.scrollY / (document.body.scrollHeight - window.innerHeight);
+  bar.style.transform = `scaleX(${progress})`;
+});
+
+// Reveal on scroll (IntersectionObserver)
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) entry.target.classList.add('visible');
+  });
+});
+document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+// Parallax (requestAnimationFrame loop)
+function updateParallax() {
+  const scroll = window.scrollY;
+  bg.style.transform = `translateY(${scroll * 0.5}px)`;
+  requestAnimationFrame(updateParallax);
+}
+updateParallax();
+
+/* AFTER (CSS only — all three effects) */
+.progress-bar { animation: grow linear; animation-timeline: scroll(); }
+.reveal       { animation: fade-in linear both; animation-timeline: view(); animation-range: entry; }
+.parallax-bg  { animation: shift linear; animation-timeline: scroll(); }</code></pre>
+
+<div class="key-insight">
+  <p><strong>Performance benefit:</strong> JavaScript scroll handlers run on the main thread and can cause jank. Scroll-driven CSS animations run on the compositor thread &mdash; the same thread that handles CSS transforms and opacity. They're guaranteed 60fps regardless of main thread load. This is the same reason CSS transitions outperform JS-animated properties.</p>
+</div>
+
+<h2>The full API at a glance</h2>
+
+<pre><code>/* === Properties === */
+animation-timeline: scroll() | view() | auto | none | &lt;custom-name&gt;;
+animation-range: normal | &lt;range-start&gt; &lt;range-end&gt;;
+
+/* === scroll() function === */
+scroll()              /* nearest scroll ancestor, block axis */
+scroll(self)          /* this element is the scroller */
+scroll(root)          /* document root scroller */
+scroll(nearest)       /* nearest ancestor (default) */
+scroll(self inline)   /* horizontal scrolling */
+
+/* === view() function === */
+view()                /* default: block axis, no inset */
+view(inline)          /* track horizontal visibility */
+view(block 50px)      /* add 50px inset (shrink the trigger zone) */
+
+/* === animation-range values === */
+animation-range: cover;               /* full element journey (default for view) */
+animation-range: entry;               /* just the entry phase */
+animation-range: exit;                /* just the exit phase */
+animation-range: contain;             /* while fully visible */
+animation-range: entry 0% entry 100%; /* explicit start/end within a range */
+
+/* === Named timelines (for targeting a specific ancestor) === */
+.scroller {
+  scroll-timeline-name: --page-scroll;
+  scroll-timeline-axis: block;
+}
+.animated-child {
+  animation-timeline: --page-scroll;  /* explicitly reference that scroller */
+}
+
+/* === View timeline on a specific subject === */
+.subject {
+  view-timeline-name: --card-visibility;
+  view-timeline-axis: block;
+}
+.related-element {
+  animation-timeline: --card-visibility;  /* animate based on .subject's visibility */
+}</code></pre>
+
+<h2>Practical patterns</h2>
+
+<h3>Pattern: Shrinking sticky header</h3>
+
+<div class="example-group">
+<div class="demo">
+  <p class="demo-label">Scroll inside &mdash; the header shrinks as you scroll down</p>
+  <div style="height: 200px; overflow-y: scroll; border: 2px solid var(--border); border-radius: 8px; scroll-timeline-name: --header-demo-scroll;">
+    <div style="position: sticky; top: 0; background: #3a86ff; color: white; padding-block: 1.5rem; padding-inline: 1rem; font-size: 1.2rem; font-weight: 600; z-index: 1; animation: shrink-header-demo linear both; animation-timeline: --header-demo-scroll; animation-range: 0% 30%;">Site Header</div>
+    <div style="height: 600px; padding: 1rem; font-size: 0.8rem; color: #666;">
+      <p>Scroll down to see the header shrink. It only animates over the first 30% of scroll, then stays small.</p>
+      <p style="margin-top: 100px;">Keep scrolling...</p>
+      <p style="margin-top: 100px;">The header stays compact now.</p>
+    </div>
+  </div>
+</div>
+<pre><code>/* Header shrinks as you scroll down the page */
+.site-header {
+  position: sticky;
+  top: 0;
+  animation: shrink-header linear both;
+  animation-timeline: scroll();
+  animation-range: 0% 30%;  /* only animate over first 30% of scroll */
+}
+
+@keyframes shrink-header {
+  from { padding-block: 1.5rem; font-size: 1.2rem; }
+  to   { padding-block: 0.5rem; font-size: 0.85rem; }
+}</code></pre>
+</div>
+
+<style>
+@keyframes shrink-header-demo {
+  from { padding-block: 1.5rem; font-size: 1.2rem; }
+  to { padding-block: 0.5rem; font-size: 0.85rem; }
+}
+</style>
+
+<h3>Pattern: Horizontal scroll-driven progress (carousel indicator)</h3>
+
+<div class="example-group">
+<div class="demo">
+  <p class="demo-label">Scroll horizontally &mdash; the indicator bar tracks carousel progress</p>
+  <div style="position: relative; border: 2px solid var(--border); border-radius: 8px; overflow: hidden;">
+    <div style="display: flex; gap: 0.75rem; overflow-x: scroll; scroll-snap-type: x mandatory; padding: 1rem; padding-top: calc(3px + 0.75rem); scroll-timeline-name: --carousel-scroll; scroll-timeline-axis: inline;">
+      <div style="position: absolute; top: 0; left: 0; right: 0; height: 3px; background: var(--accent); transform-origin: left; transform: scaleX(0); animation: grow-progress linear; animation-timeline: --carousel-scroll;"></div>
+      <div style="flex: 0 0 80%; height: 80px; background: #f0f7ff; border: 1px solid var(--border); border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; scroll-snap-align: start;">Slide 1</div>
+      <div style="flex: 0 0 80%; height: 80px; background: #f0f7ff; border: 1px solid var(--border); border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; scroll-snap-align: start;">Slide 2</div>
+      <div style="flex: 0 0 80%; height: 80px; background: #f0f7ff; border: 1px solid var(--border); border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; scroll-snap-align: start;">Slide 3</div>
+      <div style="flex: 0 0 80%; height: 80px; background: #f0f7ff; border: 1px solid var(--border); border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; scroll-snap-align: start;">Slide 4</div>
+      <div style="flex: 0 0 80%; height: 80px; background: #f0f7ff; border: 1px solid var(--border); border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; scroll-snap-align: start;">Slide 5</div>
+    </div>
+  </div>
+</div>
+<pre><code>&lt;!-- HTML --&gt;
+&lt;div class="carousel-wrapper"&gt;
+  &lt;div class="carousel"&gt;
+    &lt;div class="carousel-indicator"&gt;&lt;/div&gt;
+    &lt;div class="slide"&gt;Slide 1&lt;/div&gt;
+    &lt;div class="slide"&gt;Slide 2&lt;/div&gt;
+    &lt;div class="slide"&gt;Slide 3&lt;/div&gt;
+  &lt;/div&gt;
+&lt;/div&gt;
+
+/* The carousel is the scroll container */
+.carousel {
+  display: flex;
+  gap: 0.75rem;
+  overflow-x: scroll;
+  scroll-snap-type: x mandatory;
+  scroll-timeline-name: --carousel;
+  scroll-timeline-axis: inline;
+}
+
+/* Indicator INSIDE the carousel (so it can reference the timeline) */
+.carousel-indicator {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: blue;
+  transform-origin: left;
+  transform: scaleX(0);
+  animation: grow-progress linear;
+  animation-timeline: --carousel;
+}
+
+/* Slides snap into place */
+.slide {
+  flex: 0 0 80%;
+  scroll-snap-align: start;
+}</code></pre>
+</div>
+
+<h3>Pattern: Staggered reveal (view timeline per item)</h3>
+
+<div class="example-group">
+<div class="demo">
+  <p class="demo-label">Scroll inside &mdash; each card reveals independently with a scale + fade as it enters</p>
+  <div style="height: 220px; overflow-y: scroll; border: 2px solid var(--border); border-radius: 8px; padding: 0.5rem;">
+    <div style="height: 100px;"></div>
+    <div class="stagger-item">Card 1 &mdash; I reveal on entry</div>
+    <div class="stagger-item">Card 2 &mdash; independent timeline</div>
+    <div class="stagger-item">Card 3 &mdash; no JS needed</div>
+    <div class="stagger-item">Card 4 &mdash; each tracks its own visibility</div>
+    <div class="stagger-item">Card 5 &mdash; last one!</div>
+    <div style="height: 100px;"></div>
+  </div>
+</div>
+<pre><code>/* Each card fades in independently as it enters view */
+.card {
+  animation: fade-up linear both;
+  animation-timeline: view();
+  animation-range: entry 10% entry 90%;
+}
+
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(2rem) scale(0.85); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}</code></pre>
+</div>
+
+<style>
+.stagger-item {
+  padding: 1rem;
+  margin: 0.75rem 0.5rem;
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 0.85rem;
+  animation: stagger-reveal linear both;
+  animation-timeline: view();
+  animation-range: entry 10% entry 90%;
+}
+@keyframes stagger-reveal {
+  from { opacity: 0; transform: translateX(-80px) scale(0.7); background: #fff3e0; border-color: #e76f51; border-width: 2px; }
+  to { opacity: 1; transform: translateX(0) scale(1); background: white; border-color: var(--border); border-width: 1px; }
+}
+</style>
+
+<h2>Browser support and progressive enhancement</h2>
+
+<pre><code>/* Feature detection — provide fallback for unsupported browsers */
+@supports (animation-timeline: scroll()) {
+  .progress-bar {
+    animation: grow-progress linear;
+    animation-timeline: scroll();
+  }
+}
+
+/* Or just let it degrade gracefully:
+   - Without support, animation-timeline is ignored
+   - The element stays in its initial state (no animation plays)
+   - This is usually acceptable — scroll effects are enhancement, not functionality */</code></pre>
+
+<p>As of mid-2026: Chrome 115+, Edge 115+, Firefox 110+ (full support), Safari 18.4+. Your Chrome 149 fully supports everything in this lesson.</p>
+
+<h2>Retrieval check</h2>
+
+<div class="quiz" id="quiz1">
+  <h3>What does animation-timeline: scroll() do?</h3>
+  <ul class="quiz-options">
+    <li><button onclick="checkAnswer(this, false)">Triggers the animation when the user starts scrolling</button></li>
+    <li><button onclick="checkAnswer(this, true)">Replaces the time-based timeline with scroll progress (0% at top, 100% at bottom)</button></li>
+    <li><button onclick="checkAnswer(this, false)">Makes the animation play faster when scrolling faster</button></li>
+    <li><button onclick="checkAnswer(this, false)">Pauses the animation until the element is scrolled into view</button></li>
+  </ul>
+  <div class="quiz-feedback"></div>
+</div>
+
+<div class="quiz" id="quiz2">
+  <h3>What's the difference between scroll() and view()?</h3>
+  <ul class="quiz-options">
+    <li><button onclick="checkAnswer(this, false)">scroll() is for vertical, view() is for horizontal</button></li>
+    <li><button onclick="checkAnswer(this, true)">scroll() tracks a container's overall scroll progress; view() tracks an element's visibility within the scrollport</button></li>
+    <li><button onclick="checkAnswer(this, false)">scroll() uses JavaScript, view() is pure CSS</button></li>
+    <li><button onclick="checkAnswer(this, false)">They're identical but view() has better browser support</button></li>
+  </ul>
+  <div class="quiz-feedback"></div>
+</div>
+
+<div class="quiz" id="quiz3">
+  <h3>What does animation-range: entry 0% entry 100% mean?</h3>
+  <ul class="quiz-options">
+    <li><button onclick="checkAnswer(this, false)">The animation plays during the first 100% of scroll</button></li>
+    <li><button onclick="checkAnswer(this, true)">The animation plays from when the element starts entering to when it's fully entered</button></li>
+    <li><button onclick="checkAnswer(this, false)">The animation has a 100% entry delay before playing</button></li>
+    <li><button onclick="checkAnswer(this, false)">Only the first 100px of the element triggers the animation</button></li>
+  </ul>
+  <div class="quiz-feedback"></div>
+</div>
+
+<div class="quiz" id="quiz4">
+  <h3>Why are CSS scroll-driven animations more performant than JavaScript scroll handlers?</h3>
+  <ul class="quiz-options">
+    <li><button onclick="checkAnswer(this, false)">CSS is always faster than JavaScript by definition</button></li>
+    <li><button onclick="checkAnswer(this, false)">They use WebGL for rendering</button></li>
+    <li><button onclick="checkAnswer(this, true)">They run on the compositor thread (like transforms/opacity), not the main thread</button></li>
+    <li><button onclick="checkAnswer(this, false)">They skip the rendering pipeline entirely</button></li>
+  </ul>
+  <div class="quiz-feedback"></div>
+</div>
+
+<div class="quiz" id="quiz5">
+  <h3>scroll(self) means:</h3>
+  <ul class="quiz-options">
+    <li><button onclick="checkAnswer(this, false)">The element scrolls itself into view</button></li>
+    <li><button onclick="checkAnswer(this, true)">This element IS the scroll container (track its own scroll progress)</button></li>
+    <li><button onclick="checkAnswer(this, false)">Only this element's animations are affected</button></li>
+    <li><button onclick="checkAnswer(this, false)">The scroll timeline is scoped to this component only</button></li>
+  </ul>
+  <div class="quiz-feedback"></div>
+</div>
+
+<div class="source-link">
+  <p><strong>Primary sources:</strong></p>
+  <ul>
+    <li><a href="https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_scroll-driven_animations">MDN &mdash; CSS scroll-driven animations</a></li>
+    <li><a href="https://developer.chrome.com/docs/css-ui/scroll-driven-animations/">Chrome Developers &mdash; Animate elements on scroll</a></li>
+    <li><a href="https://developer.mozilla.org/en-US/docs/Web/CSS/animation-timeline/scroll">MDN &mdash; scroll() function</a></li>
+    <li><a href="https://developer.mozilla.org/en-US/docs/Web/CSS/animation-timeline/view">MDN &mdash; view() function</a></li>
+    <li><a href="https://wp.smashingmagazine.com/2024/12/introduction-css-scroll-driven-animations/">Smashing Magazine &mdash; Scroll and View Progress Timelines</a></li>
+  </ul>
+</div>
+
+<div class="followup">
+  <p>That's Lesson 23 &mdash; scroll-driven animations. You now have the final major modern CSS animation API: <code>scroll()</code> for progress bars and parallax, <code>view()</code> for reveal animations, <code>animation-range</code> for fine-grained control over when animations play, and named timelines for targeting specific scrollers.</p>
+  <p>Questions? Ask about combining scroll-driven animations with other features (view transitions, container queries), or about specific patterns you'd like to implement.</p>
+  <p><strong>Next:</strong></p>
+  <ul>
+    <li><strong>Capstone project</strong> &mdash; build a real page/component using 10+ features from this course</li>
+    <li><strong>Any topic you'd like to revisit or go deeper on</strong></li>
+  </ul>
+</div>
+
+<script>
+function checkAnswer(button, isCorrect) {
+  const quiz = button.closest('.quiz');
+  const buttons = quiz.querySelectorAll('button');
+  const feedback = quiz.querySelector('.quiz-feedback');
+  if (quiz.dataset.answered) return;
+  quiz.dataset.answered = 'true';
+  buttons.forEach(btn => btn.style.pointerEvents = 'none');
+  if (isCorrect) {
+    button.classList.add('correct');
+    feedback.textContent = '\u2713 Correct.';
+    feedback.style.background = '#e8f8f5';
+    feedback.style.color = '#1a7a6c';
+  } else {
+    button.classList.add('incorrect');
+    buttons.forEach(btn => {
+      if (btn.getAttribute('onclick').includes('true')) btn.classList.add('correct');
+    });
+    feedback.textContent = '\u2717 Not quite. The highlighted answer is correct.';
+    feedback.style.background = '#fef0ed';
+    feedback.style.color = '#c0392b';
+  }
+  feedback.style.display = 'block';
+}
+</script>
+
+</body>
+</html>

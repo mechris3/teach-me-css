@@ -23,7 +23,7 @@
       color: var(--text);
       background: var(--bg);
       line-height: 1.7;
-      max-width: 42rem;
+      max-width: 60rem;
       margin: 0 auto;
       padding: 3rem 1.5rem;
     }
@@ -94,6 +94,10 @@
 
     .key-insight p { margin-bottom: 0.5rem; }
     .key-insight p:last-child { margin-bottom: 0; }
+
+    .example-group { border: 1px solid var(--border); border-radius: 8px; margin: 1.5rem 0; overflow: hidden; }
+    .example-group .demo { border: none; border-radius: 0; margin: 0; border-bottom: 1px solid var(--border); }
+    .example-group pre { margin: 0; border: none; border-radius: 0; }
 
     .demo {
       border: 1px solid var(--border);
@@ -274,11 +278,12 @@
 
     @media print {
       body { max-width: 100%; padding: 1rem; }
-      .demo { break-inside: avoid; }
+      .demo, .example-group { break-inside: avoid; }
     }
   </style>
 </head>
 <body>
+<nav style="margin-bottom: 2rem;"><a href="index.html" style="font-size: 0.85rem; color: #3a86ff; text-decoration: none; border-bottom: 1px solid transparent;">← Course Contents</a></nav>
 
 <p class="lesson-number">Lesson 03</p>
 <h1>CSS Value Functions</h1>
@@ -304,12 +309,35 @@
   <li><code>*</code> and <code>/</code>: at least one operand must be a plain number. You can't do <code>calc(10px * 5px)</code> — that would give you "square pixels" which isn't a CSS unit.</li>
 </ul>
 
+<div class="example-group">
 <div class="demo">
   <p class="demo-label">Sidebar is 250px (fixed), main is calc(100% - 250px)</p>
   <div class="calc-demo">
     <div class="calc-sidebar">250px</div>
     <div class="calc-main">calc(100% - 250px)</div>
   </div>
+</div>
+
+<pre><code>&lt;!-- HTML --&gt;
+&lt;div class="calc-demo"&gt;
+  &lt;div class="calc-sidebar"&gt;250px&lt;/div&gt;
+  &lt;div class="calc-main"&gt;calc(100% - 250px)&lt;/div&gt;
+&lt;/div&gt;
+
+/* CSS */
+.calc-demo {
+  --sidebar: 250px;
+  display: flex;
+}
+
+.calc-sidebar {
+  width: var(--sidebar);
+  flex-shrink: 0;
+}
+
+.calc-main {
+  width: calc(100% - var(--sidebar));
+}</code></pre>
 </div>
 
 <h3>Nesting calc() and combining with var()</h3>
@@ -339,9 +367,22 @@ width: calc(100% - (var(--sidebar) + 2rem));</code></pre>
 /* Font size is 5vw, capped at 3rem */
 .heading { font-size: min(5vw, 3rem); }</code></pre>
 
+<div class="example-group">
 <div class="demo">
   <p class="demo-label">This box is min(100%, 500px) — resize the window to see it cap</p>
   <div class="min-demo-box">I'll fill my parent up to 500px, then stop growing.</div>
+</div>
+
+<pre><code>&lt;!-- HTML --&gt;
+&lt;div class="min-demo-box"&gt;I'll fill my parent up to 500px, then stop growing.&lt;/div&gt;
+
+/* CSS */
+.min-demo-box {
+  width: min(100%, 500px);
+  padding: 1rem;
+  background: #fff3e0;
+  border-radius: 6px;
+}</code></pre>
 </div>
 
 <div class="key-insight">
@@ -375,11 +416,25 @@ width: clamp(300px, 80%, 800px);
 /* Padding is fluid, with sensible bounds */
 padding: clamp(1rem, 3vw, 3rem);</code></pre>
 
+<div class="example-group">
 <div class="demo">
   <p class="demo-label">Resize the browser window — the text below scales fluidly between 1rem and 2.5rem</p>
   <div class="clamp-text">
     This text uses <code>font-size: clamp(1rem, 2.5vw + 0.5rem, 2.5rem)</code>. It grows with the viewport but never gets too small or too large.
   </div>
+</div>
+
+<pre><code>&lt;!-- HTML --&gt;
+&lt;div class="clamp-text"&gt;This text scales fluidly...&lt;/div&gt;
+
+/* CSS */
+.clamp-text {
+  font-size: clamp(1rem, 2.5vw + 0.5rem, 2.5rem);
+  line-height: 1.3;
+  padding: 1rem;
+  background: #f9f0ff;
+  border-radius: 6px;
+}</code></pre>
 </div>
 
 <div class="key-insight">
@@ -474,6 +529,7 @@ border-color: color-mix(in oklch, red, blue 40%);</code></pre>
   <li><code>in hsl</code> — when you specifically want hue rotation effects (e.g. shifting a colour towards warm/cool). Be aware saturation can spike.</li>
 </ul>
 
+<div class="example-group">
 <div class="demo">
   <p class="demo-label">A tint scale from a single colour using color-mix(in oklch, accent, white/black)</p>
   <div class="color-mix-grid">
@@ -486,11 +542,14 @@ border-color: color-mix(in oklch, red, blue 40%);</code></pre>
 </div>
 
 <pre><code>/* Generate a full tint scale from one token */
+:root { --accent: #3a86ff; }
+
 --tint-100: color-mix(in oklch, var(--accent), white 80%);
 --tint-300: color-mix(in oklch, var(--accent), white 50%);
 --tint-500: var(--accent);
 --tint-700: color-mix(in oklch, var(--accent), black 30%);
 --tint-900: color-mix(in oklch, var(--accent), black 60%);</code></pre>
+</div>
 
 <div class="key-insight">
   <p><strong>Practical win:</strong> define one brand colour as a custom property, then derive your entire palette using <code>color-mix()</code>. Change the brand colour and the whole palette updates. No build tools needed.</p>

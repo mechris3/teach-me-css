@@ -23,7 +23,7 @@
       color: var(--text);
       background: var(--bg);
       line-height: 1.7;
-      max-width: 42rem;
+      max-width: 60rem;
       margin: 0 auto;
       padding: 3rem 1.5rem;
     }
@@ -41,6 +41,11 @@
     .key-insight { border-left: 3px solid var(--accent); padding: 1rem 1.25rem; margin: 1.5rem 0; background: #f0f7ff; border-radius: 0 6px 6px 0; }
     .key-insight p { margin-bottom: 0.5rem; }
     .key-insight p:last-child { margin-bottom: 0; }
+
+    .example-group { border: 1px solid var(--border); border-radius: 8px; margin: 1.5rem 0; overflow: hidden; }
+    .example-group .demo { border: none; border-radius: 0; margin: 0; border-bottom: 1px solid var(--border); }
+    .example-group pre { margin: 0; border: none; border-radius: 0; }
+
     .demo { border: 1px solid var(--border); border-radius: 8px; padding: 1.5rem; margin: 1.5rem 0; background: #fafafa; }
     .demo-label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em; color: #888; margin-bottom: 1rem; }
 
@@ -316,10 +321,11 @@
     .source-link a { color: var(--accent); text-decoration: none; border-bottom: 1px solid transparent; }
     .source-link a:hover { border-bottom-color: var(--accent); }
     .followup { margin-top: 2rem; padding: 1rem 1.25rem; background: #f9f9f9; border-radius: 8px; font-size: 0.9rem; color: #555; }
-    @media print { body { max-width: 100%; padding: 1rem; } .demo { break-inside: avoid; } }
+    @media print { body { max-width: 100%; padding: 1rem; } .demo, .example-group { break-inside: avoid; } }
   </style>
 </head>
 <body>
+<nav style="margin-bottom: 2rem;"><a href="index.html" style="font-size: 0.85rem; color: #3a86ff; text-decoration: none; border-bottom: 1px solid transparent;">← Course Contents</a></nav>
 
 <p class="lesson-number">Lesson 07</p>
 <h1>CSS Animations — <code>@keyframes</code> and Beyond</h1>
@@ -492,6 +498,7 @@ animation: slide-in 0.6s;</code></pre>
    1.5s+ (after):        opacity: 0.5 (base state — snaps back!)
 */</code></pre>
 
+<div class="example-group">
 <div class="demo">
   <p class="demo-label">Three boxes with a 1s delay — watch what happens during the delay and after completion</p>
   <div class="fill-demo-item fill-none">fill: none</div>
@@ -504,7 +511,12 @@ animation: slide-in 0.6s;</code></pre>
   to   { opacity: 1; transform: translateY(0); }
 }
 
-/* No fill: visible at base state during delay, snaps back after */
+&lt;!-- HTML --&gt;
+&lt;div class="fill-demo-item fill-none"&gt;fill: none&lt;/div&gt;
+&lt;div class="fill-demo-item fill-forwards"&gt;fill: forwards&lt;/div&gt;
+&lt;div class="fill-demo-item fill-both"&gt;fill: both&lt;/div&gt;
+
+/* CSS — No fill: visible at base state during delay, snaps back after */
 .fill-none     { animation: fade-in 0.5s ease 1s 1 normal none; }
 
 /* Forwards: stays at final state after animation ends */
@@ -512,6 +524,7 @@ animation: slide-in 0.6s;</code></pre>
 
 /* Both: shows first keyframe during delay, stays at last after */
 .fill-both     { animation: fade-in 0.5s ease 1s 1 normal both; }</code></pre>
+</div>
 
 <div class="key-insight">
   <p><strong>Rule of thumb:</strong> Use <code>both</code> for entrance animations. It ensures the element starts in the "from" state (even during delay) and stays in the "to" state after completion. Without it, you get flashes of the base state.</p>
@@ -519,6 +532,7 @@ animation: slide-in 0.6s;</code></pre>
 
 <h2>Direction — alternate and reverse</h2>
 
+<div class="example-group">
 <div class="demo">
   <p class="demo-label">All four direction values animating a box to the right</p>
   <div class="direction-box dir-normal">normal</div>
@@ -527,17 +541,30 @@ animation: slide-in 0.6s;</code></pre>
   <div class="direction-box dir-alt-rev">alt-rev</div>
 </div>
 
-<pre><code>/* Normal: 0% → 100%, 0% → 100%, ... */
-animation-direction: normal;
+<pre><code>@keyframes slide-right {
+  from { transform: translateX(0); }
+  to   { transform: translateX(150px); }
+}
+
+&lt;!-- HTML --&gt;
+&lt;div class="dir-normal"&gt;normal&lt;/div&gt;
+&lt;div class="dir-reverse"&gt;reverse&lt;/div&gt;
+&lt;div class="dir-alternate"&gt;alternate&lt;/div&gt;
+&lt;div class="dir-alt-rev"&gt;alt-rev&lt;/div&gt;
+
+/* CSS */
+/* Normal: 0% → 100%, 0% → 100%, ... */
+.dir-normal    { animation: slide-right 1.5s ease-in-out infinite; animation-direction: normal; }
 
 /* Reverse: 100% → 0%, 100% → 0%, ... */
-animation-direction: reverse;
+.dir-reverse   { animation: slide-right 1.5s ease-in-out infinite; animation-direction: reverse; }
 
 /* Alternate: 0% → 100%, 100% → 0%, 0% → 100%, ... */
-animation-direction: alternate;
+.dir-alternate { animation: slide-right 1.5s ease-in-out infinite; animation-direction: alternate; }
 
 /* Alternate-reverse: 100% → 0%, 0% → 100%, ... */
-animation-direction: alternate-reverse;</code></pre>
+.dir-alt-rev   { animation: slide-right 1.5s ease-in-out infinite; animation-direction: alternate-reverse; }</code></pre>
+</div>
 
 <p><code>alternate</code> is particularly useful for looping animations that should feel smooth — like a pulse or breathing effect — because it reverses direction each cycle instead of jumping back to the start.</p>
 
@@ -545,6 +572,7 @@ animation-direction: alternate-reverse;</code></pre>
 
 <p>You can pause animations with <code>animation-play-state</code>. This is useful for reducing motion when a user isn't actively looking, or for interactive controls:</p>
 
+<div class="example-group">
 <div class="demo">
   <p class="demo-label">Click the spinner to toggle pause/play</p>
   <div class="spinner" id="spinnerDemo" onclick="this.classList.toggle('paused')"></div>
@@ -554,13 +582,23 @@ animation-direction: alternate-reverse;</code></pre>
   to { transform: rotate(360deg); }
 }
 
+&lt;!-- HTML --&gt;
+&lt;div class="spinner" onclick="this.classList.toggle('paused')"&gt;&lt;/div&gt;
+
+/* CSS */
 .spinner {
+  width: 50px;
+  height: 50px;
+  border: 4px solid #eee;
+  border-top-color: var(--accent);
+  border-radius: 50%;
   animation: spin 1s linear infinite;
 }
 
 .spinner.paused {
   animation-play-state: paused;
 }</code></pre>
+</div>
 
 <div class="key-insight">
   <p><strong>Accessibility pattern:</strong> Use <code>@media (prefers-reduced-motion: reduce)</code> to pause or remove animations for users who've requested less motion:</p>
@@ -585,6 +623,7 @@ animation-direction: alternate-reverse;</code></pre>
 
 <h3>Scroll progress bar</h3>
 
+<div class="example-group">
 <div class="demo">
   <p class="demo-label">Scroll this box — the blue bar at the top grows with scroll progress</p>
   <div class="scroll-container">
@@ -603,7 +642,14 @@ animation-direction: alternate-reverse;</code></pre>
   to   { transform: scaleX(1); }
 }
 
-.progress-bar {
+&lt;!-- HTML --&gt;
+&lt;div class="scroll-container"&gt;
+  &lt;div class="scroll-progress"&gt;&lt;/div&gt;
+  &lt;div class="scroll-content"&gt;...tall content...&lt;/div&gt;
+&lt;/div&gt;
+
+/* CSS */
+.scroll-progress {
   position: sticky;
   top: 0;
   height: 4px;
@@ -612,6 +658,7 @@ animation-direction: alternate-reverse;</code></pre>
   animation: grow-width linear;
   animation-timeline: scroll(nearest block);
 }</code></pre>
+</div>
 
 <div class="key-insight">
   <p><strong>Key concept:</strong> <code>animation-timeline: scroll()</code> replaces the default time-based timeline. The animation still uses the same @keyframes — but progress is driven by scroll position instead of a clock. Duration becomes irrelevant (you can omit it or set it to <code>auto</code>).</p>
@@ -665,6 +712,7 @@ animation-timeline: scroll();</code></pre>
 
 <p><code>view()</code> ties progress to an element's intersection with the viewport (or scroll container). Combined with <code>animation-range</code>, you can control exactly when the animation starts and ends:</p>
 
+<div class="example-group">
 <div class="demo">
   <p class="demo-label">These cards use view() on the page viewport — scroll the page up and down to see them animate in and out</p>
   <div style="display: flex; flex-direction: column; gap: 1rem;">
@@ -674,19 +722,26 @@ animation-timeline: scroll();</code></pre>
   </div>
 </div>
 
-<p><em>Note: if all cards are already visible, scroll down past them and back up — the animation is tied to their intersection with the browser viewport, not a nested container.</em></p>
-
 <pre><code>@keyframes reveal {
   from { opacity: 0; transform: translateY(30px); }
   to   { opacity: 1; transform: translateY(0); }
 }
 
-.card {
+&lt;!-- HTML --&gt;
+&lt;div class="reveal-card reveal-item"&gt;Card A&lt;/div&gt;
+&lt;div class="reveal-card reveal-item"&gt;Card B&lt;/div&gt;
+&lt;div class="reveal-card reveal-item"&gt;Card C&lt;/div&gt;
+
+/* CSS */
+.reveal-item {
   animation: reveal linear both;
   animation-timeline: view();
   animation-range: entry 0% entry 100%;
   /* Animates from invisible → visible as it enters the viewport */
 }</code></pre>
+</div>
+
+<p><em>Note: if all cards are already visible, scroll down past them and back up — the animation is tied to their intersection with the browser viewport, not a nested container.</em></p>
 
 <p><code>animation-range</code> values:</p>
 <ul>
@@ -719,6 +774,7 @@ animation-timeline: scroll();</code></pre>
 
 <h3>Staggered entrance</h3>
 
+<div class="example-group">
 <div class="demo">
   <p class="demo-label">Click replay to see staggered fade-up</p>
   <button class="replay-btn" onclick="replayStagger()">▶ Replay</button>
@@ -735,23 +791,32 @@ animation-timeline: scroll();</code></pre>
   to   { opacity: 1; transform: translateY(0); }
 }
 
-.list-item {
+&lt;!-- HTML --&gt;
+&lt;div class="stagger-item"&gt;Item 1&lt;/div&gt;
+&lt;div class="stagger-item"&gt;Item 2&lt;/div&gt;
+&lt;div class="stagger-item"&gt;Item 3&lt;/div&gt;
+&lt;div class="stagger-item"&gt;Item 4&lt;/div&gt;
+
+/* CSS */
+.stagger-item {
   animation: fade-up 0.4s ease both;
 }
 
-.list-item:nth-child(1) { animation-delay: 0s; }
-.list-item:nth-child(2) { animation-delay: 0.1s; }
-.list-item:nth-child(3) { animation-delay: 0.15s; }
-.list-item:nth-child(4) { animation-delay: 0.2s; }
+.stagger-item:nth-child(1) { animation-delay: 0s; }
+.stagger-item:nth-child(2) { animation-delay: 0.1s; }
+.stagger-item:nth-child(3) { animation-delay: 0.15s; }
+.stagger-item:nth-child(4) { animation-delay: 0.2s; }
 
 /* Or with custom properties for flexibility: */
-.list-item {
+.stagger-item {
   animation-delay: calc(var(--i, 0) * 0.1s);
 }
 /* Set --i via inline style or attr() in the HTML */</code></pre>
+</div>
 
 <h3>Loading spinner</h3>
 
+<div class="example-group">
 <div class="demo">
   <p class="demo-label">A simple border-based spinner — infinite linear rotation</p>
   <div class="demo-spinner"></div>
@@ -762,6 +827,10 @@ animation-timeline: scroll();</code></pre>
   to { transform: rotate(360deg); }
 }
 
+&lt;!-- HTML --&gt;
+&lt;div class="spinner"&gt;&lt;/div&gt;
+
+/* CSS */
 .spinner {
   width: 24px;
   height: 24px;
@@ -770,9 +839,11 @@ animation-timeline: scroll();</code></pre>
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }</code></pre>
+</div>
 
 <h3>Pulse / breathing effect</h3>
 
+<div class="example-group">
 <div class="demo">
   <p class="demo-label">Badge pulsing continuously using alternate direction</p>
   <div class="demo-badge">3 notifications</div>
@@ -783,9 +854,14 @@ animation-timeline: scroll();</code></pre>
   to   { transform: scale(1.05); opacity: 0.8; }
 }
 
+&lt;!-- HTML --&gt;
+&lt;div class="badge"&gt;3 notifications&lt;/div&gt;
+
+/* CSS */
 .badge {
   animation: pulse 1.5s ease-in-out infinite alternate;
 }</code></pre>
+</div>
 
 <h2>Animation events in JavaScript</h2>
 

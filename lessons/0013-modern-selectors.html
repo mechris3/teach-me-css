@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lesson 13: Modern Selectors — :has(), :is(), :where(), :not()</title>
+  <style>
+    :root {
+      --text: #1a1a2e;
+      --bg: #fefefe;
+      --accent: #3a86ff;
+      --code-bg: #f4f4f8;
+      --border: #e0e0e0;
+      --serif: 'Georgia', serif;
+      --mono: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+      --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+    * { box-sizing: border-box; margin: 0; }
+    body { font-family: var(--sans); color: var(--text); background: var(--bg); line-height: 1.7; max-width: 60rem; margin: 0 auto; padding: 3rem 1.5rem; }
+    h1 { font-family: var(--serif); font-size: 1.8rem; margin-bottom: 0.25rem; font-weight: normal; }
+    .lesson-number { font-size: 0.85rem; color: #666; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.25rem; }
+    h2 { font-family: var(--serif); font-size: 1.3rem; margin-top: 2.5rem; margin-bottom: 0.75rem; font-weight: normal; }
+    h3 { font-size: 1rem; margin-top: 1.5rem; margin-bottom: 0.5rem; }
+    p, li { margin-bottom: 1rem; }
+    ul, ol { padding-left: 1.5rem; }
+    code { font-family: var(--mono); font-size: 0.88em; background: var(--code-bg); padding: 0.15em 0.4em; border-radius: 3px; }
+    pre { background: var(--code-bg); border: 1px solid var(--border); border-radius: 6px; padding: 1.25rem; overflow-x: auto; margin: 1.25rem 0; line-height: 1.5; }
+    pre code { background: none; padding: 0; font-size: 0.85rem; }
+    .key-insight { border-left: 3px solid var(--accent); padding: 1rem 1.25rem; margin: 1.5rem 0; background: #f0f7ff; border-radius: 0 6px 6px 0; }
+    .key-insight p { margin-bottom: 0.5rem; }
+    .key-insight p:last-child { margin-bottom: 0; }
+    .example-group { border: 1px solid var(--border); border-radius: 8px; margin: 1.5rem 0; overflow: hidden; }
+    .example-group .demo { border: none; border-radius: 0; margin: 0; border-bottom: 1px solid var(--border); }
+    .example-group pre { margin: 0; border: none; border-radius: 0; }
+    .demo { border: 1px solid var(--border); border-radius: 8px; padding: 1.5rem; margin: 1.5rem 0; background: #fafafa; }
+    .demo-label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em; color: #888; margin-bottom: 1rem; }
+
+    /* Demo: :has() */
+    .has-demo-card {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1rem;
+      margin-bottom: 0.75rem;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .has-demo-card:has(img) {
+      border-color: var(--accent);
+      box-shadow: 0 2px 8px rgba(58, 134, 255, 0.1);
+    }
+
+    .has-demo-card:has(:checked) {
+      background: #e8f8f5;
+      border-color: #2a9d8f;
+    }
+
+    .has-demo-card img {
+      width: 100%;
+      height: 40px;
+      object-fit: cover;
+      border-radius: 4px;
+      background: var(--accent);
+    }
+
+    /* Demo: :is() */
+    .is-demo :is(h3, h4, h5) {
+      color: var(--accent);
+      margin-bottom: 0.5rem;
+    }
+
+    .is-demo :is(.intro, .summary) {
+      font-style: italic;
+      color: #555;
+    }
+
+    /* Demo: :where() */
+    .where-demo :where(h3, h4, h5) {
+      color: #e76f51;
+      margin-bottom: 0.5rem;
+    }
+
+    /* Overrides :where easily because :where has 0 specificity */
+    .where-demo h3 {
+      color: #2a9d8f;
+    }
+
+    /* Demo: :not() */
+    .not-demo .item {
+      padding: 0.5rem 0.75rem;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.85rem;
+    }
+
+    .not-demo .item:not(:last-child) {
+      margin-bottom: 0;
+    }
+
+    .not-demo .item:not(.disabled) {
+      color: var(--text);
+    }
+
+    .not-demo .item.disabled {
+      color: #aaa;
+      text-decoration: line-through;
+    }
+
+    /* Demo: combining */
+    .combine-demo article:has(> img):not(.featured) {
+      opacity: 0.7;
+    }
+
+    .combine-demo article {
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 0.75rem;
+      margin-bottom: 0.5rem;
+      font-size: 0.8rem;
+    }
+
+    .combine-demo article.featured {
+      border-color: var(--accent);
+      border-width: 2px;
+    }
+
+    .combine-demo img {
+      width: 100%;
+      height: 30px;
+      background: var(--accent);
+      border-radius: 4px;
+      margin-bottom: 0.5rem;
+    }
+
+    .quiz { background: #fffdf0; border: 1px solid #e8e0c0; border-radius: 8px; padding: 1.5rem; margin: 2rem 0; }
+    .quiz h3 { font-size: 1rem; margin-bottom: 1rem; margin-top: 0; font-weight: 600; }
+    .quiz-options { list-style: none; padding: 0; }
+    .quiz-options li { margin-bottom: 0.5rem; }
+    .quiz-options button { display: block; width: 100%; text-align: left; padding: 0.75rem 1rem; border: 1px solid var(--border); border-radius: 6px; background: white; font-family: var(--mono); font-size: 0.85rem; cursor: pointer; transition: border-color 0.15s; }
+    .quiz-options button:hover { border-color: var(--accent); }
+    .quiz-options button.correct { border-color: #2a9d8f; background: #e8f8f5; }
+    .quiz-options button.incorrect { border-color: #e76f51; background: #fef0ed; }
+    .quiz-feedback { margin-top: 1rem; padding: 0.75rem; border-radius: 6px; font-size: 0.9rem; display: none; }
+    .source-link { margin-top: 3rem; padding-top: 1.5rem; border-top: 1px solid var(--border); }
+    .source-link a { color: var(--accent); text-decoration: none; border-bottom: 1px solid transparent; }
+    .source-link a:hover { border-bottom-color: var(--accent); }
+    .followup { margin-top: 2rem; padding: 1rem 1.25rem; background: #f9f9f9; border-radius: 8px; font-size: 0.9rem; color: #555; }
+    @media print { body { max-width: 100%; padding: 1rem; } .example-group { break-inside: avoid; } }
+  </style>
+</head>
+<body>
+<nav style="margin-bottom: 2rem;"><a href="index.html" style="font-size: 0.85rem; color: #3a86ff; text-decoration: none; border-bottom: 1px solid transparent;">← Course Contents</a></nav>
+
+<p class="lesson-number">Lesson 13</p>
+<h1>Modern Selectors — <code>:has()</code>, <code>:is()</code>, <code>:where()</code>, <code>:not()</code></h1>
+
+<p>These four pseudo-class functions transform what's possible with CSS selectors. They let you select based on what an element <em>contains</em>, simplify repetitive selector lists, control specificity precisely, and exclude elements from matching.</p>
+
+<h2>The mental model</h2>
+
+<table style="width: 100%; border-collapse: collapse; font-size: 0.82rem; margin: 1.5rem 0;">
+  <thead>
+    <tr style="border-bottom: 2px solid var(--border); text-align: left;">
+      <th style="padding: 0.5rem;">Selector</th>
+      <th style="padding: 0.5rem;">What it does</th>
+      <th style="padding: 0.5rem;">Specificity</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr style="border-bottom: 1px solid var(--border);">
+      <td style="padding: 0.4rem 0.5rem;"><code>:has()</code></td>
+      <td style="padding: 0.4rem 0.5rem;">Select an element based on what's <em>inside</em> it (the "parent selector")</td>
+      <td style="padding: 0.4rem 0.5rem;">Specificity of its most specific argument</td>
+    </tr>
+    <tr style="border-bottom: 1px solid var(--border);">
+      <td style="padding: 0.4rem 0.5rem;"><code>:is()</code></td>
+      <td style="padding: 0.4rem 0.5rem;">Match any of a list of selectors (OR logic, shorthand)</td>
+      <td style="padding: 0.4rem 0.5rem;">Specificity of its most specific argument</td>
+    </tr>
+    <tr style="border-bottom: 1px solid var(--border);">
+      <td style="padding: 0.4rem 0.5rem;"><code>:where()</code></td>
+      <td style="padding: 0.4rem 0.5rem;">Same as :is() but with zero specificity</td>
+      <td style="padding: 0.4rem 0.5rem;"><strong>Always 0</strong></td>
+    </tr>
+    <tr>
+      <td style="padding: 0.4rem 0.5rem;"><code>:not()</code></td>
+      <td style="padding: 0.4rem 0.5rem;">Exclude elements that match the argument</td>
+      <td style="padding: 0.4rem 0.5rem;">Specificity of its argument</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="key-insight">
+  <p><strong>The specificity rule for all of these:</strong> The pseudo-class itself contributes nothing. The specificity comes from its <em>argument</em> — specifically, the most specific selector in the argument list. <code>:where()</code> is the exception: it always contributes zero, making it ideal for defaults you want to be easily overridable.</p>
+</div>
+
+<h2><code>:has()</code> — the parent selector CSS never had</h2>
+
+<p>Before <code>:has()</code>, CSS could only style elements based on their ancestors, never based on their children. You couldn't say "style this div IF it contains an image." Now you can:</p>
+
+<div class="example-group">
+<div class="demo">
+  <p class="demo-label">The first card has an image inside it — :has(img) gives it a blue border. The second card doesn't.</p>
+  <div class="has-demo-card">
+    <img alt="placeholder">
+    <p style="font-size: 0.8rem; margin-top: 0.5rem;">Card with image → styled by :has(img)</p>
+  </div>
+  <div class="has-demo-card">
+    <p style="font-size: 0.8rem;">Card without image → no :has(img) match</p>
+  </div>
+</div>
+<pre><code>&lt;!-- HTML --&gt;
+&lt;div class="card"&gt;
+  &lt;img src="..."&gt;
+  &lt;p&gt;Card with image&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class="card"&gt;
+  &lt;p&gt;Card without image&lt;/p&gt;
+&lt;/div&gt;
+
+/* Style the CARD based on whether it CONTAINS an image */
+.card:has(img) {
+  border-color: blue;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}</code></pre>
+</div>
+
+<h3>:has() with form states</h3>
+
+<div class="example-group">
+<div class="demo">
+  <p class="demo-label">Check the checkbox — the card changes background via :has(:checked)</p>
+  <div class="has-demo-card">
+    <label style="font-size: 0.85rem; cursor: pointer;">
+      <input type="checkbox"> Accept terms
+    </label>
+  </div>
+</div>
+<pre><code>&lt;!-- HTML --&gt;
+&lt;div class="card"&gt;
+  &lt;label&gt;&lt;input type="checkbox"&gt; Accept terms&lt;/label&gt;
+&lt;/div&gt;
+
+/* Card reacts to checkbox state INSIDE it */
+.card:has(:checked) {
+  background: #e8f8f5;
+  border-color: teal;
+}</code></pre>
+</div>
+
+<h3>:has() with combinators</h3>
+
+<p><code>:has()</code> accepts any valid selector as its argument, including combinators:</p>
+
+<pre><code>/* Direct child only */
+.card:has(&gt; img) { }        /* card with img as direct child */
+
+/* Sibling */
+h2:has(+ p) { }             /* h2 immediately followed by a p */
+
+/* Descendant at any depth */
+.form:has(:invalid) { }     /* form containing any invalid input */
+
+/* Multiple conditions */
+.card:has(img):has(h2) { }  /* card with BOTH img AND h2 inside */</code></pre>
+
+<div class="key-insight">
+  <p><strong>:has() is not just a parent selector.</strong> It's a "conditional selector" — it lets any element's styling depend on the state or content of its relatives. This replaces many patterns that previously required JavaScript (like styling a form when any field is invalid).</p>
+</div>
+
+<h2><code>:is()</code> — selector list shorthand</h2>
+
+<p><code>:is()</code> matches any element that matches any of its arguments. It's a way to avoid repeating the same context for multiple selectors:</p>
+
+<div class="example-group">
+<div class="demo">
+  <p class="demo-label">All headings inside .article are blue — one rule instead of three</p>
+  <div class="is-demo">
+    <h3>Heading 3</h3>
+    <h4>Heading 4</h4>
+    <h5>Heading 5</h5>
+    <p class="intro">Intro paragraph (italic via :is(.intro, .summary))</p>
+    <p>Normal paragraph</p>
+  </div>
+</div>
+<pre><code>&lt;!-- HTML --&gt;
+&lt;div class="article"&gt;
+  &lt;h3&gt;Heading 3&lt;/h3&gt;
+  &lt;h4&gt;Heading 4&lt;/h4&gt;
+  &lt;h5&gt;Heading 5&lt;/h5&gt;
+  &lt;p class="intro"&gt;Intro&lt;/p&gt;
+  &lt;p&gt;Normal&lt;/p&gt;
+&lt;/div&gt;
+
+/* Without :is() — repetitive */
+.article h3, .article h4, .article h5 { color: blue; }
+
+/* With :is() — concise */
+.article :is(h3, h4, h5) { color: blue; }
+
+/* Also works for class lists */
+.article :is(.intro, .summary) { font-style: italic; }</code></pre>
+</div>
+
+<div class="key-insight">
+  <p><strong>Specificity of :is():</strong> Takes the specificity of its <em>most specific argument</em>. So <code>:is(h3, .title, #main)</code> has the specificity of <code>#main</code> (1,0,0) — even when matching an <code>h3</code>. This can surprise you. If you want zero specificity, use <code>:where()</code> instead.</p>
+</div>
+
+<h2><code>:where()</code> — :is() with zero specificity</h2>
+
+<p><code>:where()</code> is functionally identical to <code>:is()</code> — it matches the same elements. The only difference: <strong>it always contributes zero specificity.</strong></p>
+
+<div class="example-group">
+<div class="demo">
+  <p class="demo-label">:where(h3, h4, h5) sets colour to coral — but a simple h3 selector overrides it (green) because :where has zero specificity</p>
+  <div class="where-demo">
+    <h3>I'm green (h3 selector beats :where)</h3>
+    <h4>I'm coral (:where wins — no competing rule)</h4>
+  </div>
+</div>
+<pre><code>&lt;!-- HTML --&gt;
+&lt;div class="article"&gt;
+  &lt;h3&gt;I'm green&lt;/h3&gt;
+  &lt;h4&gt;I'm coral&lt;/h4&gt;
+&lt;/div&gt;
+
+/* :where has ZERO specificity — easily overridden */
+.article :where(h3, h4, h5) { color: coral; }
+
+/* This wins because (0,0,1) > (0,0,0) */
+.article h3 { color: green; }</code></pre>
+</div>
+
+<div class="key-insight">
+  <p><strong>When to use :where() vs :is():</strong></p>
+  <ul>
+    <li><code>:is()</code> — when you want the selector list to carry normal specificity (component styles, things you want to "stick")</li>
+    <li><code>:where()</code> — when you want zero specificity (resets, defaults, library styles that users should easily override). Perfect for use inside <code>@layer</code> reset/base layers.</li>
+  </ul>
+</div>
+
+<h2><code>:not()</code> — exclusion</h2>
+
+<p><code>:not()</code> matches elements that do NOT match the argument:</p>
+
+<div class="example-group">
+<div class="demo">
+  <p class="demo-label">All items except .disabled are full colour. The last item has no bottom border via :not(:last-child).</p>
+  <div class="not-demo">
+    <div class="item">Active item</div>
+    <div class="item">Active item</div>
+    <div class="item disabled">Disabled item (excluded by :not(.disabled))</div>
+    <div class="item">Last item (no bottom border via :not(:last-child))</div>
+  </div>
+</div>
+<pre><code>&lt;!-- HTML --&gt;
+&lt;div class="list"&gt;
+  &lt;div class="item"&gt;Active&lt;/div&gt;
+  &lt;div class="item"&gt;Active&lt;/div&gt;
+  &lt;div class="item disabled"&gt;Disabled&lt;/div&gt;
+  &lt;div class="item"&gt;Last&lt;/div&gt;
+&lt;/div&gt;
+
+/* Style all items except disabled ones */
+.item:not(.disabled) { color: black; }
+
+/* Border on all except last (replaces the margin-bottom-on-all + override-last pattern) */
+.item:not(:last-child) { border-bottom: 1px solid #eee; }</code></pre>
+</div>
+
+<p><code>:not()</code> now accepts complex selectors (multiple arguments):</p>
+
+<pre><code>/* Exclude multiple things */
+.item:not(.disabled, .hidden) { }
+
+/* Exclude elements with a specific child (combined with :has) */
+.card:not(:has(img)) { }  /* cards WITHOUT images */</code></pre>
+
+<h2>Combining them</h2>
+
+<p>These selectors compose naturally — you can chain and nest them:</p>
+
+<div class="example-group">
+<div class="demo">
+  <p class="demo-label">Articles with images that aren't .featured get reduced opacity</p>
+  <div class="combine-demo">
+    <article class="featured"><img alt="">Featured article with image (full opacity)</article>
+    <article><img alt="">Non-featured article with image (reduced opacity)</article>
+    <article>Article without image (full opacity — doesn't match :has(img))</article>
+  </div>
+</div>
+<pre><code>&lt;!-- HTML --&gt;
+&lt;article class="featured"&gt;&lt;img&gt;Featured&lt;/article&gt;
+&lt;article&gt;&lt;img&gt;Non-featured with image&lt;/article&gt;
+&lt;article&gt;No image&lt;/article&gt;
+
+/* Chaining :has() and :not() */
+article:has(&gt; img):not(.featured) {
+  opacity: 0.7;
+  /* Matches articles that HAVE a direct child img
+     but are NOT .featured */
+}</code></pre>
+</div>
+
+<h2>Specificity summary</h2>
+
+<pre><code>/* Specificity examples: */
+:is(.card, #main)        → (1, 0, 0)  /* takes #main's specificity */
+:where(.card, #main)     → (0, 0, 0)  /* always zero */
+:not(.disabled)          → (0, 1, 0)  /* specificity of .disabled */
+:has(> img)              → (0, 0, 1)  /* specificity of img */
+:has(.card > .title)     → (0, 2, 0)  /* specificity of .card > .title */</code></pre>
+
+<h2>Browser support</h2>
+
+<ul>
+  <li><code>:has()</code> — Chrome 105+, Safari 15.4+, Firefox 121+</li>
+  <li><code>:is()</code> — Chrome 88+, Safari 14+, Firefox 78+</li>
+  <li><code>:where()</code> — Chrome 88+, Safari 14+, Firefox 78+</li>
+  <li><code>:not()</code> (with complex selectors) — Chrome 88+, Safari 9+, Firefox 84+</li>
+</ul>
+
+<h2>Retrieval check</h2>
+
+<div class="quiz" id="quiz1">
+  <h3>What does :has() let you do that was previously impossible in CSS?</h3>
+  <ul class="quiz-options">
+    <li><button onclick="checkAnswer(this, false)">Select elements by their class name</button></li>
+    <li><button onclick="checkAnswer(this, true)">Style an element based on what's inside it (its children/descendants)</button></li>
+    <li><button onclick="checkAnswer(this, false)">Apply styles only on hover</button></li>
+    <li><button onclick="checkAnswer(this, false)">Select elements by their position in the DOM</button></li>
+  </ul>
+  <div class="quiz-feedback"></div>
+</div>
+
+<div class="quiz" id="quiz2">
+  <h3>What's the specificity of :where(.card, #main, .title)?</h3>
+  <ul class="quiz-options">
+    <li><button onclick="checkAnswer(this, false)">(1, 0, 0) — takes #main's specificity</button></li>
+    <li><button onclick="checkAnswer(this, false)">(0, 2, 0) — sum of class selectors</button></li>
+    <li><button onclick="checkAnswer(this, true)">(0, 0, 0) — :where() is always zero</button></li>
+    <li><button onclick="checkAnswer(this, false)">(0, 1, 0) — average of arguments</button></li>
+  </ul>
+  <div class="quiz-feedback"></div>
+</div>
+
+<div class="quiz" id="quiz3">
+  <h3>What's the specificity of :is(.card, #main)?</h3>
+  <ul class="quiz-options">
+    <li><button onclick="checkAnswer(this, true)">(1, 0, 0) — takes the most specific argument (#main)</button></li>
+    <li><button onclick="checkAnswer(this, false)">(0, 0, 0) — :is() has zero specificity</button></li>
+    <li><button onclick="checkAnswer(this, false)">(0, 1, 0) — uses .card's specificity</button></li>
+    <li><button onclick="checkAnswer(this, false)">(1, 1, 0) — sum of both</button></li>
+  </ul>
+  <div class="quiz-feedback"></div>
+</div>
+
+<div class="quiz" id="quiz4">
+  <h3>You want to style a form differently when any of its inputs are invalid. Which selector?</h3>
+  <ul class="quiz-options">
+    <li><button onclick="checkAnswer(this, false)">form:not(:valid)</button></li>
+    <li><button onclick="checkAnswer(this, true)">form:has(:invalid)</button></li>
+    <li><button onclick="checkAnswer(this, false)">form:is(:invalid)</button></li>
+    <li><button onclick="checkAnswer(this, false)">form > :invalid</button></li>
+  </ul>
+  <div class="quiz-feedback"></div>
+</div>
+
+<div class="quiz" id="quiz5">
+  <h3>When should you use :where() instead of :is()?</h3>
+  <ul class="quiz-options">
+    <li><button onclick="checkAnswer(this, false)">When you need higher specificity</button></li>
+    <li><button onclick="checkAnswer(this, false)">When targeting multiple elements at once</button></li>
+    <li><button onclick="checkAnswer(this, true)">When you want zero specificity so styles are easily overridden (resets, defaults)</button></li>
+    <li><button onclick="checkAnswer(this, false)">When the selector list contains IDs</button></li>
+  </ul>
+  <div class="quiz-feedback"></div>
+</div>
+
+<div class="source-link">
+  <p><strong>Primary sources:</strong></p>
+  <ul>
+    <li><a href="https://developer.mozilla.org/en-US/docs/Web/CSS/:has">MDN — :has()</a></li>
+    <li><a href="https://developer.mozilla.org/en-US/docs/Web/CSS/:is">MDN — :is()</a></li>
+    <li><a href="https://developer.mozilla.org/en-US/docs/Web/CSS/:where">MDN — :where()</a></li>
+    <li><a href="https://developer.mozilla.org/en-US/docs/Web/CSS/:not">MDN — :not()</a></li>
+  </ul>
+</div>
+
+<div class="followup">
+  <p>💬 That's Lesson 13. You now have four powerful selector tools: :has() for upward/conditional selection, :is() for concise selector lists, :where() for zero-specificity defaults, and :not() for exclusion. Combined with @layer (specificity management) and nesting (authoring structure), you have full control over what gets selected and how strongly.</p>
+  <p><strong>Next options:</strong></p>
+  <ul>
+    <li><strong>@scope</strong> — scoping styles to a DOM subtree (proximity-based styling)</li>
+    <li><strong>View transitions</strong> — animating between page/component states</li>
+    <li><strong>The full cascade algorithm</strong> — putting together everything: origin, context, layers, specificity, inheritance</li>
+    <li><strong>Logical properties</strong> — writing-mode-aware layout (margin-inline, padding-block, etc.)</li>
+  </ul>
+  <p>Your call, or I'll pick.</p>
+</div>
+
+<script>
+function checkAnswer(button, isCorrect) {
+  const quiz = button.closest('.quiz');
+  const buttons = quiz.querySelectorAll('button');
+  const feedback = quiz.querySelector('.quiz-feedback');
+
+  if (quiz.dataset.answered) return;
+  quiz.dataset.answered = 'true';
+
+  buttons.forEach(btn => btn.style.pointerEvents = 'none');
+
+  if (isCorrect) {
+    button.classList.add('correct');
+    feedback.textContent = '✓ Correct.';
+    feedback.style.background = '#e8f8f5';
+    feedback.style.color = '#1a7a6c';
+  } else {
+    button.classList.add('incorrect');
+    buttons.forEach(btn => {
+      if (btn.getAttribute('onclick').includes('true')) {
+        btn.classList.add('correct');
+      }
+    });
+    feedback.textContent = '✗ Not quite. The highlighted answer is correct.';
+    feedback.style.background = '#fef0ed';
+    feedback.style.color = '#c0392b';
+  }
+  feedback.style.display = 'block';
+}
+</script>
+
+</body>
+</html>
